@@ -1,10 +1,10 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   index,
-  primaryKey,
-  sqliteTableCreator,
-  sqliteTable,
   integer,
+  real,
+  sqliteTable,
+  sqliteTableCreator,
   text,
 } from "drizzle-orm/sqlite-core";
 
@@ -33,3 +33,22 @@ export const posts = createTable(
 export const trips = sqliteTable("trips", {
   id: integer("id").primaryKey(),
 });
+
+export const attractions = sqliteTable(
+  "attractions",
+  {
+    id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+    name: text("name", { length: 256 }).notNull(),
+    nameLocal: text("name_local", { length: 256 }),
+    description: text("description"),
+    address: text("address", { length: 256 }),
+    latitude: real("latitude"),
+    longitude: real("longitude"),
+    sourceUrl: text("source_url", { length: 256 }),
+    cityId: integer("city_id").notNull(), // References cities.id in the geo database (cross-database FK not supported)
+  },
+  (table) => [
+    index("attractions_city_idx").on(table.cityId),
+    index("attractions_coords_idx").on(table.latitude, table.longitude),
+  ],
+);
