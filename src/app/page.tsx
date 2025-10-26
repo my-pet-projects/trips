@@ -11,7 +11,8 @@ export default async function Home() {
   // console.log("Cities in DE:", deCountries);
   const trips = await api.trip.getTrips();
   // console.log("Trips:", trips);
-  const attractions = await api.attraction.getAttractions();
+  const attractions = await api.attraction.paginateAttractions();
+  console.log("Attractions:", attractions);
 
   return (
     <HydrateClient>
