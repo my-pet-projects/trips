@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   index,
   integer,
+  real,
   sqliteTable,
   sqliteTableCreator,
   text,
@@ -39,8 +40,8 @@ export const attractions = sqliteTable("attractions", {
   nameLocal: text("name_local"),
   description: text("description"),
   address: text("address"),
-  latitude: integer("latitude"),
-  longitude: integer("longitude"),
+  latitude: real("latitude"),
+  longitude: real("longitude"),
   sourceUrl: text("source_url"),
-  cityId: integer("city_id").notNull(),
+  cityId: integer("city_id").notNull(), // references the cities table in the separate geo database
 });

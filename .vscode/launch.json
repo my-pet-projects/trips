@@ -6,7 +6,7 @@
       "type": "node-terminal",
       "request": "launch",
       "command": "pnpm dev",
-      "cwd": "${workspaceFolder}/src",
+      "cwd": "${workspaceFolder}",
       "skipFiles": ["<node_internals>/**"],
       "sourceMaps": true
     }
