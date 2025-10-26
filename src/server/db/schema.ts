@@ -1,10 +1,9 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   index,
-  primaryKey,
-  sqliteTableCreator,
-  sqliteTable,
   integer,
+  sqliteTable,
+  sqliteTableCreator,
   text,
 } from "drizzle-orm/sqlite-core";
 
@@ -32,4 +31,16 @@ export const posts = createTable(
 
 export const trips = sqliteTable("trips", {
   id: integer("id").primaryKey(),
+});
+
+export const attractions = sqliteTable("attractions", {
+  id: integer("id").primaryKey(),
+  name: text("name").notNull(),
+  nameLocal: text("name_local"),
+  description: text("description"),
+  address: text("address"),
+  latitude: integer("latitude"),
+  longitude: integer("longitude"),
+  sourceUrl: text("source_url"),
+  cityId: integer("city_id").notNull(),
 });

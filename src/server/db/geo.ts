@@ -1,7 +1,7 @@
 import { createClient, type Client } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 
-import { env } from "~/env";
+import { env, isProd } from "~/env";
 import * as schema from "./geo-schema";
 
 /**
@@ -18,6 +18,8 @@ export const geoClient =
     url: env.GEO_DATABASE_URL,
     authToken: env.GEO_DATABASE_TOKEN,
   });
-if (env.NODE_ENV !== "production") globalForGeoDb.geoClient = geoClient;
+if (!isProd) globalForGeoDb.geoClient = geoClient;
 
-export const geoDb = drizzle(geoClient, { schema });
+export const geoDb = drizzle(geoClient, {
+  schema,
+});

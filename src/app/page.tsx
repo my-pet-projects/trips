@@ -1,17 +1,17 @@
 import Link from "next/link";
 
-import { LatestPost } from "~/app/_components/post";
 import { api, HydrateClient } from "~/trpc/server";
 
 export default async function Home() {
   const hello = await api.post.hello({ text: "from tRPC" });
 
   const countries = await api.geo.getCountries();
-  console.log("Countries:", countries);
+  // console.log("Countries:", countries);
   const deCountries = await api.geo.getCitiesByCountry({ cca2: "DE" });
-  console.log("Cities in DE:", deCountries);
+  // console.log("Cities in DE:", deCountries);
   const trips = await api.trip.getTrips();
-  console.log("Trips:", trips);
+  // console.log("Trips:", trips);
+  const attractions = await api.attraction.getAttractions();
 
   return (
     <HydrateClient>

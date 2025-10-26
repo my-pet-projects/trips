@@ -1,7 +1,7 @@
 import { createClient, type Client } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 
-import { env } from "~/env";
+import { env, isProd } from "~/env";
 import * as schema from "./schema";
 
 /**
@@ -18,6 +18,15 @@ export const client =
     url: env.TRIPS_DATABASE_URL,
     authToken: env.TRIPS_DATABASE_TOKEN,
   });
-if (env.NODE_ENV !== "production") globalForDb.client = client;
+if (!isProd) globalForDb.client = client;
 
-export const db = drizzle(client, { schema });
+export const db = drizzle(client, {
+  schema,
+  logger: !isProd
+    ? {
+        logQuery(query, params) {
+          console.log("[Drizzle]", query, params);
+        },
+      }
+    : undefined,
+});
