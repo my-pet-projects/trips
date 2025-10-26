@@ -34,14 +34,21 @@ export const trips = sqliteTable("trips", {
   id: integer("id").primaryKey(),
 });
 
-export const attractions = sqliteTable("attractions", {
-  id: integer("id").primaryKey(),
-  name: text("name").notNull(),
-  nameLocal: text("name_local"),
-  description: text("description"),
-  address: text("address"),
-  latitude: real("latitude"),
-  longitude: real("longitude"),
-  sourceUrl: text("source_url"),
-  cityId: integer("city_id").notNull(), // references the cities table in the separate geo database
-});
+export const attractions = sqliteTable(
+  "attractions",
+  {
+    id: integer("id").primaryKey(),
+    name: text("name").notNull(),
+    nameLocal: text("name_local"),
+    description: text("description"),
+    address: text("address"),
+    latitude: real("latitude"),
+    longitude: real("longitude"),
+    sourceUrl: text("source_url"),
+    cityId: integer("city_id").notNull(), // References cities.id in the geo database (cross-database FK not supported)
+  },
+  (table) => [
+    index("attractions_city_idx").on(table.cityId),
+    index("attractions_coords_idx").on(table.latitude, table.longitude),
+  ],
+);
