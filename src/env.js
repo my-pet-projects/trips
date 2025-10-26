@@ -48,3 +48,5 @@ export const env = createEnv({
    */
   emptyStringAsUndefined: true,
 });
+
+export const isProd = env.NODE_ENV === "production";
