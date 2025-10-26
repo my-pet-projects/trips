@@ -1,8 +1,9 @@
-import { eq, inArray } from "drizzle-orm";
+import { count, eq, inArray } from "drizzle-orm";
 import z from "zod";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import * as geoSchema from "~/server/db/geo-schema";
+import * as schema from "~/server/db/schema";
 
 export const attractionRouter = createTRPCRouter({
   paginateAttractions: publicProcedure
@@ -16,6 +17,11 @@ export const attractionRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const { limit = 10, offset = 0 } = input ?? {};
+
+      const [rowCount] = await ctx.db
+        .select({ count: count() })
+        .from(schema.attractions);
+
       const attractions = await ctx.db.query.attractions.findMany({
         limit,
         offset,
@@ -25,23 +31,26 @@ export const attractionRouter = createTRPCRouter({
         ...new Set(attractions.map((attraction) => attraction.cityId)),
       ];
 
-      const cities = await ctx.geoDb
-        .select({
-          id: geoSchema.cities.id,
-          name: geoSchema.cities.name,
-          countryCode: geoSchema.cities.countryCode,
-          country: {
-            cca2: geoSchema.countries.cca2,
-            cca3: geoSchema.countries.cca3,
-            name: geoSchema.countries.name,
-          },
-        })
-        .from(geoSchema.cities)
-        .innerJoin(
-          geoSchema.countries,
-          eq(geoSchema.cities.countryCode, geoSchema.countries.cca2),
-        )
-        .where(inArray(geoSchema.cities.id, cityIds));
+      const cities =
+        cityIds.length > 0
+          ? await ctx.geoDb
+              .select({
+                id: geoSchema.cities.id,
+                name: geoSchema.cities.name,
+                countryCode: geoSchema.cities.countryCode,
+                country: {
+                  cca2: geoSchema.countries.cca2,
+                  cca3: geoSchema.countries.cca3,
+                  name: geoSchema.countries.name,
+                },
+              })
+              .from(geoSchema.cities)
+              .innerJoin(
+                geoSchema.countries,
+                eq(geoSchema.cities.countryCode, geoSchema.countries.cca2),
+              )
+              .where(inArray(geoSchema.cities.id, cityIds))
+          : [];
 
       const cityMap = new Map(cities.map((city) => [city.id, city]));
 
@@ -67,7 +76,7 @@ export const attractionRouter = createTRPCRouter({
         pagination: {
           limit,
           offset,
-          total: attractions.length,
+          total: rowCount?.count ?? 0,
         },
       };
     }),
