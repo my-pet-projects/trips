@@ -1,5 +1,12 @@
-import { sql } from "drizzle-orm";
-import { index, sqliteTableCreator } from "drizzle-orm/sqlite-core";
+import { relations, sql } from "drizzle-orm";
+import {
+  index,
+  primaryKey,
+  sqliteTableCreator,
+  sqliteTable,
+  integer,
+  text,
+} from "drizzle-orm/sqlite-core";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -22,3 +29,7 @@ export const posts = createTable(
   }),
   (t) => [index("name_idx").on(t.name)],
 );
+
+export const trips = sqliteTable("trips", {
+  id: integer("id").primaryKey(),
+});

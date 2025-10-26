@@ -7,7 +7,10 @@ export const env = createEnv({
    * isn't built with invalid env vars.
    */
   server: {
-    DATABASE_URL: z.string().url(),
+    GEO_DATABASE_URL: z.string().url(),
+    GEO_DATABASE_TOKEN: z.string(),
+    TRIPS_DATABASE_URL: z.string().url(),
+    TRIPS_DATABASE_TOKEN: z.string(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -27,7 +30,10 @@ export const env = createEnv({
    * middlewares) or client-side so we need to destruct manually.
    */
   runtimeEnv: {
-    DATABASE_URL: process.env.DATABASE_URL,
+    GEO_DATABASE_URL: process.env.GEO_DATABASE_URL,
+    GEO_DATABASE_TOKEN: process.env.GEO_DATABASE_TOKEN,
+    TRIPS_DATABASE_URL: process.env.TRIPS_DATABASE_URL,
+    TRIPS_DATABASE_TOKEN: process.env.TRIPS_DATABASE_TOKEN,
     NODE_ENV: process.env.NODE_ENV,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
