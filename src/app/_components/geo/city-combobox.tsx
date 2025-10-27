@@ -53,7 +53,7 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
   } = api.geo.getCitiesByCountry.useQuery(
     {
       countryCode: countryCode ?? "",
-      search: debouncedSearch || undefined,
+      search: debouncedSearch.trim() || undefined,
     },
     {
       enabled: !!countryCode, // Only fetch cities if a countryCode is provided
