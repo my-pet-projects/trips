@@ -49,7 +49,7 @@ export const CountryCombobox: React.FC<CountryComboboxProps> = ({
     isLoading: isLoadingCountries,
     error,
   } = api.geo.getCountries.useQuery(
-    { search: debouncedSearch || undefined },
+    { search: debouncedSearch.trim() || undefined },
     {
       staleTime: 1000 * 60 * 60,
     },
@@ -96,6 +96,7 @@ export const CountryCombobox: React.FC<CountryComboboxProps> = ({
         isDisabled={isDisabled || !!error}
         placeholder={error ? "Error loading countries" : placeholder}
         noOptionsMessage={() => "No countries found"}
+        filterOption={null}
         className="basic-single"
         classNamePrefix="select"
       />
