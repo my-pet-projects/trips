@@ -1,13 +1,14 @@
 import Link from "next/link";
 
 import { api, HydrateClient } from "~/trpc/server";
+import { CountryCitySelector } from "./_components/geo/country-city-selector";
 
 export default async function Home() {
   const hello = await api.post.hello({ text: "from tRPC" });
 
   const countries = await api.geo.getCountries();
   // console.log("Countries:", countries);
-  const deCountries = await api.geo.getCitiesByCountry({ cca2: "DE" });
+  const deCountries = await api.geo.getCitiesByCountry({ countryCode: "DE" });
   // console.log("Cities in DE:", deCountries);
   const trips = await api.trip.getTrips();
   // console.log("Trips:", trips);
@@ -21,6 +22,9 @@ export default async function Home() {
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
             Create <span className="text-[hsl(280,100%,70%)]">T3</span> App
           </h1>
+          <div className="mt-8 w-full max-w-lg rounded-xl bg-white/10 p-4 text-white">
+            <CountryCitySelector />
+          </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
             <Link
               className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
