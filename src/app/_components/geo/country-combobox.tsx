@@ -34,6 +34,7 @@ export const CountryCombobox: React.FC<CountryComboboxProps> = ({
 }) => {
   const [inputValue, setInputValue] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const inputId = `${id}-input`;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -48,7 +49,7 @@ export const CountryCombobox: React.FC<CountryComboboxProps> = ({
     isLoading: isLoadingCountries,
     error,
   } = api.geo.getCountries.useQuery(
-    { search: debouncedSearch },
+    { search: debouncedSearch || undefined },
     {
       staleTime: 1000 * 60 * 60,
     },
@@ -71,22 +72,30 @@ export const CountryCombobox: React.FC<CountryComboboxProps> = ({
 
   return (
     <div>
-      <label htmlFor={id} className="mb-1 block text-sm font-medium text-white">
+      <label
+        htmlFor={inputId}
+        className="mb-1 block text-sm font-medium text-white"
+      >
         {label}
       </label>
       <Select<CountrySelectOption>
         instanceId={id}
         id={id}
+        inputId={inputId}
         options={options}
         isLoading={isLoadingCountries}
+        loadingMessage={() => "Loading countries..."}
         value={selectedOption}
         onChange={(option: CountrySelectOption | null) =>
           onChange(option ? option.fullCountry : null)
         }
-        onInputChange={(newValue: string) => setInputValue(newValue)}
+        onInputChange={(newValue: string, { action }) => {
+          if (action === "input-change") setInputValue(newValue);
+        }}
         isClearable={isClearable}
         isDisabled={isDisabled || !!error}
         placeholder={error ? "Error loading countries" : placeholder}
+        noOptionsMessage={() => "No countries found"}
         className="basic-single"
         classNamePrefix="select"
       />
