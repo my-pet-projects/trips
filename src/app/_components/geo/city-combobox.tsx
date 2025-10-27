@@ -36,8 +36,8 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
 }) => {
   const [inputValue, setInputValue] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const inputId = `${id}-input`;
 
-  // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(inputValue);
@@ -53,7 +53,7 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
   } = api.geo.getCitiesByCountry.useQuery(
     {
       countryCode: countryCode ?? "",
-      search: debouncedSearch,
+      search: debouncedSearch || undefined,
     },
     {
       enabled: !!countryCode, // Only fetch cities if a countryCode is provided
@@ -78,19 +78,26 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
 
   return (
     <div>
-      <label htmlFor={id} className="mb-1 block text-sm font-medium text-white">
+      <label
+        htmlFor={inputId}
+        className="mb-1 block text-sm font-medium text-white"
+      >
         {label}
       </label>
       <Select<CitySelectOption>
         instanceId={id}
         id={id}
+        inputId={inputId}
         options={options}
         isLoading={isLoadingCities}
+        loadingMessage={() => "Loading cities..."}
         value={selectedOption}
         onChange={(option: CitySelectOption | null) =>
           onChange(option ? option.fullCity : null)
         }
-        onInputChange={(newValue: string) => setInputValue(newValue)}
+        onInputChange={(newValue: string, { action }) => {
+          if (action === "input-change") setInputValue(newValue);
+        }}
         isClearable={isClearable}
         isDisabled={isDisabled || !countryCode || !!error}
         placeholder={
@@ -100,10 +107,10 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
               ? "Select a country first"
               : placeholder
         }
-        aria-label={label}
         noOptionsMessage={() =>
           countryCode ? "No cities found" : "Select a country first"
         }
+        filterOption={null}
         className="basic-single"
         classNamePrefix="select"
       />
