@@ -23,7 +23,7 @@ export const CountryCitySelector: React.FC = () => {
       <CountryCombobox value={selectedCountry} onChange={handleCountryChange} />
 
       <CityCombobox
-        countryCode={selectedCountry ? selectedCountry.cca2 : null} // Pass only the countryCode
+        countryCode={selectedCountry?.cca2 ?? null}
         value={selectedCity}
         onChange={setSelectedCity}
       />

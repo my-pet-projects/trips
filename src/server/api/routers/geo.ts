@@ -17,13 +17,16 @@ export const geoRouter = createTRPCRouter({
         orderBy: [geoSchema.countries.name],
       });
 
-      return countries ?? null;
+      return countries;
     }),
 
   getCitiesByCountry: publicProcedure
     .input(
       z.object({
-        countryCode: z.string().length(2),
+        countryCode: z
+          .string()
+          .length(2)
+          .transform((s) => s.toUpperCase()),
         search: z.string().optional(),
       }),
     )
@@ -56,9 +59,6 @@ export const geoRouter = createTRPCRouter({
         .orderBy(geoSchema.cities.name)
         .limit(100);
 
-      return citiesWithCountries.map((city) => ({
-        ...city,
-        country: city.country,
-      }));
+      return citiesWithCountries;
     }),
 });
