@@ -23,42 +23,50 @@ export const geoRouter = createTRPCRouter({
   getCitiesByCountry: publicProcedure
     .input(
       z.object({
-        countryCode: z
-          .string()
-          .length(2)
-          .transform((s) => s.toUpperCase()),
+        countryCode: z.string(),
         search: z.string().optional(),
+        cityId: z.number().optional(), // NEW: optional cityId filter
       }),
     )
     .query(async ({ ctx, input }) => {
-      const { countryCode, search } = input;
+      const { countryCode, search, cityId } = input;
 
-      const conditions = [eq(geoSchema.cities.countryCode, countryCode)];
+      const whereConditions = [eq(geoSchema.cities.countryCode, countryCode)];
 
-      if (search) {
-        conditions.push(like(geoSchema.cities.name, `%${search}%`));
+      // If cityId is provided, only fetch that specific city
+      if (cityId) {
+        whereConditions.push(eq(geoSchema.cities.id, cityId));
+      } else if (search) {
+        // Only apply search if we're not filtering by specific cityId
+        whereConditions.push(like(geoSchema.cities.name, `%${search}%`));
       }
 
-      const citiesWithCountries = await ctx.geoDb
+      const cities = await ctx.geoDb
         .select({
           id: geoSchema.cities.id,
           name: geoSchema.cities.name,
           countryCode: geoSchema.cities.countryCode,
-          country: {
-            cca2: geoSchema.countries.cca2,
-            cca3: geoSchema.countries.cca3,
-            name: geoSchema.countries.name,
-          },
         })
         .from(geoSchema.cities)
-        .innerJoin(
-          geoSchema.countries,
-          eq(geoSchema.cities.countryCode, geoSchema.countries.cca2),
-        )
-        .where(and(...conditions))
-        .orderBy(geoSchema.cities.name)
-        .limit(100);
+        .where(and(...whereConditions))
+        .limit(cityId ? 1 : 100); // Limit to 1 if fetching specific city
 
-      return citiesWithCountries;
+      return cities;
+    }),
+
+  getCityById: publicProcedure
+    .input(z.object({ cityId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const [city] = await ctx.geoDb
+        .select({
+          id: geoSchema.cities.id,
+          name: geoSchema.cities.name,
+          countryCode: geoSchema.cities.countryCode,
+        })
+        .from(geoSchema.cities)
+        .where(eq(geoSchema.cities.id, input.cityId))
+        .limit(1);
+
+      return city ?? null;
     }),
 });

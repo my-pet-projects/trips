@@ -17,6 +17,7 @@ interface CityComboboxProps {
   countryCode: string | null;
   value: City | null;
   onChange: (city: City | null) => void;
+  initialValue?: number; // Now a number (cityId) instead of string
   id?: string;
   label?: string;
   placeholder?: string;
@@ -27,6 +28,7 @@ interface CityComboboxProps {
 export const CityCombobox: React.FC<CityComboboxProps> = ({
   countryCode,
   value,
+  initialValue,
   onChange,
   id = "city-select",
   label = "City",
@@ -34,8 +36,10 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
   isClearable = true,
   isDisabled = false,
 }) => {
+  const [isInitialized, setIsInitialized] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+
   const inputId = `${id}-input`;
 
   useEffect(() => {
@@ -56,10 +60,22 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
       search: debouncedSearch.trim() || undefined,
     },
     {
-      enabled: !!countryCode, // Only fetch cities if a countryCode is provided
+      enabled: !!countryCode,
       staleTime: 1000 * 60 * 10,
     },
   );
+
+  useEffect(() => {
+    if (initialValue && cities && !value && !isInitialized && countryCode) {
+      const city = cities.find((c) => c.id === initialValue);
+      if (city) {
+        onChange(city);
+      }
+      setIsInitialized(true);
+    } else if (!initialValue && !isInitialized) {
+      setIsInitialized(true);
+    }
+  }, [initialValue, cities, value, onChange, isInitialized, countryCode]);
 
   const options: CitySelectOption[] = useMemo(() => {
     return (

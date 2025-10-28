@@ -16,6 +16,7 @@ interface CountrySelectOption {
 interface CountryComboboxProps {
   value: Country | null;
   onChange: (country: Country | null) => void;
+  initialValue?: string; // NEW: cca2, cca3, or name to resolve
   id?: string;
   label?: string;
   placeholder?: string;
@@ -26,12 +27,14 @@ interface CountryComboboxProps {
 export const CountryCombobox: React.FC<CountryComboboxProps> = ({
   value,
   onChange,
+  initialValue,
   id = "country-select",
   label = "Country",
   placeholder = "Select a country...",
   isClearable = true,
   isDisabled = false,
 }) => {
+  const [isInitialized, setIsInitialized] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const inputId = `${id}-input`;
@@ -64,6 +67,19 @@ export const CountryCombobox: React.FC<CountryComboboxProps> = ({
       })) ?? []
     );
   }, [countries]);
+
+  useEffect(() => {
+    console.log("CountryCombobox: initialValue =", initialValue);
+    if (initialValue && countries && !value && !isInitialized) {
+      const country = countries.find((c) => c.cca2 === initialValue);
+      if (country) {
+        onChange(country);
+      }
+      setIsInitialized(true);
+    } else if (!initialValue && !isInitialized) {
+      setIsInitialized(true);
+    }
+  }, [initialValue, countries, value, onChange, isInitialized]);
 
   const selectedOption = useMemo(() => {
     if (!value) return null;
