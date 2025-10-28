@@ -1,0 +1,126 @@
+"use client";
+
+import { Search } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  type ChangeEvent,
+  useCallback,
+  useEffect,
+  useState,
+  useTransition,
+} from "react";
+
+import { CountryCitySelector } from "~/app/_components/geo/country-city-selector";
+import { Input } from "~/app/_components/ui/input";
+
+type SearchBarProps = {
+  initialSearch: string;
+  initialCountry: string;
+  initialCity: string;
+};
+
+export function SearchBar({
+  initialSearch,
+  initialCountry,
+  initialCity,
+}: SearchBarProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
+
+  // Update search query when URL changes (e.g., browser back/forward)
+  useEffect(() => {
+    setSearchQuery(initialSearch);
+  }, [initialSearch]);
+
+  // Debounce search input and update URL
+  useEffect(() => {
+    if (searchQuery === initialSearch) return; // Don't trigger on mount if value hasn't changed
+
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (searchQuery) {
+        params.set("search", searchQuery);
+      } else {
+        params.delete("search");
+      }
+      params.delete("page"); // Reset to first page on search
+
+      startTransition(() => {
+        router.push(`/attractions?${params.toString()}`);
+      });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [initialSearch, router, searchParams, searchQuery]);
+
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleCountryCityChange = useCallback(
+    (country: string | null, city: string | null) => {
+      console.log("Country/City changed:", country, city);
+      const params = new URLSearchParams(searchParams.toString());
+
+      if (country) {
+        params.set("country", country);
+      } else {
+        params.delete("country");
+      }
+
+      if (city) {
+        params.set("city", city);
+      } else {
+        params.delete("city");
+      }
+
+      params.delete("page"); // Reset to first page on filter change
+
+      startTransition(() => {
+        router.push(`/attractions?${params.toString()}`);
+      });
+    },
+    [router, searchParams],
+  );
+
+  return (
+    <div className="w-full space-y-6 rounded-lg bg-white p-6 shadow-lg sm:p-8">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-end">
+        {/* Search Input */}
+        <div className="relative w-full lg:w-1/3 lg:shrink-0 lg:grow-0 lg:basis-1/3">
+          <label htmlFor="attraction-search" className="sr-only">
+            Search attractions
+          </label>
+          <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-gray-400" />
+          <Input
+            id="attraction-search"
+            placeholder="Search attractions by name, location, or category..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className="h-12 w-full rounded-lg border border-gray-300 bg-gray-50 pr-12 pl-12 text-base shadow-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+          />
+          {isPending && (
+            <div
+              className="absolute top-1/2 right-4 -translate-y-1/2"
+              role="status"
+            >
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
+              <span className="sr-only">Searching...</span>
+            </div>
+          )}
+        </div>
+
+        {/* Location Filters */}
+        <div className="w-full lg:w-2/3 lg:shrink-0 lg:grow lg:basis-2/3">
+          <CountryCitySelector
+            initialCountry={initialCountry}
+            initialCity={initialCity}
+            onChange={handleCountryCityChange}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}

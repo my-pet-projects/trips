@@ -1,12 +1,22 @@
-"use client";
+import { MapPin } from "lucide-react";
 
-import { MapPin, Plane, Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { SearchBar } from "./_components/search-bar";
 
-import { Button } from "~/app/_components/ui/button";
+type SearchParams = {
+  searchParams: Promise<{
+    page?: string;
+    search?: string;
+    country?: string;
+    city?: string;
+  }>;
+};
 
-export default function AttractionsPage() {
-  const router = useRouter();
+export default async function AttractionsPage({ searchParams }: SearchParams) {
+  const params = await searchParams;
+  const page = Number(params.page) || 1;
+  const search = params.search ?? "";
+  const country = params.country ?? "";
+  const city = params.city ?? "";
 
   return (
     <div className="min-h-screen bg-linear-to-br from-sky-50 via-white to-orange-50">
@@ -27,19 +37,18 @@ export default function AttractionsPage() {
                 </p>
               </div>
             </div>
-            <nav className="flex items-center gap-4">
-              <Button variant="ghost" onClick={() => router.push("/")}>
-                <Plane className="mr-2 h-4 w-4" />
-                My Trips
-              </Button>
-              <Button onClick={() => router.push("/attractions/new")}>
-                <Plus className="mr-2 h-4 w-4" />
-                New Attraction
-              </Button>
-            </nav>
           </div>
         </div>
       </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-6">
+        <SearchBar
+          initialSearch={search}
+          initialCountry={country}
+          initialCity={city}
+        />
+      </main>
     </div>
   );
 }

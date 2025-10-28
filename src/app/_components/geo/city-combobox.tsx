@@ -1,121 +1,119 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useRef } from "react";
 import Select from "react-select";
 
-import { api, type RouterOutputs } from "~/trpc/react";
+import type { RouterOutputs } from "~/trpc/react";
 
 type City = RouterOutputs["geo"]["getCitiesByCountry"][number];
 
-interface CitySelectOption {
+export interface CitySelectOption {
   value: number;
   label: string;
   fullCity: City;
 }
 
 interface CityComboboxProps {
-  countryCode: string | null;
+  options: CitySelectOption[];
+  isLoading: boolean;
   value: City | null;
   onChange: (city: City | null) => void;
-  id?: string;
-  label?: string;
-  placeholder?: string;
-  isClearable?: boolean;
+  onDebouncedSearchTermChange: (searchTerm: string) => void;
   isDisabled?: boolean;
+  countryCode: string | null;
+  error?: boolean;
 }
 
 export const CityCombobox: React.FC<CityComboboxProps> = ({
-  countryCode,
+  options,
+  isLoading,
   value,
   onChange,
-  id = "city-select",
-  label = "City",
-  placeholder = "Select a city...",
-  isClearable = true,
+  onDebouncedSearchTermChange,
   isDisabled = false,
+  countryCode,
+  error = false,
 }) => {
-  const [inputValue, setInputValue] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const inputId = `${id}-input`;
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(inputValue);
-    }, 300);
+  const handleDebouncedSearch = (searchTerm: string) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    if (searchTerm !== (value?.name ?? "")) {
+      debounceTimerRef.current = setTimeout(() => {
+        onDebouncedSearchTermChange(searchTerm);
+      }, 300);
+    } else {
+      onDebouncedSearchTermChange("");
+    }
+  };
 
-    return () => clearTimeout(timer);
-  }, [inputValue]);
-
-  const {
-    data: cities,
-    isLoading: isLoadingCities,
-    error,
-  } = api.geo.getCitiesByCountry.useQuery(
-    {
-      countryCode: countryCode ?? "",
-      search: debouncedSearch.trim() || undefined,
-    },
-    {
-      enabled: !!countryCode, // Only fetch cities if a countryCode is provided
-      staleTime: 1000 * 60 * 10,
-    },
-  );
-
-  const options: CitySelectOption[] = useMemo(() => {
-    return (
-      cities?.map((c) => ({
-        value: c.id,
-        label: c.name,
-        fullCity: c,
-      })) ?? []
-    );
-  }, [cities]);
-
-  const selectedOption = useMemo(() => {
-    if (!value) return null;
-    return options.find((option) => option.value === value.id) ?? null;
-  }, [value, options]);
+  const selectedOption = value
+    ? { value: value.id, label: value.name, fullCity: value }
+    : null;
 
   return (
-    <div>
+    <div className="w-full">
       <label
-        htmlFor={inputId}
-        className="mb-1 block text-sm font-medium text-white"
+        htmlFor="city-select"
+        className="mb-1 block text-sm font-medium text-gray-700"
       >
-        {label}
+        City
       </label>
       <Select<CitySelectOption>
-        instanceId={id}
-        id={id}
-        inputId={inputId}
+        key={`city-select-${value?.id ?? "null"}`}
+        instanceId="city-select"
         options={options}
-        isLoading={isLoadingCities}
+        isLoading={isLoading}
         loadingMessage={() => "Loading cities..."}
         value={selectedOption}
-        onChange={(option: CitySelectOption | null) =>
-          onChange(option ? option.fullCity : null)
-        }
-        onInputChange={(newValue: string, { action }) => {
-          if (action === "input-change") setInputValue(newValue);
+        onInputChange={(newValue, { action }) => {
+          if (action === "input-change") {
+            handleDebouncedSearch(newValue);
+          } else if (action === "menu-close" || action === "input-blur") {
+            handleDebouncedSearch(value?.name ?? "");
+          }
         }}
-        isClearable={isClearable}
-        isDisabled={isDisabled || !countryCode || !!error}
+        onChange={(option) => {
+          onChange(option?.fullCity ?? null);
+          onDebouncedSearchTermChange("");
+        }}
+        isClearable
+        isDisabled={isDisabled || !countryCode || error}
         placeholder={
           error
             ? "Error loading cities"
             : !countryCode
               ? "Select a country first"
-              : placeholder
+              : "Select a city..."
         }
         noOptionsMessage={() =>
           countryCode ? "No cities found" : "Select a country first"
         }
         filterOption={null}
-        className="basic-single"
-        classNamePrefix="select"
+        classNames={{
+          control: (state) =>
+            `!w-full !rounded-lg !border ${
+              state.isFocused
+                ? "!border-orange-500 !ring-1 !ring-orange-500"
+                : error
+                  ? "!border-red-500"
+                  : "!border-gray-300"
+            } !bg-gray-50 !h-12 !text-base ${state.isDisabled ? "!bg-gray-200" : ""}`,
+          placeholder: () => "!text-gray-400",
+          singleValue: () => "!truncate",
+          input: () => "",
+          indicatorSeparator: () => "!bg-gray-300",
+          dropdownIndicator: () => "!text-gray-400 hover:!text-gray-500",
+          clearIndicator: () => "!text-gray-400 hover:!text-red-500",
+          menu: () => "!rounded-lg !shadow-md !mt-2",
+          option: (state) =>
+            `!text-gray-800 ${state.isSelected ? "!bg-orange-200 !text-orange-700" : state.isFocused ? "!bg-orange-50" : "!bg-white"}`,
+        }}
       />
       {error && countryCode && (
-        <p className="mt-1 text-sm text-red-400">
+        <p className="mt-1 text-sm text-red-500">
           Failed to load cities. Please try again.
         </p>
       )}
