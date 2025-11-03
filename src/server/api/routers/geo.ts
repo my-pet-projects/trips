@@ -16,7 +16,7 @@ export const geoRouter = createTRPCRouter({
   getCitiesByCountry: publicProcedure
     .input(
       z.object({
-        countryCode: z.string(),
+        countryCode: z.string().length(2).toUpperCase(),
         search: z.string().optional(),
       }),
     )
