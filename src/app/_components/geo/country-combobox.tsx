@@ -1,107 +1,115 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import Select from "react-select";
+import React, { useMemo } from "react";
+import Select, {
+  components,
+  type OptionProps,
+  type SingleValueProps,
+} from "react-select";
 
-import { api, type RouterOutputs } from "~/trpc/react";
+import { getFlagEmoji } from "~/lib/utils";
+import type { RouterOutputs } from "~/trpc/react";
 
 type Country = RouterOutputs["geo"]["getCountries"][number];
 
-interface CountrySelectOption {
+export interface CountrySelectOption {
   value: string;
   label: string;
   fullCountry: Country;
 }
 
 interface CountryComboboxProps {
+  options: CountrySelectOption[];
+  isLoading: boolean;
   value: Country | null;
   onChange: (country: Country | null) => void;
-  id?: string;
-  label?: string;
-  placeholder?: string;
-  isClearable?: boolean;
-  isDisabled?: boolean;
+  error?: boolean;
+  showLabel?: boolean;
 }
 
 export const CountryCombobox: React.FC<CountryComboboxProps> = ({
+  options,
+  isLoading,
   value,
   onChange,
-  id = "country-select",
-  label = "Country",
-  placeholder = "Select a country...",
-  isClearable = true,
-  isDisabled = false,
+  error = false,
+  showLabel = true,
 }) => {
-  const [inputValue, setInputValue] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const inputId = `${id}-input`;
+  const selectedOption = value
+    ? { value: value.cca2, label: value.name, fullCountry: value }
+    : null;
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(inputValue);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [inputValue]);
-
-  const {
-    data: countries,
-    isLoading: isLoadingCountries,
-    error,
-  } = api.geo.getCountries.useQuery(
-    { search: debouncedSearch.trim() || undefined },
-    {
-      staleTime: 1000 * 60 * 60,
-    },
+  const customComponents = useMemo(
+    () => ({
+      Option: (props: OptionProps<CountrySelectOption>) => (
+        <components.Option {...props}>
+          <div className="flex items-center gap-2">
+            <span className="text-xl leading-none">
+              {getFlagEmoji(props.data.fullCountry.cca2)}
+            </span>
+            <span>{props.data.label}</span>
+          </div>
+        </components.Option>
+      ),
+      SingleValue: (props: SingleValueProps<CountrySelectOption>) => (
+        <components.SingleValue {...props}>
+          <div className="flex items-center gap-2">
+            <span className="text-xl leading-none">
+              {getFlagEmoji(props.data.fullCountry.cca2)}
+            </span>
+            <span>{props.data.label}</span>
+          </div>
+        </components.SingleValue>
+      ),
+    }),
+    [],
   );
 
-  const options: CountrySelectOption[] = useMemo(() => {
-    return (
-      countries?.map((c) => ({
-        value: c.cca2,
-        label: c.name,
-        fullCountry: c,
-      })) ?? []
-    );
-  }, [countries]);
-
-  const selectedOption = useMemo(() => {
-    if (!value) return null;
-    return options.find((option) => option.value === value.cca2) ?? null;
-  }, [value, options]);
-
   return (
-    <div>
-      <label
-        htmlFor={inputId}
-        className="mb-1 block text-sm font-medium text-white"
-      >
-        {label}
-      </label>
+    <div className="h-12 w-full">
+      {showLabel && (
+        <label
+          htmlFor="country-select"
+          className="mb-1 block text-sm font-medium text-gray-700"
+        >
+          Country
+        </label>
+      )}
       <Select<CountrySelectOption>
-        instanceId={id}
-        id={id}
-        inputId={inputId}
+        instanceId="country-select"
+        inputId="country-select"
         options={options}
-        isLoading={isLoadingCountries}
+        isLoading={isLoading}
         loadingMessage={() => "Loading countries..."}
         value={selectedOption}
-        onChange={(option: CountrySelectOption | null) =>
-          onChange(option ? option.fullCountry : null)
-        }
-        onInputChange={(newValue: string, { action }) => {
-          if (action === "input-change") setInputValue(newValue);
-        }}
-        isClearable={isClearable}
-        isDisabled={isDisabled || !!error}
-        placeholder={error ? "Error loading countries" : placeholder}
+        onChange={(option) => onChange(option?.fullCountry ?? null)}
+        isClearable
+        isDisabled={error}
+        placeholder={error ? "Error loading countries" : "Select a country..."}
         noOptionsMessage={() => "No countries found"}
-        filterOption={null}
-        className="basic-single"
-        classNamePrefix="select"
+        components={customComponents}
+        classNames={{
+          control: (state) =>
+            `!w-full !rounded-lg !border ${
+              state.isFocused
+                ? "!border-orange-500 !ring-1 !ring-orange-500"
+                : error
+                  ? "!border-red-500"
+                  : "!border-gray-300"
+            } !bg-gray-50 !h-12 !text-base ${state.isDisabled ? "!bg-gray-200" : ""}`,
+          placeholder: () => "!text-gray-400",
+          singleValue: () => "!truncate",
+          input: () => "",
+          indicatorSeparator: () => "!bg-gray-300",
+          dropdownIndicator: () => "!text-gray-400 hover:!text-gray-500",
+          clearIndicator: () => "!text-gray-400 hover:!text-red-500",
+          menu: () => "!rounded-lg !shadow-md !mt-2",
+          option: (state) =>
+            `!text-gray-800 ${state.isSelected ? "!bg-orange-200 !text-orange-700" : state.isFocused ? "!bg-orange-50" : "!bg-white"}`,
+        }}
       />
       {error && (
-        <p className="mt-1 text-sm text-red-400">
+        <p className="mt-1 text-sm text-red-500">
           Failed to load countries. Please try again.
         </p>
       )}
