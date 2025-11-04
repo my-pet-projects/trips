@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import Select from "react-select";
 
 import type { RouterOutputs } from "~/trpc/react";
@@ -35,6 +35,14 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
   error = false,
 }) => {
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleDebouncedSearch = (searchTerm: string) => {
     if (debounceTimerRef.current) {

@@ -21,15 +21,19 @@ export function CountryCitySelector({
 }: CountryCitySelectorProps) {
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
-  const [citySearchQuery, setCitySearchQuery] = useState(initialCity ?? "");
+  const [citySearchQuery, setCitySearchQuery] = useState("");
 
-  const hasInitialized = useRef(false);
+  // Track initialization: 'pending' | 'loading-city' | 'complete'
+  const initStatus = useRef<"pending" | "loading-city" | "complete">("pending");
 
   const {
     data: countries,
     isLoading: isLoadingCountries,
     error: countriesError,
   } = api.geo.getCountries.useQuery();
+
+  const shouldFetchCities =
+    !!selectedCountry?.cca2 && (!selectedCity || !!citySearchQuery);
 
   const {
     data: cities,
@@ -41,7 +45,7 @@ export function CountryCitySelector({
       search: citySearchQuery || undefined,
     },
     {
-      enabled: !!selectedCountry?.cca2 && (!selectedCity || !!citySearchQuery),
+      enabled: shouldFetchCities,
     },
   );
 
@@ -74,34 +78,42 @@ export function CountryCitySelector({
     return options;
   }, [cities, selectedCity]);
 
-  // Initialize country from props
+  // One-time initialization
   useEffect(() => {
-    if (hasInitialized.current || !countries) return;
+    if (initStatus.current !== "pending" || !countries) return;
 
     const country = countries.find((c) => c.cca2 === initialCountry);
-    if (country) setSelectedCountry(country);
+    if (country) {
+      setSelectedCountry(country);
+      if (initialCity) {
+        initStatus.current = "loading-city";
+        setCitySearchQuery(initialCity);
+      } else {
+        initStatus.current = "complete";
+      }
+    } else {
+      initStatus.current = "complete";
+    }
+  }, [countries, initialCountry, initialCity]);
 
-    hasInitialized.current = true;
-  }, [countries, initialCountry]);
-
-  // Set city when found in results
+  // Set city when found in results (only during initialization)
   useEffect(() => {
-    if (!initialCity || selectedCity || !cities) return;
+    if (initStatus.current !== "loading-city" || !cities || selectedCity)
+      return;
 
     const city = cities.find((c) => c.name === initialCity);
     if (city) {
       setSelectedCity(city);
-      setCitySearchQuery("");
     }
+    initStatus.current = "complete";
   }, [cities, initialCity, selectedCity]);
 
   // Notify parent of changes after initialization
   useEffect(() => {
-    if (!hasInitialized.current) return;
-    if (initialCity && !selectedCity && isLoadingCities) return;
+    if (initStatus.current !== "complete") return;
 
     onChange?.(selectedCountry?.cca2 ?? null, selectedCity?.name ?? null);
-  }, [selectedCountry, selectedCity, onChange, initialCity, isLoadingCities]);
+  }, [selectedCountry, selectedCity, onChange]);
 
   return (
     <div className="flex w-full flex-col gap-6 sm:flex-row sm:gap-4 md:gap-6">
@@ -126,8 +138,8 @@ export function CountryCitySelector({
           countryCode={selectedCountry?.cca2 ?? null}
           options={cityOptions}
           isLoading={isLoadingCities}
-          isDisabled={!selectedCountry}
           error={!!citiesError}
+          isDisabled={!selectedCountry}
         />
       </div>
     </div>

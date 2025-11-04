@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import Select, {
   components,
   type OptionProps,
@@ -37,26 +37,30 @@ export const CountryCombobox: React.FC<CountryComboboxProps> = ({
     ? { value: value.cca2, label: value.name, fullCountry: value }
     : null;
 
-  const Option = (props: OptionProps<CountrySelectOption>) => (
-    <components.Option {...props}>
-      <div className="flex items-center gap-2">
-        <span className="text-xl leading-none">
-          {getFlagEmoji(props.data.fullCountry.cca2)}
-        </span>
-        <span>{props.data.label}</span>
-      </div>
-    </components.Option>
-  );
-
-  const SingleValue = (props: SingleValueProps<CountrySelectOption>) => (
-    <components.SingleValue {...props}>
-      <div className="flex items-center gap-2">
-        <span className="text-xl leading-none">
-          {getFlagEmoji(props.data.fullCountry.cca2)}
-        </span>
-        <span>{props.data.label}</span>
-      </div>
-    </components.SingleValue>
+  const customComponents = useMemo(
+    () => ({
+      Option: (props: OptionProps<CountrySelectOption>) => (
+        <components.Option {...props}>
+          <div className="flex items-center gap-2">
+            <span className="text-xl leading-none">
+              {getFlagEmoji(props.data.fullCountry.cca2)}
+            </span>
+            <span>{props.data.label}</span>
+          </div>
+        </components.Option>
+      ),
+      SingleValue: (props: SingleValueProps<CountrySelectOption>) => (
+        <components.SingleValue {...props}>
+          <div className="flex items-center gap-2">
+            <span className="text-xl leading-none">
+              {getFlagEmoji(props.data.fullCountry.cca2)}
+            </span>
+            <span>{props.data.label}</span>
+          </div>
+        </components.SingleValue>
+      ),
+    }),
+    [],
   );
 
   return (
@@ -78,7 +82,7 @@ export const CountryCombobox: React.FC<CountryComboboxProps> = ({
         isDisabled={error}
         placeholder={error ? "Error loading countries" : "Select a country..."}
         noOptionsMessage={() => "No countries found"}
-        components={{ Option, SingleValue }}
+        components={customComponents}
         classNames={{
           control: (state) =>
             `!w-full !rounded-lg !border ${
