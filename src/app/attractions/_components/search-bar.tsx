@@ -1,3 +1,4 @@
+// ~/app/_components/search-bar.tsx
 "use client";
 
 import { Search } from "lucide-react";
@@ -29,14 +30,15 @@ export function SearchBar({
   const [isPending, startTransition] = useTransition();
   const [searchQuery, setSearchQuery] = useState(initialSearch);
 
-  // Update search query when URL changes (e.g., browser back/forward)
+  // Sync search query with URL changes (e.g., browser back/forward)
   useEffect(() => {
+    if (searchQuery === initialSearch) return;
     setSearchQuery(initialSearch);
-  }, [initialSearch]);
+  }, [initialSearch, searchQuery]);
 
   // Debounce search input and update URL
   useEffect(() => {
-    if (searchQuery === initialSearch) return; // Don't trigger on mount if value hasn't changed
+    if (searchQuery === initialSearch) return;
 
     const timer = setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString());
@@ -53,7 +55,9 @@ export function SearchBar({
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [initialSearch, router, searchParams, searchQuery]);
+    // searchParams and router are stable in Next.js
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, initialSearch]);
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -61,7 +65,6 @@ export function SearchBar({
 
   const handleCountryCityChange = useCallback(
     (country: string | null, city: string | null) => {
-      console.log("Country/City changed:", country, city);
       const params = new URLSearchParams(searchParams.toString());
 
       if (country) {
@@ -82,14 +85,16 @@ export function SearchBar({
         router.push(`/attractions?${params.toString()}`);
       });
     },
-    [router, searchParams],
+    // searchParams and router are stable in Next.js
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
 
   return (
     <div className="w-full space-y-6 rounded-lg bg-white p-6 shadow-lg sm:p-8">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-end">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
         {/* Search Input */}
-        <div className="relative w-full lg:w-1/3 lg:shrink-0 lg:grow-0 lg:basis-1/3">
+        <div className="relative w-full lg:w-1/3">
           <label htmlFor="attraction-search" className="sr-only">
             Search attractions
           </label>
@@ -103,7 +108,7 @@ export function SearchBar({
           />
           {isPending && (
             <div
-              className="absolute top-1/2 right-4 -translate-y-1/2"
+              className="absolute top-1/2 right-4 z-10 -translate-y-1/2"
               role="status"
             >
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
@@ -113,11 +118,12 @@ export function SearchBar({
         </div>
 
         {/* Location Filters */}
-        <div className="w-full lg:w-2/3 lg:shrink-0 lg:grow lg:basis-2/3">
+        <div className="w-full lg:flex-1">
           <CountryCitySelector
             initialCountry={initialCountry}
             initialCity={initialCity}
             onChange={handleCountryCityChange}
+            showLabels={false}
           />
         </div>
       </div>

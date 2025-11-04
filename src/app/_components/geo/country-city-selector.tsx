@@ -12,12 +12,14 @@ type CountryCitySelectorProps = {
   initialCountry?: string;
   initialCity?: string;
   onChange?: (country: string | null, city: string | null) => void;
+  showLabels?: boolean;
 };
 
 export function CountryCitySelector({
   initialCountry,
   initialCity,
   onChange,
+  showLabels = true,
 }: CountryCitySelectorProps) {
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
@@ -134,6 +136,7 @@ export function CountryCitySelector({
           options={countryOptions}
           isLoading={isLoadingCountries}
           error={!!countriesError}
+          showLabel={showLabels}
         />
       </div>
       <div className="flex-1">
@@ -146,6 +149,7 @@ export function CountryCitySelector({
           isLoading={isLoadingCities}
           error={!!citiesError}
           isDisabled={!selectedCountry}
+          showLabel={showLabels}
         />
       </div>
     </div>

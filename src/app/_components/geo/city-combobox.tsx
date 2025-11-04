@@ -22,6 +22,7 @@ interface CityComboboxProps {
   isDisabled?: boolean;
   countryCode: string | null;
   error?: boolean;
+  showLabel?: boolean;
 }
 
 export const CityCombobox: React.FC<CityComboboxProps> = ({
@@ -33,6 +34,7 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
   isDisabled = false,
   countryCode,
   error = false,
+  showLabel = true,
 }) => {
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -62,13 +64,15 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
     : null;
 
   return (
-    <div className="w-full">
-      <label
-        htmlFor="city-select"
-        className="mb-1 block text-sm font-medium text-gray-700"
-      >
-        City
-      </label>
+    <div className="h-12 w-full">
+      {showLabel && (
+        <label
+          htmlFor="city-select"
+          className="mb-1 block text-sm font-medium text-gray-700"
+        >
+          City
+        </label>
+      )}
       <Select<CitySelectOption>
         instanceId="city-select"
         inputId="city-select"

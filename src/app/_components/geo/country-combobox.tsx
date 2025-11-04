@@ -24,6 +24,7 @@ interface CountryComboboxProps {
   value: Country | null;
   onChange: (country: Country | null) => void;
   error?: boolean;
+  showLabel?: boolean;
 }
 
 export const CountryCombobox: React.FC<CountryComboboxProps> = ({
@@ -32,6 +33,7 @@ export const CountryCombobox: React.FC<CountryComboboxProps> = ({
   value,
   onChange,
   error = false,
+  showLabel = true,
 }) => {
   const selectedOption = value
     ? { value: value.cca2, label: value.name, fullCountry: value }
@@ -64,13 +66,15 @@ export const CountryCombobox: React.FC<CountryComboboxProps> = ({
   );
 
   return (
-    <div className="w-full">
-      <label
-        htmlFor="country-select"
-        className="mb-1 block text-sm font-medium text-gray-700"
-      >
-        Country
-      </label>
+    <div className="h-12 w-full">
+      {showLabel && (
+        <label
+          htmlFor="country-select"
+          className="mb-1 block text-sm font-medium text-gray-700"
+        >
+          Country
+        </label>
+      )}
       <Select<CountrySelectOption>
         instanceId="country-select"
         inputId="country-select"
