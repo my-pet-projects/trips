@@ -23,7 +23,6 @@ export function CountryCitySelector({
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
   const [citySearchQuery, setCitySearchQuery] = useState("");
 
-  // Track initialization: 'pending' | 'loading-city' | 'complete'
   const initStatus = useRef<"pending" | "loading-city" | "complete">("pending");
   const onChangeRef = useRef(onChange);
 
@@ -32,9 +31,6 @@ export function CountryCitySelector({
     isLoading: isLoadingCountries,
     error: countriesError,
   } = api.geo.getCountries.useQuery();
-
-  const shouldFetchCities =
-    !!selectedCountry?.cca2 && (!selectedCity || !!citySearchQuery);
 
   const {
     data: cities,
@@ -46,7 +42,7 @@ export function CountryCitySelector({
       search: citySearchQuery || undefined,
     },
     {
-      enabled: shouldFetchCities,
+      enabled: !!selectedCountry?.cca2,
     },
   );
 
@@ -79,35 +75,36 @@ export function CountryCitySelector({
     return options;
   }, [cities, selectedCity]);
 
-  // Initialize country and city based on initial props
+  // Single consolidated initialization
   useEffect(() => {
-    if (initStatus.current !== "pending" || !countries) return;
+    if (initStatus.current === "complete") return;
 
-    const country = countries.find((c) => c.cca2 === initialCountry);
-    if (country) {
-      setSelectedCountry(country);
-      if (initialCity) {
-        initStatus.current = "loading-city";
-        setCitySearchQuery(initialCity);
-      } else {
-        initStatus.current = "complete";
+    // Stage 1: Wait for countries
+    if (initStatus.current === "pending") {
+      if (!countries) return;
+      const country = countries.find((c) => c.cca2 === initialCountry);
+      if (country) {
+        setSelectedCountry(country);
+        if (initialCity) {
+          initStatus.current = "loading-city";
+          setCitySearchQuery(initialCity);
+          return; // Wait for cities
+        }
       }
-    } else {
+      initStatus.current = "complete";
+      return;
+    }
+
+    // Stage 2: Wait for cities (if needed)
+    if (initStatus.current === "loading-city") {
+      if (!cities) return;
+      const city = cities.find((c) => c.name === initialCity);
+      if (city) {
+        setSelectedCity(city);
+      }
       initStatus.current = "complete";
     }
-  }, [countries, initialCountry, initialCity]);
-
-  // Set city when found in results (only during initialization)
-  useEffect(() => {
-    if (initStatus.current !== "loading-city" || !cities || selectedCity)
-      return;
-
-    const city = cities.find((c) => c.name === initialCity);
-    if (city) {
-      setSelectedCity(city);
-    }
-    initStatus.current = "complete";
-  }, [cities, initialCity, selectedCity]);
+  }, [countries, cities, initialCountry, initialCity]);
 
   // To keep onChange reference up to date
   useEffect(() => {
