@@ -73,6 +73,7 @@ export const CountryCombobox: React.FC<CountryComboboxProps> = ({
       </label>
       <Select<CountrySelectOption>
         instanceId="country-select"
+        inputId="country-select"
         options={options}
         isLoading={isLoading}
         loadingMessage={() => "Loading countries..."}

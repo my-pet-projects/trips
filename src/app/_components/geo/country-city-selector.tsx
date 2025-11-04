@@ -25,6 +25,7 @@ export function CountryCitySelector({
 
   // Track initialization: 'pending' | 'loading-city' | 'complete'
   const initStatus = useRef<"pending" | "loading-city" | "complete">("pending");
+  const onChangeRef = useRef(onChange);
 
   const {
     data: countries,
@@ -78,7 +79,7 @@ export function CountryCitySelector({
     return options;
   }, [cities, selectedCity]);
 
-  // One-time initialization
+  // Initialize country and city based on initial props
   useEffect(() => {
     if (initStatus.current !== "pending" || !countries) return;
 
@@ -108,12 +109,20 @@ export function CountryCitySelector({
     initStatus.current = "complete";
   }, [cities, initialCity, selectedCity]);
 
+  // To keep onChange reference up to date
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
   // Notify parent of changes after initialization
   useEffect(() => {
     if (initStatus.current !== "complete") return;
 
-    onChange?.(selectedCountry?.cca2 ?? null, selectedCity?.name ?? null);
-  }, [selectedCountry, selectedCity, onChange]);
+    onChangeRef.current?.(
+      selectedCountry?.cca2 ?? null,
+      selectedCity?.name ?? null,
+    );
+  }, [selectedCountry, selectedCity]);
 
   return (
     <div className="flex w-full flex-col gap-6 sm:flex-row sm:gap-4 md:gap-6">

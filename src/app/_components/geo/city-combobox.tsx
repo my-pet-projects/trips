@@ -70,8 +70,8 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
         City
       </label>
       <Select<CitySelectOption>
-        key={`city-select-${value?.id ?? "null"}`}
         instanceId="city-select"
+        inputId="city-select"
         options={options}
         isLoading={isLoading}
         loadingMessage={() => "Loading cities..."}
