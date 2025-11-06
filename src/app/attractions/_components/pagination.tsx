@@ -91,21 +91,6 @@ export function Pagination({
     return null;
   }
 
-  if (
-    isNaN(currentPage) ||
-    isNaN(totalPages) ||
-    isNaN(totalItems) ||
-    isNaN(itemsPerPage)
-  ) {
-    console.error("Pagination received NaN values:", {
-      currentPage,
-      totalPages,
-      totalItems,
-      itemsPerPage,
-    });
-    return null;
-  }
-
   if (totalPages <= 1) {
     return null;
   }
