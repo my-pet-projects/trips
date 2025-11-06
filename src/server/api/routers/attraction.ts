@@ -1,4 +1,4 @@
-import { and, count, eq, ilike, inArray, or } from "drizzle-orm";
+import { and, count, eq, inArray, like, or } from "drizzle-orm";
 import z from "zod";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
@@ -23,10 +23,15 @@ export const attractionRouter = createTRPCRouter({
 
       let cityId: number | undefined;
       if (city) {
+        const cityConditions = [eq(geoSchema.cities.name, city)];
+        if (country) {
+          cityConditions.push(eq(geoSchema.cities.countryCode, country));
+        }
+
         const [cityData] = await ctx.geoDb
           .select({ id: geoSchema.cities.id })
           .from(geoSchema.cities)
-          .where(eq(geoSchema.cities.name, city))
+          .where(and(...cityConditions))
           .limit(1);
 
         cityId = cityData?.id;
@@ -46,8 +51,8 @@ export const attractionRouter = createTRPCRouter({
       if (search) {
         conditions.push(
           or(
-            ilike(schema.attractions.name, `%${search}%`),
-            ilike(schema.attractions.nameLocal, `%${search}%`),
+            like(schema.attractions.name, `%${search}%`),
+            like(schema.attractions.nameLocal, `%${search}%`),
           ),
         );
       }

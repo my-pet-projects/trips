@@ -31,10 +31,10 @@ export function SearchBar({
   const [searchQuery, setSearchQuery] = useState(initialSearch);
 
   // Sync search query with URL changes (e.g., browser back/forward)
+  // Only update if the URL param actually changed from external source
   useEffect(() => {
-    if (searchQuery === initialSearch) return;
     setSearchQuery(initialSearch);
-  }, [initialSearch, searchQuery]);
+  }, [initialSearch]);
 
   // Debounce search input and update URL
   useEffect(() => {
