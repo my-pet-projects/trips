@@ -140,7 +140,7 @@ export function Pagination({
         </div>
 
         {/* Pagination controls */}
-        <nav className="flex items-center gap-2" role="navigation">
+        <nav className="flex items-center gap-2">
           {/* First page */}
           <Button
             variant="outline"
