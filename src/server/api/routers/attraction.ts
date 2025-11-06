@@ -1,4 +1,4 @@
-import { count, eq, inArray } from "drizzle-orm";
+import { and, count, eq, ilike, inArray, or } from "drizzle-orm";
 import z from "zod";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
@@ -12,20 +12,67 @@ export const attractionRouter = createTRPCRouter({
         .object({
           limit: z.number().min(1).max(100).default(10),
           offset: z.number().min(0).default(0),
+          search: z.string().optional(),
+          country: z.string().length(2).optional(),
+          city: z.string().optional(),
         })
         .optional(),
     )
     .query(async ({ ctx, input }) => {
-      const { limit = 10, offset = 0 } = input ?? {};
+      const { limit = 10, offset = 0, search, country, city } = input ?? {};
+
+      let cityId: number | undefined;
+      if (city) {
+        const [cityData] = await ctx.geoDb
+          .select({ id: geoSchema.cities.id })
+          .from(geoSchema.cities)
+          .where(eq(geoSchema.cities.name, city))
+          .limit(1);
+
+        cityId = cityData?.id;
+        if (!cityId) {
+          return {
+            attractions: [],
+            pagination: {
+              limit,
+              offset,
+              total: 0,
+            },
+          };
+        }
+      }
+
+      const conditions = [];
+      if (search) {
+        conditions.push(
+          or(
+            ilike(schema.attractions.name, `%${search}%`),
+            ilike(schema.attractions.nameLocal, `%${search}%`),
+          ),
+        );
+      }
+      if (country) {
+        conditions.push(eq(schema.attractions.countryCode, country));
+      }
+      if (cityId) {
+        conditions.push(eq(schema.attractions.cityId, cityId));
+      }
+
+      const whereClause =
+        conditions.length > 0 ? and(...conditions) : undefined;
 
       const [rowCount] = await ctx.db
         .select({ count: count() })
-        .from(schema.attractions);
+        .from(schema.attractions)
+        .where(whereClause);
 
-      const attractions = await ctx.db.query.attractions.findMany({
-        limit,
-        offset,
-      });
+      const attractions = await ctx.db
+        .select()
+        .from(schema.attractions)
+        .where(whereClause)
+        .orderBy(schema.attractions.id)
+        .limit(limit)
+        .offset(offset);
 
       const cityIds = [
         ...new Set(attractions.map((attraction) => attraction.cityId)),
@@ -54,25 +101,27 @@ export const attractionRouter = createTRPCRouter({
 
       const cityMap = new Map(cities.map((city) => [city.id, city]));
 
+      const enrichedAttractions = attractions
+        .map((attraction) => {
+          const cityData = cityMap.get(attraction.cityId);
+          if (!cityData) {
+            console.warn(
+              `Attraction ${attraction.id} references non-existent city ${attraction.cityId}`,
+            );
+            return null;
+          }
+          return {
+            ...attraction,
+            city: cityData,
+          };
+        })
+        .filter(
+          (attraction): attraction is NonNullable<typeof attraction> =>
+            attraction !== null,
+        );
+
       return {
-        attractions: attractions
-          .map((attraction) => {
-            const city = cityMap.get(attraction.cityId);
-            if (!city) {
-              console.warn(
-                `Attraction ${attraction.id} references non-existent city ${attraction.cityId}`,
-              );
-              return null;
-            }
-            return {
-              ...attraction,
-              city,
-            };
-          })
-          .filter(
-            (attraction): attraction is NonNullable<typeof attraction> =>
-              attraction !== null,
-          ),
+        attractions: enrichedAttractions,
         pagination: {
           limit,
           offset,
