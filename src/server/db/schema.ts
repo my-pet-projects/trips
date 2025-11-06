@@ -46,6 +46,7 @@ export const attractions = sqliteTable(
     longitude: real("longitude"),
     sourceUrl: text("source_url", { length: 256 }),
     cityId: integer("city_id").notNull(), // References cities.id in the geo database (cross-database FK not supported)
+    countryCode: text("country_code", { length: 2 }).notNull(),
   },
   (table) => [
     index("attractions_city_idx").on(table.cityId),
