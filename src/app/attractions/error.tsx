@@ -37,7 +37,7 @@ export default function Error({
       </header>
 
       {/* Main content area for the error message */}
-      <div className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 py-6">
         <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
           <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-red-100 shadow-lg">
             <AlertCircle className="h-12 w-12 text-red-600" />
@@ -60,7 +60,7 @@ export default function Error({
             Try Again
           </button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

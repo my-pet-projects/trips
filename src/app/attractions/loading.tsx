@@ -22,7 +22,7 @@ export default function Loading() {
       </header>
 
       {/* Main content area for the loading spinner */}
-      <main className="container mx-auto flex min-h-[calc(100vh-(--spacing(20)))] flex-col items-center justify-center px-4 py-6">
+      <main className="container mx-auto px-4 py-6">
         <div className="flex flex-col items-center">
           <div className="h-12 w-12 animate-spin rounded-full border-4 border-solid border-blue-500 border-t-transparent"></div>
           <p className="mt-4 text-lg text-gray-700">Fetching attractions...</p>
