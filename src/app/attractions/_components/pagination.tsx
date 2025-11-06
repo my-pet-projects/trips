@@ -7,7 +7,7 @@ import {
   ChevronsRight,
   Loader2,
 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useTransition } from "react";
 
 import { Button } from "~/app/_components/ui/button";
@@ -28,6 +28,7 @@ export function Pagination({
   itemsPerPage,
 }: PaginationProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
@@ -46,10 +47,10 @@ export function Pagination({
       }
 
       startTransition(() => {
-        router.push(`?${params.toString()}`, { scroll: true });
+        router.push(`${pathname}?${params.toString()}`, { scroll: true });
       });
     },
-    [currentPage, totalPages, searchParams, router],
+    [currentPage, totalPages, searchParams, router, pathname],
   );
 
   const pageNumbers = useMemo(() => {
@@ -164,7 +165,7 @@ export function Pagination({
           </Button>
 
           {/* Page numbers */}
-          <div className="xs:flex hidden items-center gap-1">
+          <div className="hidden items-center gap-1 sm:flex">
             {pageNumbers.map((page, index) => {
               if (page === "...") {
                 return (
@@ -200,7 +201,7 @@ export function Pagination({
           </div>
 
           {/* Current page indicator */}
-          <div className="xs:hidden flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:hidden">
             <span className="text-sm font-medium text-gray-700">
               Page {currentPage} of {totalPages}
             </span>
