@@ -1,4 +1,5 @@
-import { count, eq, inArray } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+import { and, count, eq, inArray, like, or } from "drizzle-orm";
 import z from "zod";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
@@ -12,53 +13,105 @@ export const attractionRouter = createTRPCRouter({
         .object({
           limit: z.number().min(1).max(100).default(10),
           offset: z.number().min(0).default(0),
+          search: z.string().optional(),
+          country: z.string().length(2).optional(),
+          city: z.string().optional(),
         })
         .optional(),
     )
     .query(async ({ ctx, input }) => {
-      const { limit = 10, offset = 0 } = input ?? {};
+      try {
+        const { limit = 10, offset = 0, search, country, city } = input ?? {};
 
-      const [rowCount] = await ctx.db
-        .select({ count: count() })
-        .from(schema.attractions);
+        let cityId: number | undefined;
+        if (city) {
+          const cityConditions = [eq(geoSchema.cities.name, city)];
+          if (country) {
+            cityConditions.push(eq(geoSchema.cities.countryCode, country));
+          }
 
-      const attractions = await ctx.db.query.attractions.findMany({
-        limit,
-        offset,
-      });
+          const [cityData] = await ctx.geoDb
+            .select({ id: geoSchema.cities.id })
+            .from(geoSchema.cities)
+            .where(and(...cityConditions))
+            .limit(1);
 
-      const cityIds = [
-        ...new Set(attractions.map((attraction) => attraction.cityId)),
-      ];
+          cityId = cityData?.id;
+          if (!cityId) {
+            return {
+              attractions: [],
+              pagination: {
+                limit,
+                offset,
+                total: 0,
+              },
+            };
+          }
+        }
 
-      const cities =
-        cityIds.length > 0
-          ? await ctx.geoDb
-              .select({
-                id: geoSchema.cities.id,
-                name: geoSchema.cities.name,
-                countryCode: geoSchema.cities.countryCode,
-                country: {
-                  cca2: geoSchema.countries.cca2,
-                  cca3: geoSchema.countries.cca3,
-                  name: geoSchema.countries.name,
-                },
-              })
-              .from(geoSchema.cities)
-              .innerJoin(
-                geoSchema.countries,
-                eq(geoSchema.cities.countryCode, geoSchema.countries.cca2),
-              )
-              .where(inArray(geoSchema.cities.id, cityIds))
-          : [];
+        const conditions = [];
+        if (search) {
+          conditions.push(
+            or(
+              like(schema.attractions.name, `%${search}%`),
+              like(schema.attractions.nameLocal, `%${search}%`),
+            ),
+          );
+        }
+        if (country) {
+          conditions.push(eq(schema.attractions.countryCode, country));
+        }
+        if (cityId) {
+          conditions.push(eq(schema.attractions.cityId, cityId));
+        }
 
-      const cityMap = new Map(cities.map((city) => [city.id, city]));
+        const whereClause =
+          conditions.length > 0 ? and(...conditions) : undefined;
 
-      return {
-        attractions: attractions
+        const [rowCount] = await ctx.db
+          .select({ count: count() })
+          .from(schema.attractions)
+          .where(whereClause);
+
+        const attractions = await ctx.db
+          .select()
+          .from(schema.attractions)
+          .where(whereClause)
+          .orderBy(schema.attractions.id)
+          .limit(limit)
+          .offset(offset);
+
+        const cityIds = [
+          ...new Set(attractions.map((attraction) => attraction.cityId)),
+        ];
+
+        const cities =
+          cityIds.length > 0
+            ? await ctx.geoDb
+                .select({
+                  id: geoSchema.cities.id,
+                  name: geoSchema.cities.name,
+                  countryCode: geoSchema.cities.countryCode,
+                  country: {
+                    cca2: geoSchema.countries.cca2,
+                    cca3: geoSchema.countries.cca3,
+                    name: geoSchema.countries.name,
+                  },
+                })
+                .from(geoSchema.cities)
+                .innerJoin(
+                  geoSchema.countries,
+                  eq(geoSchema.cities.countryCode, geoSchema.countries.cca2),
+                )
+                .where(inArray(geoSchema.cities.id, cityIds))
+            : [];
+
+        const cityMap = new Map(cities.map((city) => [city.id, city]));
+
+        const enrichedAttractions = attractions
           .map((attraction) => {
-            const city = cityMap.get(attraction.cityId);
-            if (!city) {
+            const cityData = cityMap.get(attraction.cityId);
+            if (!cityData) {
               console.warn(
                 `Attraction ${attraction.id} references non-existent city ${attraction.cityId}`,
               );
@@ -66,18 +119,29 @@ export const attractionRouter = createTRPCRouter({
             }
             return {
               ...attraction,
-              city,
+              city: cityData,
             };
           })
           .filter(
             (attraction): attraction is NonNullable<typeof attraction> =>
               attraction !== null,
-          ),
-        pagination: {
-          limit,
-          offset,
-          total: rowCount?.count ?? 0,
-        },
-      };
+          );
+
+        return {
+          attractions: enrichedAttractions,
+          pagination: {
+            limit,
+            offset,
+            total: rowCount?.count ?? 0,
+          },
+        };
+      } catch (error) {
+        console.error("Error fetching attractions:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch attractions",
+          cause: error,
+        });
+      }
     }),
 });

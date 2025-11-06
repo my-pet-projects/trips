@@ -1,5 +1,7 @@
 import { MapPin } from "lucide-react";
 
+import { api } from "~/trpc/server";
+import { AttractionsTable } from "./_components/attractions-table";
 import { SearchBar } from "./_components/search-bar";
 
 type SearchParams = {
@@ -13,10 +15,19 @@ type SearchParams = {
 
 export default async function AttractionsPage({ searchParams }: SearchParams) {
   const params = await searchParams;
-  const page = Number(params.page) || 1;
+  const page = parseInt(params.page ?? "1", 10) || 1;
   const search = params.search ?? "";
   const country = params.country ?? "";
   const city = params.city ?? "";
+  const itemsPerPage = 20;
+
+  const attractions = await api.attraction.paginateAttractions({
+    limit: itemsPerPage,
+    offset: (page - 1) * itemsPerPage,
+    search: search || undefined,
+    country: country || undefined,
+    city: city || undefined,
+  });
 
   return (
     <div className="min-h-screen bg-linear-to-br from-sky-50 via-white to-orange-50">
@@ -47,6 +58,12 @@ export default async function AttractionsPage({ searchParams }: SearchParams) {
           initialSearch={search}
           initialCountry={country}
           initialCity={city}
+        />
+        <AttractionsTable
+          attractions={attractions.attractions}
+          totalCount={attractions.pagination.total}
+          currentPage={page}
+          itemsPerPage={itemsPerPage}
         />
       </main>
     </div>
