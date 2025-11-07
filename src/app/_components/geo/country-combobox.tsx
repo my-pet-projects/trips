@@ -3,6 +3,7 @@
 import React, { useMemo } from "react";
 import Select, {
   components,
+  type InputProps,
   type OptionProps,
   type SingleValueProps,
 } from "react-select";
@@ -60,6 +61,9 @@ export const CountryCombobox: React.FC<CountryComboboxProps> = ({
             <span>{props.data.label}</span>
           </div>
         </components.SingleValue>
+      ),
+      Input: (props: InputProps<CountrySelectOption>) => (
+        <components.Input {...props} autoComplete="nope" />
       ),
     }),
     [],

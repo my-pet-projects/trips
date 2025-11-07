@@ -1,4 +1,3 @@
-// ~/app/_components/search-bar.tsx
 "use client";
 
 import { Search } from "lucide-react";
@@ -13,6 +12,10 @@ import {
 
 import { CountryCitySelector } from "~/app/_components/geo/country-city-selector";
 import { Input } from "~/app/_components/ui/input";
+import type { RouterOutputs } from "~/trpc/react";
+
+type City = RouterOutputs["geo"]["getCitiesByCountry"][number];
+type Country = RouterOutputs["geo"]["getCountries"][number];
 
 type SearchBarProps = {
   initialSearch: string;
@@ -55,7 +58,8 @@ export function SearchBar({
     }, 300);
 
     return () => clearTimeout(timer);
-    // searchParams and router are stable in Next.js
+    // Don't include searchParams/router in deps to avoid infinite loops
+    // We depend on initialSearch instead, which updates when URL changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, initialSearch]);
 
@@ -64,17 +68,17 @@ export function SearchBar({
   };
 
   const handleCountryCityChange = useCallback(
-    (country: string | null, city: string | null) => {
+    (country: Country | null, city: City | null) => {
       const params = new URLSearchParams(searchParams.toString());
 
       if (country) {
-        params.set("country", country);
+        params.set("country", country.cca2);
       } else {
         params.delete("country");
       }
 
       if (city) {
-        params.set("city", city);
+        params.set("city", city.name);
       } else {
         params.delete("city");
       }
@@ -85,7 +89,8 @@ export function SearchBar({
         router.push(`/attractions?${params.toString()}`);
       });
     },
-    // searchParams and router are stable in Next.js
+    // Don't include searchParams/router in deps to avoid infinite loops
+    // The callback reads fresh searchParams.toString() on each invocation
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
