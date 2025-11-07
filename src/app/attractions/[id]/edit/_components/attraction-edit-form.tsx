@@ -25,7 +25,10 @@ const attractionSchema = z.object({
   address: z.string().max(256).optional(),
   latitude: z.coerce.number().min(-90).max(90).optional().nullable(),
   longitude: z.coerce.number().min(-180).max(180).optional().nullable(),
-  sourceUrl: z.string().url().max(256).optional().nullable().or(z.literal("")),
+  sourceUrl: z
+    .union([z.string().url().max(256), z.literal("")])
+    .optional()
+    .nullable(),
   cityId: z.number().min(1, "City is required"),
   countryCode: z.string().length(2, "Country is required"),
 });
@@ -52,6 +55,7 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(
     attraction.countryCode,
   );
@@ -68,16 +72,22 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
       longitude: attraction.longitude ?? undefined,
       sourceUrl: attraction.sourceUrl ?? "",
       countryCode: attraction.countryCode,
+      cityId: attraction.city?.id,
     },
   });
 
   const updateMutation = api.attraction.update.useMutation({
     onSuccess: () => {
+      setSuccess(true);
+      setError(null);
       router.refresh();
       setIsSubmitting(false);
+      // Hide success message after 5 seconds
+      setTimeout(() => setSuccess(false), 5000);
     },
     onError: (err) => {
       setError(getErrorMessage(err));
+      setSuccess(false);
       setIsSubmitting(false);
     },
   });
@@ -85,15 +95,12 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
   const onSubmit = async (data: AttractionFormData) => {
     setIsSubmitting(true);
     setError(null);
+    setSuccess(false);
 
-    try {
-      await updateMutation.mutateAsync({
-        id: attraction.id,
-        ...data,
-      });
-    } catch (err: unknown) {
-      console.error("Update error:", err);
-    }
+    await updateMutation.mutateAsync({
+      id: attraction.id,
+      ...data,
+    });
   };
 
   const handleLocationChange = (country: Country | null, city: City | null) => {
@@ -329,6 +336,15 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
           </div>
         </div>
 
+        {/* Success Message */}
+        {success && (
+          <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+            <p className="text-sm text-green-700">
+              ✓ Attraction updated successfully!
+            </p>
+          </div>
+        )}
+
         {/* Error Message */}
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4">
@@ -337,7 +353,7 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
         )}
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-end gap-3 pt-2">
           <Button
             type="button"
             variant="outline"

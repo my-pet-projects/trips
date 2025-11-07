@@ -25,11 +25,19 @@ export const attractionRouter = createTRPCRouter({
           });
         }
 
-        const [cityData] = await ctx.geoDb
-          .select()
-          .from(geoSchema.cities)
-          .where(eq(geoSchema.cities.id, attraction.cityId))
-          .limit(1);
+        const [cityData] =
+          (await ctx.geoDb
+            .select()
+            .from(geoSchema.cities)
+            .where(eq(geoSchema.cities.id, attraction.cityId))
+            .limit(1)) ?? [];
+
+        if (!cityData) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `City with ID ${attraction.cityId} not found for attraction ${input.id}`,
+          });
+        }
 
         return {
           ...attraction,

@@ -58,7 +58,8 @@ export function SearchBar({
     }, 300);
 
     return () => clearTimeout(timer);
-    // searchParams and router are stable in Next.js
+    // Don't include searchParams/router in deps to avoid infinite loops
+    // We depend on initialSearch instead, which updates when URL changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, initialSearch]);
 
@@ -88,7 +89,8 @@ export function SearchBar({
         router.push(`/attractions?${params.toString()}`);
       });
     },
-    // searchParams and router are stable in Next.js
+    // Don't include searchParams/router in deps to avoid infinite loops
+    // The callback reads fresh searchParams.toString() on each invocation
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
