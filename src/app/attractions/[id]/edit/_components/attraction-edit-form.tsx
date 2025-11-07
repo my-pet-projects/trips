@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { TRPCClientError } from "@trpc/client";
 import { Globe, Loader2, MapPin, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -82,8 +82,6 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
       setError(null);
       router.refresh();
       setIsSubmitting(false);
-      // Hide success message after 5 seconds
-      setTimeout(() => setSuccess(false), 5000);
     },
     onError: (err) => {
       setError(getErrorMessage(err));
@@ -91,6 +89,12 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
       setIsSubmitting(false);
     },
   });
+
+  useEffect(() => {
+    if (!success) return;
+    const timer = setTimeout(() => setSuccess(false), 5000);
+    return () => clearTimeout(timer);
+  }, [success]);
 
   const onSubmit = async (data: AttractionFormData) => {
     setIsSubmitting(true);
@@ -107,10 +111,18 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
     if (country) {
       setSelectedCountry(country.cca2);
       form.setValue("countryCode", country.cca2);
+      form.clearErrors("countryCode");
+    } else {
+      setSelectedCountry("");
+      form.setValue("countryCode", "");
     }
     if (city) {
       setSelectedCity(city.name);
       form.setValue("cityId", city.id);
+      form.clearErrors("cityId");
+    } else {
+      setSelectedCity("");
+      form.setValue("cityId", undefined as unknown as number);
     }
   };
 
