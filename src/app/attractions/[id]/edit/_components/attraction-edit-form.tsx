@@ -81,9 +81,6 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
       setSuccess(true);
       setError(null);
       setIsSubmitting(false);
-      setTimeout(() => {
-        router.refresh();
-      }, 1500);
     },
     onError: (err) => {
       setError(getErrorMessage(err));
