@@ -70,7 +70,7 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
       address: attraction.address ?? "",
       latitude: attraction.latitude ?? undefined,
       longitude: attraction.longitude ?? undefined,
-      sourceUrl: attraction.sourceUrl ?? "",
+      sourceUrl: attraction.sourceUrl ?? undefined,
       countryCode: attraction.countryCode,
       cityId: attraction.city?.id,
     },
@@ -80,8 +80,10 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
     onSuccess: () => {
       setSuccess(true);
       setError(null);
-      router.refresh();
       setIsSubmitting(false);
+      setTimeout(() => {
+        router.refresh();
+      }, 1500);
     },
     onError: (err) => {
       setError(getErrorMessage(err));
@@ -162,7 +164,7 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
                 id="name"
                 autoComplete="nope"
                 {...form.register("name")}
-                className="mt-1.5 h-11"
+                className="mt-1.5 h-12"
                 placeholder="Enter attraction name"
               />
               {form.formState.errors.name && (
@@ -184,7 +186,7 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
                 id="nameLocal"
                 autoComplete="nope"
                 {...form.register("nameLocal")}
-                className="mt-1.5 h-11"
+                className="mt-1.5 h-12"
                 placeholder="Enter local name (optional)"
               />
               {form.formState.errors.nameLocal && (
@@ -211,6 +213,29 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
               {form.formState.errors.description && (
                 <p className="mt-1 text-sm text-red-600">
                   {form.formState.errors.description.message}
+                </p>
+              )}
+            </div>
+
+            {/* Source URL */}
+            <div>
+              <Label
+                htmlFor="sourceUrl"
+                className="text-sm font-medium text-gray-700"
+              >
+                Source URL
+              </Label>
+              <Input
+                id="sourceUrl"
+                autoComplete="nope"
+                type="url"
+                {...form.register("sourceUrl")}
+                className="mt-1.5 h-12 font-mono text-sm"
+                placeholder="https://example.com"
+              />
+              {form.formState.errors.sourceUrl && (
+                <p className="mt-1 text-sm text-red-600">
+                  {form.formState.errors.sourceUrl.message}
                 </p>
               )}
             </div>
@@ -264,7 +289,7 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
                 id="address"
                 autoComplete="nope"
                 {...form.register("address")}
-                className="mt-1.5 h-11"
+                className="mt-1.5 h-12"
                 placeholder="Enter street address"
               />
               {form.formState.errors.address && (
@@ -289,7 +314,7 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
                   type="number"
                   step="any"
                   {...form.register("latitude", { valueAsNumber: true })}
-                  className="mt-1.5 h-11 font-mono"
+                  className="mt-1.5 h-12 font-mono"
                   placeholder="e.g., 40.712776"
                 />
                 {form.formState.errors.latitude && (
@@ -312,7 +337,7 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
                   type="number"
                   step="any"
                   {...form.register("longitude", { valueAsNumber: true })}
-                  className="mt-1.5 h-11 font-mono"
+                  className="mt-1.5 h-12 font-mono"
                   placeholder="e.g., -74.005974"
                 />
                 {form.formState.errors.longitude && (
@@ -321,29 +346,6 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
                   </p>
                 )}
               </div>
-            </div>
-
-            {/* Source URL */}
-            <div>
-              <Label
-                htmlFor="sourceUrl"
-                className="text-sm font-medium text-gray-700"
-              >
-                Source URL
-              </Label>
-              <Input
-                id="sourceUrl"
-                autoComplete="nope"
-                type="url"
-                {...form.register("sourceUrl")}
-                className="mt-1.5 h-11 font-mono text-sm"
-                placeholder="https://example.com"
-              />
-              {form.formState.errors.sourceUrl && (
-                <p className="mt-1 text-sm text-red-600">
-                  {form.formState.errors.sourceUrl.message}
-                </p>
-              )}
             </div>
           </div>
         </div>
@@ -371,14 +373,14 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
             variant="outline"
             onClick={() => router.back()}
             disabled={isSubmitting}
-            className="h-11 px-6"
+            className="h-12 px-6"
           >
             Cancel
           </Button>
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="h-11 bg-orange-500 px-6 hover:bg-orange-600"
+            className="h-12 bg-orange-500 px-6 hover:bg-orange-600"
           >
             {isSubmitting ? (
               <>

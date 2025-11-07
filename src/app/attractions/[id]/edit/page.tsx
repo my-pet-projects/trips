@@ -10,6 +10,11 @@ type EditAttractionPageProps = {
   }>;
 };
 
+export const metadata = {
+  title: "Edit Attraction Details",
+  description: "Update information about the attraction",
+};
+
 export default async function EditAttractionPage({
   params,
 }: EditAttractionPageProps) {
