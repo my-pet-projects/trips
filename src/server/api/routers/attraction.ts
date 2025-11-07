@@ -7,6 +7,44 @@ import * as geoSchema from "~/server/db/geo-schema";
 import * as schema from "~/server/db/schema";
 
 export const attractionRouter = createTRPCRouter({
+  getAttractionById: publicProcedure
+    .input(z.object({ id: z.number().min(1) }))
+    .query(async ({ ctx, input }) => {
+      try {
+        const attraction = await ctx.db
+          .select()
+          .from(schema.attractions)
+          .where(eq(schema.attractions.id, input.id))
+          .limit(1)
+          .then((rows) => rows[0]);
+
+        if (!attraction) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: `Attraction with ID ${input.id} not found`,
+          });
+        }
+
+        const [cityData] = await ctx.geoDb
+          .select()
+          .from(geoSchema.cities)
+          .where(eq(geoSchema.cities.id, attraction.cityId))
+          .limit(1);
+
+        return {
+          ...attraction,
+          city: cityData,
+        };
+      } catch (error) {
+        console.error("Error fetching attraction by ID:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch attraction",
+          cause: error,
+        });
+      }
+    }),
+
   paginateAttractions: publicProcedure
     .input(
       z
@@ -143,5 +181,52 @@ export const attractionRouter = createTRPCRouter({
           cause: error,
         });
       }
+    }),
+
+  update: publicProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        name: z.string().min(1, "Name is required").max(256),
+        nameLocal: z.string().max(256).optional(),
+        description: z.string().optional(),
+        address: z.string().max(256).optional(),
+        latitude: z.coerce.number().min(-90).max(90).optional().nullable(),
+        longitude: z.coerce.number().min(-180).max(180).optional().nullable(),
+        sourceUrl: z.string().max(256).optional().nullable(),
+        cityId: z.number().min(1, "City is required"),
+        countryCode: z.string().length(2, "Country is required"),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...updateData } = input;
+
+      const existing = await ctx.db.query.attractions.findFirst({
+        where: eq(schema.attractions.id, id),
+      });
+
+      if (!existing) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Attraction not found",
+        });
+      }
+
+      const result = await ctx.db
+        .update(schema.attractions)
+        .set({
+          ...updateData,
+        })
+        .where(eq(schema.attractions.id, id))
+        .returning();
+
+      if (!result[0]) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update attraction",
+        });
+      }
+
+      return result[0];
     }),
 });

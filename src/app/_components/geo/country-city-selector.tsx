@@ -11,7 +11,7 @@ type City = RouterOutputs["geo"]["getCitiesByCountry"][number];
 type CountryCitySelectorProps = {
   initialCountry?: string;
   initialCity?: string;
-  onChange?: (country: string | null, city: string | null) => void;
+  onChange?: (country: Country | null, city: City | null) => void;
   showLabels?: boolean;
 };
 
@@ -117,10 +117,7 @@ export function CountryCitySelector({
   useEffect(() => {
     if (initStatus.current !== "complete") return;
 
-    onChangeRef.current?.(
-      selectedCountry?.cca2 ?? null,
-      selectedCity?.name ?? null,
-    );
+    onChangeRef.current?.(selectedCountry ?? null, selectedCity ?? null);
   }, [selectedCountry, selectedCity]);
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import Select from "react-select";
+import React, { useEffect, useMemo, useRef } from "react";
+import Select, { components, type InputProps } from "react-select";
 
 import type { RouterOutputs } from "~/trpc/react";
 
@@ -63,6 +63,15 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
     ? { value: value.id, label: value.name, fullCity: value }
     : null;
 
+  const customComponents = useMemo(
+    () => ({
+      Input: (props: InputProps<CitySelectOption>) => (
+        <components.Input {...props} autoComplete="nope" />
+      ),
+    }),
+    [],
+  );
+
   return (
     <div className="h-12 w-full">
       {showLabel && (
@@ -103,6 +112,7 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
         noOptionsMessage={() =>
           countryCode ? "No cities found" : "Select a country first"
         }
+        components={customComponents}
         filterOption={null}
         classNames={{
           control: (state) =>
