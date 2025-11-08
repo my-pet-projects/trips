@@ -145,12 +145,14 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
   const currentLongitude = form.watch("longitude");
   const hasValidLatitude = Number.isFinite(currentLatitude ?? NaN);
   const hasValidLongitude = Number.isFinite(currentLongitude ?? NaN);
-  const mapLatitude = hasValidLatitude
-    ? (currentLatitude as unknown as number)
-    : (attraction.latitude ?? attraction.city?.latitude ?? 0);
-  const mapLongitude = hasValidLongitude
-    ? (currentLongitude as unknown as number)
-    : (attraction.longitude ?? attraction.city?.longitude ?? 0);
+  const mapLatitude =
+    hasValidLatitude && currentLatitude != null
+      ? currentLatitude
+      : (attraction.latitude ?? attraction.city?.latitude ?? 0);
+  const mapLongitude =
+    hasValidLongitude && currentLongitude != null
+      ? currentLongitude
+      : (attraction.longitude ?? attraction.city?.longitude ?? 0);
 
   const handleMapCoordinatesChange = (lat: number, lng: number) => {
     form.setValue("latitude", lat, { shouldValidate: true, shouldDirty: true });
@@ -377,7 +379,7 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
                       type="number"
                       step="any"
                       {...form.register("latitude", { valueAsNumber: true })}
-                      className="h-12 flex-1 rounded-r-none pr-10 font-mono" // Just space for clipboard icon
+                      className="h-12 flex-1 rounded-r-none pr-10 font-mono"
                       placeholder="e.g., 40.712776"
                     />
                     <div className="absolute inset-y-0 right-0 flex items-center pr-2">
@@ -408,7 +410,7 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
                       type="number"
                       step="any"
                       {...form.register("longitude", { valueAsNumber: true })}
-                      className="h-12 flex-1 rounded-r-none pr-10 font-mono" // Just space for clipboard icon
+                      className="h-12 flex-1 rounded-r-none pr-10 font-mono"
                       placeholder="e.g., -74.005974"
                     />
                     <div className="absolute inset-y-0 right-0 flex items-center pr-2">
