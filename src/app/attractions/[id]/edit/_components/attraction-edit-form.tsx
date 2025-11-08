@@ -64,7 +64,17 @@ const DynamicAttractionMap = dynamic(
     import("~/app/_components/map/attraction-map").then(
       (mod) => mod.AttractionMap,
     ),
-  { ssr: false },
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[400px] w-full items-center justify-center rounded-lg border border-gray-200 bg-gray-50">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-gray-400" />
+          <p className="mt-2 text-sm text-gray-600">Loading map...</p>
+        </div>
+      </div>
+    ),
+  },
 );
 
 export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
@@ -165,17 +175,29 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
   const handlePasteCoordinates = async (field: "latitude" | "longitude") => {
     try {
       const text = await navigator.clipboard.readText();
-      const numbers = text
+      const tokens = text
         .split(/[\s,]+/)
+        .map((token) => token.trim())
+        .filter((token) => token.length > 0);
+      const numbers = tokens
         .map(Number)
-        .filter((n) => !isNaN(n));
+        .filter((value) => Number.isFinite(value));
 
       if (numbers.length >= 2) {
-        form.setValue("latitude", numbers[0]);
-        form.setValue("longitude", numbers[1]);
+        form.setValue("latitude", numbers[0], {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+        form.setValue("longitude", numbers[1], {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
         await form.trigger(["latitude", "longitude"]);
       } else if (numbers.length === 1) {
-        form.setValue(field, numbers[0]);
+        form.setValue(field, numbers[0], {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
         await form.trigger(field);
       }
     } catch (err) {
