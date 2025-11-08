@@ -2,7 +2,14 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TRPCClientError } from "@trpc/client";
-import { Clipboard, Globe, Loader2, Map, MapPin, Save } from "lucide-react";
+import {
+  Clipboard,
+  Globe,
+  Loader2,
+  Map as MapIcon,
+  MapPin,
+  Save,
+} from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -175,15 +182,12 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
   };
 
   const openMap = (mapType: "osm" | "google") => {
-    const latitude = form.watch("latitude");
-    const longitude = form.watch("longitude");
-
-    if (latitude !== null && longitude !== null) {
+    if (hasValidLatitude && hasValidLongitude) {
       let url = "";
       if (mapType === "osm") {
-        url = `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=16/${latitude}/${longitude}`;
+        url = `https://www.openstreetmap.org/?mlat=${mapLatitude}&mlon=${mapLongitude}#map=16/${mapLatitude}/${mapLongitude}`;
       } else {
-        url = `https://www.google.com/maps/@${latitude},${longitude}`;
+        url = `https://www.google.com/maps/@${mapLatitude},${mapLongitude}`;
       }
       window.open(url, "_blank");
     }
@@ -432,14 +436,16 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
                   onClick={() => openMap("osm")}
                   title="Open in OpenStreetMap"
                   className="inline-flex h-12 w-12 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                  disabled={!hasValidLatitude || !hasValidLongitude}
                 >
-                  <Map className="h-5 w-5" aria-hidden="true" />
+                  <MapIcon className="h-5 w-5" aria-hidden="true" />
                 </button>
                 <button
                   type="button"
                   onClick={() => openMap("google")}
                   title="Open in Google Maps"
                   className="inline-flex h-12 w-12 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                  disabled={!hasValidLatitude || !hasValidLongitude}
                 >
                   <MapPin className="h-5 w-5" aria-hidden="true" />
                 </button>
