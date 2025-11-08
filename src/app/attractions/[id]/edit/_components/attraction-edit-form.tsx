@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TRPCClientError } from "@trpc/client";
 import { Globe, Loader2, MapPin, Save } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -51,6 +52,14 @@ function getErrorMessage(error: unknown): string {
   return "An unexpected error occurred";
 }
 
+const DynamicAttractionMap = dynamic(
+  () =>
+    import("~/app/_components/map/attraction-map").then(
+      (mod) => mod.AttractionMap,
+    ),
+  { ssr: false },
+);
+
 export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,8 +77,8 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
       nameLocal: attraction.nameLocal ?? "",
       description: attraction.description ?? "",
       address: attraction.address ?? "",
-      latitude: attraction.latitude ?? undefined,
-      longitude: attraction.longitude ?? undefined,
+      latitude: attraction.latitude ?? 0,
+      longitude: attraction.longitude ?? 0,
       sourceUrl: attraction.sourceUrl ?? undefined,
       countryCode: attraction.countryCode,
       cityId: attraction.city?.id,
@@ -123,6 +132,17 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
       setSelectedCity("");
       form.setValue("cityId", undefined as unknown as number);
     }
+  };
+
+  const currentLatitude = form.watch("latitude");
+  const currentLongitude = form.watch("longitude");
+
+  const handleMapCoordinatesChange = (lat: number, lng: number) => {
+    form.setValue("latitude", lat, { shouldValidate: true, shouldDirty: true });
+    form.setValue("longitude", lng, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
   };
 
   return (
@@ -343,6 +363,25 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
                   </p>
                 )}
               </div>
+            </div>
+
+            {/* Map */}
+            <div>
+              <Label className="mb-1.5 block text-sm font-medium text-gray-700">
+                Map Preview
+              </Label>
+              <DynamicAttractionMap
+                latitude={currentLatitude ?? 0}
+                longitude={currentLongitude ?? 0}
+                currentCity={attraction.city}
+                onCoordinatesChange={handleMapCoordinatesChange}
+                className="h-[400px] w-full"
+              />
+              <p className="mt-1.5 text-xs text-gray-500">
+                {currentLatitude && currentLongitude
+                  ? "Map shows current coordinates. Update latitude/longitude or click on the map to move the marker."
+                  : "Enter coordinates to display location on map or click on the map to set them."}
+              </p>
             </div>
           </div>
         </div>
