@@ -2,7 +2,15 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TRPCClientError } from "@trpc/client";
-import { Globe, Loader2, MapPin, Save } from "lucide-react";
+import {
+  Clipboard,
+  Globe,
+  Loader2,
+  Map as MapIcon,
+  MapPin,
+  Save,
+} from "lucide-react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -50,6 +58,24 @@ function getErrorMessage(error: unknown): string {
   }
   return "An unexpected error occurred";
 }
+
+const DynamicAttractionMap = dynamic(
+  () =>
+    import("~/app/_components/map/attraction-map").then(
+      (mod) => mod.AttractionMap,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[400px] w-full items-center justify-center rounded-lg border border-gray-200 bg-gray-50">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-gray-400" />
+          <p className="mt-2 text-sm text-gray-600">Loading map...</p>
+        </div>
+      </div>
+    ),
+  },
+);
 
 export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
   const router = useRouter();
@@ -122,6 +148,72 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
     } else {
       setSelectedCity("");
       form.setValue("cityId", undefined as unknown as number);
+    }
+  };
+
+  const currentLatitude = form.watch("latitude");
+  const currentLongitude = form.watch("longitude");
+  const hasValidLatitude = Number.isFinite(currentLatitude ?? NaN);
+  const hasValidLongitude = Number.isFinite(currentLongitude ?? NaN);
+  const mapLatitude =
+    hasValidLatitude && currentLatitude != null
+      ? currentLatitude
+      : (attraction.latitude ?? attraction.city?.latitude ?? 0);
+  const mapLongitude =
+    hasValidLongitude && currentLongitude != null
+      ? currentLongitude
+      : (attraction.longitude ?? attraction.city?.longitude ?? 0);
+
+  const handleMapCoordinatesChange = (lat: number, lng: number) => {
+    form.setValue("latitude", lat, { shouldValidate: true, shouldDirty: true });
+    form.setValue("longitude", lng, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+  };
+
+  const handlePasteCoordinates = async (field: "latitude" | "longitude") => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const tokens = text
+        .split(/[\s,]+/)
+        .map((token) => token.trim())
+        .filter((token) => token.length > 0);
+      const numbers = tokens
+        .map(Number)
+        .filter((value) => Number.isFinite(value));
+
+      if (numbers.length >= 2) {
+        form.setValue("latitude", numbers[0], {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+        form.setValue("longitude", numbers[1], {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+        await form.trigger(["latitude", "longitude"]);
+      } else if (numbers.length === 1) {
+        form.setValue(field, numbers[0], {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+        await form.trigger(field);
+      }
+    } catch (err) {
+      console.error("Failed to read clipboard contents: ", err);
+    }
+  };
+
+  const openMap = (mapType: "osm" | "google") => {
+    if (hasValidLatitude && hasValidLongitude) {
+      let url = "";
+      if (mapType === "osm") {
+        url = `https://www.openstreetmap.org/?mlat=${mapLatitude}&mlon=${mapLongitude}#map=16/${mapLatitude}/${mapLongitude}`;
+      } else {
+        url = `https://www.google.com/maps/@${mapLatitude},${mapLongitude}`;
+      }
+      window.open(url, "_blank");
     }
   };
 
@@ -297,52 +389,110 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
             </div>
 
             {/* Coordinates */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <Label
-                  htmlFor="latitude"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Latitude
-                </Label>
-                <Input
-                  id="latitude"
-                  autoComplete="nope"
-                  type="number"
-                  step="any"
-                  {...form.register("latitude", { valueAsNumber: true })}
-                  className="mt-1.5 h-12 font-mono"
-                  placeholder="e.g., 40.712776"
-                />
-                {form.formState.errors.latitude && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {form.formState.errors.latitude.message}
-                  </p>
-                )}
-              </div>
+            <div className="flex flex-col items-end gap-4 sm:flex-row">
+              <div className="grid grow grid-cols-1 gap-4 sm:grid-cols-2">
+                {/* Latitude Input */}
+                <div>
+                  <Label htmlFor="latitude">Latitude</Label>
+                  <div className="relative mt-1.5 flex rounded-md shadow-sm">
+                    <Input
+                      id="latitude"
+                      autoComplete="nope"
+                      type="number"
+                      step="any"
+                      {...form.register("latitude", { valueAsNumber: true })}
+                      className="h-12 flex-1 rounded-r-none pr-10 font-mono"
+                      placeholder="e.g., 40.712776"
+                    />
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-2">
+                      <button
+                        type="button"
+                        onClick={() => handlePasteCoordinates("latitude")}
+                        title="Paste from clipboard (Lat/Lon or just Lat)"
+                        className="inline-flex items-center p-2 text-gray-400 hover:text-gray-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                      >
+                        <Clipboard className="h-5 w-5" aria-hidden="true" />
+                      </button>
+                    </div>
+                  </div>
+                  {form.formState.errors.latitude && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {form.formState.errors.latitude.message}
+                    </p>
+                  )}
+                </div>
 
-              <div>
-                <Label
-                  htmlFor="longitude"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Longitude
-                </Label>
-                <Input
-                  id="longitude"
-                  autoComplete="nope"
-                  type="number"
-                  step="any"
-                  {...form.register("longitude", { valueAsNumber: true })}
-                  className="mt-1.5 h-12 font-mono"
-                  placeholder="e.g., -74.005974"
-                />
-                {form.formState.errors.longitude && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {form.formState.errors.longitude.message}
-                  </p>
-                )}
+                {/* Longitude Input */}
+                <div>
+                  <Label htmlFor="longitude">Longitude</Label>
+                  <div className="relative mt-1.5 flex rounded-md shadow-sm">
+                    <Input
+                      id="longitude"
+                      autoComplete="nope"
+                      type="number"
+                      step="any"
+                      {...form.register("longitude", { valueAsNumber: true })}
+                      className="h-12 flex-1 rounded-r-none pr-10 font-mono"
+                      placeholder="e.g., -74.005974"
+                    />
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-2">
+                      <button
+                        type="button"
+                        onClick={() => handlePasteCoordinates("longitude")}
+                        title="Paste from clipboard (Lon or Lat/Lon)"
+                        className="inline-flex items-center p-2 text-gray-400 hover:text-gray-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                      >
+                        <Clipboard className="h-5 w-5" aria-hidden="true" />
+                      </button>
+                    </div>
+                  </div>
+                  {form.formState.errors.longitude && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {form.formState.errors.longitude.message}
+                    </p>
+                  )}
+                </div>
               </div>
+              {/* Map Icons */}
+              <div className="mb-1 flex gap-2 sm:mb-0 sm:self-end">
+                <button
+                  type="button"
+                  onClick={() => openMap("osm")}
+                  title="Open in OpenStreetMap"
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                  disabled={!hasValidLatitude || !hasValidLongitude}
+                >
+                  <MapIcon className="h-5 w-5" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openMap("google")}
+                  title="Open in Google Maps"
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                  disabled={!hasValidLatitude || !hasValidLongitude}
+                >
+                  <MapPin className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+
+            {/* Map */}
+            <div>
+              <Label className="mb-1.5 block text-sm font-medium text-gray-700">
+                Map Preview
+              </Label>
+              <DynamicAttractionMap
+                latitude={mapLatitude}
+                longitude={mapLongitude}
+                currentCity={attraction.city}
+                onCoordinatesChange={handleMapCoordinatesChange}
+                className="h-[400px] w-full"
+              />
+              <p className="mt-1.5 text-xs text-gray-500">
+                {hasValidLatitude && hasValidLongitude
+                  ? "Map shows current coordinates. Update latitude/longitude or click on the map to move the marker."
+                  : "Enter coordinates to display location on map or click on the map to set them."}
+              </p>
             </div>
           </div>
         </div>
