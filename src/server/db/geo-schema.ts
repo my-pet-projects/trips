@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const countries = sqliteTable("countries", {
   cca2: text("cca2", { length: 2 }).primaryKey(),
@@ -14,6 +14,8 @@ export const countriesRelations = relations(countries, ({ many }) => ({
 export const cities = sqliteTable("cities", {
   id: integer("id").primaryKey(),
   name: text("name").notNull(),
+  latitude: real("latitude").notNull(),
+  longitude: real("longitude").notNull(),
   countryCode: text("country_code", { length: 2 })
     .references(() => countries.cca2)
     .notNull(),
