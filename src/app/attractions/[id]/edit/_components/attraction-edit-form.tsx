@@ -9,11 +9,13 @@ import {
   Map as MapIcon,
   MapPin,
   Save,
+  Scan,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import { CountryCitySelector } from "~/app/_components/geo/country-city-selector";
@@ -80,8 +82,6 @@ const DynamicAttractionMap = dynamic(
 export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(
     attraction.countryCode,
   );
@@ -102,30 +102,70 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
     },
   });
 
+  const parseSiteMutation = api.attractionScraper.parseUrl.useMutation({
+    onMutate: () => {
+      toast.loading("Parsing site data...", {
+        id: "parse-site",
+      });
+    },
+    onSuccess: (data) => {
+      toast.dismiss("parse-site");
+
+      form.setValue("latitude", data.latitude);
+      form.setValue("longitude", data.longitude);
+      form.setValue("name", data.name);
+      form.setValue("nameLocal", data.localName);
+      form.setValue("description", data.description);
+
+      void form.trigger([
+        "latitude",
+        "longitude",
+        "name",
+        "nameLocal",
+        "description",
+      ]);
+
+      toast.success("Site parsed successfully!", {
+        description: "Form fields have been updated with parsed data.",
+      });
+    },
+    onError: (error) => {
+      toast.dismiss("parse-site");
+      toast.error("Failed to parse site", {
+        description: getErrorMessage(error),
+      });
+    },
+  });
+
+  const handleParseSourceUrl = () => {
+    const rawUrl = form.watch("sourceUrl") ?? "";
+    const url = rawUrl.trim();
+    if (url === "") {
+      toast.error("Source URL required", {
+        description: "Please enter a URL to parse.",
+      });
+      return;
+    }
+    parseSiteMutation.mutate({ url });
+  };
+
   const updateMutation = api.attraction.update.useMutation({
     onSuccess: () => {
-      setSuccess(true);
-      setError(null);
+      toast.success("Attraction updated!", {
+        description: "Changes have been saved successfully.",
+      });
       setIsSubmitting(false);
     },
     onError: (err) => {
-      setError(getErrorMessage(err));
-      setSuccess(false);
+      toast.error("Failed to update attraction", {
+        description: getErrorMessage(err),
+      });
       setIsSubmitting(false);
     },
   });
 
-  useEffect(() => {
-    if (!success) return;
-    const timer = setTimeout(() => setSuccess(false), 5000);
-    return () => clearTimeout(timer);
-  }, [success]);
-
   const onSubmit = async (data: AttractionFormData) => {
     setIsSubmitting(true);
-    setError(null);
-    setSuccess(false);
-
     await updateMutation.mutateAsync({
       id: attraction.id,
       ...data,
@@ -193,14 +233,30 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
           shouldDirty: true,
         });
         await form.trigger(["latitude", "longitude"]);
+        toast.success("Coordinates pasted", {
+          description: `Lat: ${numbers[0]}, Lng: ${numbers[1]}`,
+        });
       } else if (numbers.length === 1) {
         form.setValue(field, numbers[0], {
           shouldValidate: true,
           shouldDirty: true,
         });
         await form.trigger(field);
+        toast.success(
+          `${field === "latitude" ? "Latitude" : "Longitude"} pasted`,
+          {
+            description: `${numbers[0]}`,
+          },
+        );
+      } else {
+        toast.error("No valid coordinates found", {
+          description: "Clipboard doesn't contain valid numbers.",
+        });
       }
     } catch (err) {
+      toast.error("Failed to paste", {
+        description: "Unable to read clipboard contents.",
+      });
       console.error("Failed to read clipboard contents: ", err);
     }
   };
@@ -211,7 +267,7 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
       if (mapType === "osm") {
         url = `https://www.openstreetmap.org/?mlat=${mapLatitude}&mlon=${mapLongitude}#map=16/${mapLatitude}/${mapLongitude}`;
       } else {
-        url = `https://www.google.com/maps/@${mapLatitude},${mapLongitude}`;
+        url = `https://www.google.com/maps/@${mapLatitude},${mapLongitude},16z`;
       }
       window.open(url, "_blank");
     }
@@ -314,14 +370,32 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
               >
                 Source URL
               </Label>
-              <Input
-                id="sourceUrl"
-                autoComplete="nope"
-                type="url"
-                {...form.register("sourceUrl")}
-                className="mt-1.5 h-12 font-mono text-sm"
-                placeholder="https://example.com"
-              />
+              <div className="mt-1.5 flex items-end gap-2">
+                <div className="grow">
+                  <Input
+                    id="sourceUrl"
+                    autoComplete="nope"
+                    type="url"
+                    {...form.register("sourceUrl")}
+                    className="h-12 w-full font-mono text-sm"
+                    placeholder="https://example.com"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  onClick={handleParseSourceUrl}
+                  disabled={parseSiteMutation.isPending}
+                  title="Parse site for data"
+                  variant="outline"
+                  className="h-12 w-12 p-0"
+                >
+                  {parseSiteMutation.isPending ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <Scan className="h-5 w-5" />
+                  )}
+                </Button>
+              </div>
               {form.formState.errors.sourceUrl && (
                 <p className="mt-1 text-sm text-red-600">
                   {form.formState.errors.sourceUrl.message}
@@ -459,7 +533,7 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
                   type="button"
                   onClick={() => openMap("osm")}
                   title="Open in OpenStreetMap"
-                  className="inline-flex h-12 w-12 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={!hasValidLatitude || !hasValidLongitude}
                 >
                   <MapIcon className="h-5 w-5" aria-hidden="true" />
@@ -468,7 +542,7 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
                   type="button"
                   onClick={() => openMap("google")}
                   title="Open in Google Maps"
-                  className="inline-flex h-12 w-12 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={!hasValidLatitude || !hasValidLongitude}
                 >
                   <MapPin className="h-5 w-5" aria-hidden="true" />
@@ -496,22 +570,6 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
             </div>
           </div>
         </div>
-
-        {/* Success Message */}
-        {success && (
-          <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-            <p className="text-sm text-green-700">
-              ✓ Attraction updated successfully!
-            </p>
-          </div>
-        )}
-
-        {/* Error Message */}
-        {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-            <p className="text-sm text-red-700">{error}</p>
-          </div>
-        )}
 
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-3 pt-2">

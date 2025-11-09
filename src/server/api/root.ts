@@ -2,6 +2,7 @@ import { postRouter } from "~/server/api/routers/post";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 import { attractionRouter } from "./routers/attraction";
+import { attractionScraperRouter } from "./routers/attraction-scraper";
 import { geoRouter } from "./routers/geo";
 import { tripRouter } from "./routers/trip";
 
@@ -15,6 +16,7 @@ export const appRouter = createTRPCRouter({
   geo: geoRouter,
   trip: tripRouter,
   attraction: attractionRouter,
+  attractionScraper: attractionScraperRouter,
 });
 
 // export type definition of API
