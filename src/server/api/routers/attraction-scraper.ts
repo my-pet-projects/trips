@@ -161,7 +161,15 @@ export const attractionScraperRouter = createTRPCRouter({
 
       let html: string;
       try {
-        const res = await fetch(url);
+        const FETCH_TIMEOUT = 10000; // 10 seconds
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+
+        const res = await fetch(url, {
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
         if (!res.ok) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",

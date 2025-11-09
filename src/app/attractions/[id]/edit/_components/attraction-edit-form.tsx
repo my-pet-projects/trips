@@ -138,8 +138,9 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
   });
 
   const handleParseSourceUrl = () => {
-    const url = form.watch("sourceUrl");
-    if (!url || url.trim() === "") {
+    const rawUrl = form.watch("sourceUrl") ?? "";
+    const url = rawUrl.trim();
+    if (url === "") {
       toast.error("Source URL required", {
         description: "Please enter a URL to parse.",
       });
