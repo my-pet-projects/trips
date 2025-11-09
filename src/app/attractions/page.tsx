@@ -1,4 +1,5 @@
-import { MapPin } from "lucide-react";
+import { MapPin, Plane, Plus } from "lucide-react";
+import Link from "next/link";
 
 import { api } from "~/trpc/server";
 import { AttractionsTable } from "./_components/attractions-table";
@@ -48,6 +49,22 @@ export default async function AttractionsPage({ searchParams }: SearchParams) {
                 </p>
               </div>
             </div>
+            <nav className="flex items-center gap-4">
+              <Link
+                href="/"
+                className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+              >
+                <Plane className="mr-2 h-4 w-4" />
+                My Trips
+              </Link>
+              <Link
+                href="/attractions/new"
+                className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                New Attraction
+              </Link>
+            </nav>
           </div>
         </div>
       </header>

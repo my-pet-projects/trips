@@ -8,6 +8,7 @@ import {
   Loader2,
   Map as MapIcon,
   MapPin,
+  Plus,
   Save,
   Scan,
 } from "lucide-react";
@@ -27,6 +28,12 @@ import { api, type RouterOutputs } from "~/trpc/react";
 
 type City = RouterOutputs["geo"]["getCitiesByCountry"][number];
 type Country = RouterOutputs["geo"]["getCountries"][number];
+type Attraction = RouterOutputs["attraction"]["getAttractionById"];
+
+type AttractionFormProps = {
+  mode: "create" | "edit";
+  attraction?: Attraction;
+};
 
 const attractionSchema = z.object({
   name: z.string().min(1, "Name is required").max(256),
@@ -45,13 +52,7 @@ const attractionSchema = z.object({
 
 type AttractionFormData = z.infer<typeof attractionSchema>;
 
-type Attraction = RouterOutputs["attraction"]["getAttractionById"];
-
-type AttractionEditFormProps = {
-  attraction: Attraction;
-};
-
-function getErrorMessage(error: unknown): string {
+const getErrorMessage = (error: unknown): string => {
   if (error instanceof TRPCClientError) {
     return error.message;
   }
@@ -59,7 +60,11 @@ function getErrorMessage(error: unknown): string {
     return error.message;
   }
   return "An unexpected error occurred";
-}
+};
+
+const isValidCoordinate = (value: number | null | undefined): boolean => {
+  return Number.isFinite(value ?? NaN);
+};
 
 const DynamicAttractionMap = dynamic(
   () =>
@@ -79,34 +84,47 @@ const DynamicAttractionMap = dynamic(
   },
 );
 
-export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
+export function AttractionForm({ mode, attraction }: AttractionFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(
-    attraction.countryCode,
+    mode === "edit" ? attraction?.countryCode : "",
   );
-  const [selectedCity, setSelectedCity] = useState(attraction.city?.name);
+  const [selectedCity, setSelectedCity] = useState(
+    mode === "edit" ? attraction?.city?.name : "",
+  );
+
+  const isEditMode = mode === "edit";
 
   const form = useForm<AttractionFormData>({
     resolver: zodResolver(attractionSchema),
-    defaultValues: {
-      name: attraction.name,
-      nameLocal: attraction.nameLocal ?? "",
-      description: attraction.description ?? "",
-      address: attraction.address ?? "",
-      latitude: attraction.latitude ?? undefined,
-      longitude: attraction.longitude ?? undefined,
-      sourceUrl: attraction.sourceUrl ?? undefined,
-      countryCode: attraction.countryCode,
-      cityId: attraction.city?.id,
-    },
+    defaultValues: isEditMode
+      ? {
+          name: attraction?.name ?? "",
+          nameLocal: attraction?.nameLocal ?? "",
+          description: attraction?.description ?? "",
+          address: attraction?.address ?? "",
+          latitude: attraction?.latitude ?? undefined,
+          longitude: attraction?.longitude ?? undefined,
+          sourceUrl: attraction?.sourceUrl ?? undefined,
+          countryCode: attraction?.countryCode ?? "",
+          cityId: attraction?.city?.id,
+        }
+      : {
+          name: "",
+          nameLocal: "",
+          description: "",
+          address: "",
+          latitude: undefined,
+          longitude: undefined,
+          sourceUrl: undefined,
+          countryCode: "",
+        },
   });
 
   const parseSiteMutation = api.attractionScraper.parseUrl.useMutation({
     onMutate: () => {
-      toast.loading("Parsing site data...", {
-        id: "parse-site",
-      });
+      toast.loading("Parsing site data...", { id: "parse-site" });
     },
     onSuccess: (data) => {
       toast.dismiss("parse-site");
@@ -137,17 +155,20 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
     },
   });
 
-  const handleParseSourceUrl = () => {
-    const rawUrl = form.watch("sourceUrl") ?? "";
-    const url = rawUrl.trim();
-    if (url === "") {
-      toast.error("Source URL required", {
-        description: "Please enter a URL to parse.",
+  const createMutation = api.attraction.create.useMutation({
+    onSuccess: (data) => {
+      toast.success("Attraction created!", {
+        description: "The attraction has been created successfully.",
       });
-      return;
-    }
-    parseSiteMutation.mutate({ url });
-  };
+      router.push(`/attractions/${data.id}/edit`);
+    },
+    onError: (err) => {
+      toast.error("Failed to create attraction", {
+        description: getErrorMessage(err),
+      });
+      setIsSubmitting(false);
+    },
+  });
 
   const updateMutation = api.attraction.update.useMutation({
     onSuccess: () => {
@@ -164,12 +185,28 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
     },
   });
 
+  const handleParseSourceUrl = () => {
+    const url = form.watch("sourceUrl");
+    if (!url?.trim()) {
+      toast.error("Source URL required", {
+        description: "Please enter a URL to parse.",
+      });
+      return;
+    }
+    parseSiteMutation.mutate({ url });
+  };
+
   const onSubmit = async (data: AttractionFormData) => {
     setIsSubmitting(true);
-    await updateMutation.mutateAsync({
-      id: attraction.id,
-      ...data,
-    });
+
+    if (isEditMode && attraction) {
+      await updateMutation.mutateAsync({
+        id: attraction.id,
+        ...data,
+      });
+    } else {
+      await createMutation.mutateAsync(data);
+    }
   };
 
   const handleLocationChange = (country: Country | null, city: City | null) => {
@@ -181,6 +218,7 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
       setSelectedCountry("");
       form.setValue("countryCode", "");
     }
+
     if (city) {
       setSelectedCity(city.name);
       form.setValue("cityId", city.id);
@@ -190,19 +228,6 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
       form.setValue("cityId", undefined as unknown as number);
     }
   };
-
-  const currentLatitude = form.watch("latitude");
-  const currentLongitude = form.watch("longitude");
-  const hasValidLatitude = Number.isFinite(currentLatitude ?? NaN);
-  const hasValidLongitude = Number.isFinite(currentLongitude ?? NaN);
-  const mapLatitude =
-    hasValidLatitude && currentLatitude != null
-      ? currentLatitude
-      : (attraction.latitude ?? attraction.city?.latitude ?? 0);
-  const mapLongitude =
-    hasValidLongitude && currentLongitude != null
-      ? currentLongitude
-      : (attraction.longitude ?? attraction.city?.longitude ?? 0);
 
   const handleMapCoordinatesChange = (lat: number, lng: number) => {
     form.setValue("latitude", lat, { shouldValidate: true, shouldDirty: true });
@@ -215,11 +240,10 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
   const handlePasteCoordinates = async (field: "latitude" | "longitude") => {
     try {
       const text = await navigator.clipboard.readText();
-      const tokens = text
+      const numbers = text
         .split(/[\s,]+/)
         .map((token) => token.trim())
-        .filter((token) => token.length > 0);
-      const numbers = tokens
+        .filter((token) => token.length > 0)
         .map(Number)
         .filter((value) => Number.isFinite(value));
 
@@ -244,9 +268,7 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
         await form.trigger(field);
         toast.success(
           `${field === "latitude" ? "Latitude" : "Longitude"} pasted`,
-          {
-            description: `${numbers[0]}`,
-          },
+          { description: `${numbers[0]}` },
         );
       } else {
         toast.error("No valid coordinates found", {
@@ -262,16 +284,36 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
   };
 
   const openMap = (mapType: "osm" | "google") => {
-    if (hasValidLatitude && hasValidLongitude) {
-      let url = "";
-      if (mapType === "osm") {
-        url = `https://www.openstreetmap.org/?mlat=${mapLatitude}&mlon=${mapLongitude}#map=16/${mapLatitude}/${mapLongitude}`;
-      } else {
-        url = `https://www.google.com/maps/@${mapLatitude},${mapLongitude},16z`;
-      }
-      window.open(url, "_blank");
-    }
+    if (!hasValidLatitude || !hasValidLongitude) return;
+
+    const url =
+      mapType === "osm"
+        ? `https://www.openstreetmap.org/?mlat=${mapLatitude}&mlon=${mapLongitude}#map=16/${mapLatitude}/${mapLongitude}`
+        : `https://www.google.com/maps/@${mapLatitude},${mapLongitude},16z`;
+
+    window.open(url, "_blank");
   };
+
+  const currentLatitude = form.watch("latitude");
+  const currentLongitude = form.watch("longitude");
+  const hasValidLatitude = isValidCoordinate(currentLatitude);
+  const hasValidLongitude = isValidCoordinate(currentLongitude);
+
+  const mapLatitude =
+    hasValidLatitude && currentLatitude != null
+      ? currentLatitude
+      : isEditMode
+        ? (attraction?.latitude ?? attraction?.city?.latitude ?? 0)
+        : 0;
+
+  const mapLongitude =
+    hasValidLongitude && currentLongitude != null
+      ? currentLongitude
+      : isEditMode
+        ? (attraction?.longitude ?? attraction?.city?.longitude ?? 0)
+        : 0;
+
+  const currentCity = isEditMode ? attraction?.city : undefined;
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -280,7 +322,7 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
         className="space-y-6"
         autoComplete="nope"
       >
-        {/* Main Info Card */}
+        {/* Basic Information Card */}
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div className="mb-6 flex items-center gap-3 border-b pb-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100">
@@ -319,7 +361,7 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
               )}
             </div>
 
-            {/* Name Local */}
+            {/* Local Name */}
             <div>
               <Label
                 htmlFor="nameLocal"
@@ -420,7 +462,7 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
           </div>
 
           <div className="space-y-5">
-            {/* Country & City Selector */}
+            {/* Country & City */}
             <div>
               <Label className="mb-1.5 block text-sm font-medium text-gray-700">
                 Country & City <span className="text-red-500">*</span>
@@ -465,29 +507,27 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
             {/* Coordinates */}
             <div className="flex flex-col items-end gap-4 sm:flex-row">
               <div className="grid grow grid-cols-1 gap-4 sm:grid-cols-2">
-                {/* Latitude Input */}
+                {/* Latitude */}
                 <div>
                   <Label htmlFor="latitude">Latitude</Label>
-                  <div className="relative mt-1.5 flex rounded-md shadow-sm">
+                  <div className="relative mt-1.5">
                     <Input
                       id="latitude"
                       autoComplete="nope"
                       type="number"
                       step="any"
                       {...form.register("latitude", { valueAsNumber: true })}
-                      className="h-12 flex-1 rounded-r-none pr-10 font-mono"
+                      className="h-12 pr-10 font-mono"
                       placeholder="e.g., 40.712776"
                     />
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-2">
-                      <button
-                        type="button"
-                        onClick={() => handlePasteCoordinates("latitude")}
-                        title="Paste from clipboard (Lat/Lon or just Lat)"
-                        className="inline-flex items-center p-2 text-gray-400 hover:text-gray-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
-                      >
-                        <Clipboard className="h-5 w-5" aria-hidden="true" />
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handlePasteCoordinates("latitude")}
+                      title="Paste from clipboard"
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    >
+                      <Clipboard className="h-5 w-5" />
+                    </button>
                   </div>
                   {form.formState.errors.latitude && (
                     <p className="mt-1 text-sm text-red-600">
@@ -496,29 +536,27 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
                   )}
                 </div>
 
-                {/* Longitude Input */}
+                {/* Longitude */}
                 <div>
                   <Label htmlFor="longitude">Longitude</Label>
-                  <div className="relative mt-1.5 flex rounded-md shadow-sm">
+                  <div className="relative mt-1.5">
                     <Input
                       id="longitude"
                       autoComplete="nope"
                       type="number"
                       step="any"
                       {...form.register("longitude", { valueAsNumber: true })}
-                      className="h-12 flex-1 rounded-r-none pr-10 font-mono"
+                      className="h-12 pr-10 font-mono"
                       placeholder="e.g., -74.005974"
                     />
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-2">
-                      <button
-                        type="button"
-                        onClick={() => handlePasteCoordinates("longitude")}
-                        title="Paste from clipboard (Lon or Lat/Lon)"
-                        className="inline-flex items-center p-2 text-gray-400 hover:text-gray-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
-                      >
-                        <Clipboard className="h-5 w-5" aria-hidden="true" />
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handlePasteCoordinates("longitude")}
+                      title="Paste from clipboard"
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    >
+                      <Clipboard className="h-5 w-5" />
+                    </button>
                   </div>
                   {form.formState.errors.longitude && (
                     <p className="mt-1 text-sm text-red-600">
@@ -527,30 +565,35 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
                   )}
                 </div>
               </div>
-              {/* Map Icons */}
-              <div className="mb-1 flex gap-2 sm:mb-0 sm:self-end">
-                <button
+
+              {/* Map Action Buttons */}
+              <div className="flex gap-2 sm:self-end">
+                <Button
                   type="button"
+                  variant="outline"
+                  size="icon"
                   onClick={() => openMap("osm")}
                   title="Open in OpenStreetMap"
-                  className="inline-flex h-12 w-12 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={!hasValidLatitude || !hasValidLongitude}
+                  className="h-12 w-12"
                 >
-                  <MapIcon className="h-5 w-5" aria-hidden="true" />
-                </button>
-                <button
+                  <MapIcon className="h-5 w-5" />
+                </Button>
+                <Button
                   type="button"
+                  variant="outline"
+                  size="icon"
                   onClick={() => openMap("google")}
                   title="Open in Google Maps"
-                  className="inline-flex h-12 w-12 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={!hasValidLatitude || !hasValidLongitude}
+                  className="h-12 w-12"
                 >
-                  <MapPin className="h-5 w-5" aria-hidden="true" />
-                </button>
+                  <MapPin className="h-5 w-5" />
+                </Button>
               </div>
             </div>
 
-            {/* Map */}
+            {/* Map Preview */}
             <div>
               <Label className="mb-1.5 block text-sm font-medium text-gray-700">
                 Map Preview
@@ -558,14 +601,14 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
               <DynamicAttractionMap
                 latitude={mapLatitude}
                 longitude={mapLongitude}
-                currentCity={attraction.city}
+                currentCity={currentCity}
                 onCoordinatesChange={handleMapCoordinatesChange}
                 className="h-[400px] w-full"
               />
               <p className="mt-1.5 text-xs text-gray-500">
                 {hasValidLatitude && hasValidLongitude
-                  ? "Map shows current coordinates. Update latitude/longitude or click on the map to move the marker."
-                  : "Enter coordinates to display location on map or click on the map to set them."}
+                  ? "Click on the map to update the marker position, or enter coordinates manually."
+                  : "Enter coordinates or click on the map to set the location."}
               </p>
             </div>
           </div>
@@ -590,12 +633,21 @@ export function AttractionEditForm({ attraction }: AttractionEditFormProps) {
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                {isEditMode ? "Saving..." : "Creating..."}
               </>
             ) : (
               <>
-                <Save className="mr-2 h-4 w-4" />
-                Save Changes
+                {isEditMode ? (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Changes
+                  </>
+                ) : (
+                  <>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Attraction
+                  </>
+                )}
               </>
             )}
           </Button>

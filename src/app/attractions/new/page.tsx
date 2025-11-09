@@ -1,44 +1,13 @@
 import { ArrowLeft, MapPin } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-
 import { AttractionForm } from "~/app/_components/forms/attraction-form";
-import { api } from "~/trpc/server";
-
-type EditAttractionPageProps = {
-  params: Promise<{
-    id: string;
-  }>;
-};
 
 export const metadata = {
-  title: "Edit Attraction Details",
-  description: "Update information about the attraction",
+  title: "New Attraction",
+  description: "Add a new place to visit",
 };
 
-export default async function EditAttractionPage({
-  params,
-}: EditAttractionPageProps) {
-  const { id } = await params;
-  const attractionId = parseInt(id, 10);
-
-  if (isNaN(attractionId)) {
-    notFound();
-  }
-
-  let attraction;
-  let error = null;
-
-  try {
-    attraction = await api.attraction.getAttractionById({ id: attractionId });
-    if (!attraction) {
-      notFound();
-    }
-  } catch (err) {
-    error = err instanceof Error ? err.message : "Failed to load attraction";
-    console.error("Error fetching attraction:", err);
-  }
-
+export default async function CreateAttractionPage() {
   return (
     <div className="min-h-screen bg-linear-to-br from-sky-50 via-white to-orange-50">
       {/* Header */}
@@ -57,10 +26,10 @@ export default async function EditAttractionPage({
               </div>
               <div>
                 <h1 className="text-foreground text-2xl font-bold">
-                  Edit Attraction
+                  New Attraction
                 </h1>
                 <p className="text-muted-foreground text-sm">
-                  Update attraction details
+                  Add a new place to visit
                 </p>
               </div>
             </div>
@@ -70,18 +39,7 @@ export default async function EditAttractionPage({
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        {error ? (
-          <div className="mx-auto max-w-4xl">
-            <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
-              <h2 className="mb-2 text-xl font-semibold text-red-900">
-                Error Loading Attraction
-              </h2>
-              <p className="text-red-700">{error}</p>
-            </div>
-          </div>
-        ) : attraction ? (
-          <AttractionForm attraction={attraction} mode="edit" />
-        ) : null}
+        <AttractionForm mode="create" />
       </main>
     </div>
   );

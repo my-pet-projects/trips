@@ -237,4 +237,36 @@ export const attractionRouter = createTRPCRouter({
 
       return result[0];
     }),
+
+  create: publicProcedure
+    .input(
+      z.object({
+        name: z.string().min(1, "Name is required").max(256),
+        nameLocal: z.string().max(256).optional(),
+        description: z.string().optional(),
+        address: z.string().max(256).optional(),
+        latitude: z.coerce.number().min(-90).max(90).optional().nullable(),
+        longitude: z.coerce.number().min(-180).max(180).optional().nullable(),
+        sourceUrl: z.string().max(256).optional().nullable(),
+        cityId: z.number().min(1, "City is required"),
+        countryCode: z.string().length(2, "Country is required"),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { ...createData } = input;
+
+      const result = await ctx.db
+        .insert(schema.attractions)
+        .values(createData)
+        .returning();
+
+      if (!result[0]) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create attraction",
+        });
+      }
+
+      return result[0];
+    }),
 });
