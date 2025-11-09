@@ -20,7 +20,7 @@ type City = RouterOutputs["geo"]["getCitiesByCountry"][number];
 interface AttractionMapProps {
   latitude: number;
   longitude: number;
-  currentCity: City;
+  currentCity?: City;
   onCoordinatesChange: (lat: number, lng: number) => void;
   className?: string;
 }
@@ -173,15 +173,17 @@ function MapController({
         icon={ATTRACTION_MARKER_ICON}
       />
 
-      <Marker
-        draggable={false}
-        position={[currentCity.latitude, currentCity.longitude]}
-        icon={CUSTOM_MARKER_ICON}
-      >
-        <Tooltip>
-          <span>Current City: {currentCity.name}</span>
-        </Tooltip>
-      </Marker>
+      {currentCity && (
+        <Marker
+          draggable={false}
+          position={[currentCity.latitude, currentCity.longitude]}
+          icon={CUSTOM_MARKER_ICON}
+        >
+          <Tooltip>
+            <span>Current City: {currentCity.name}</span>
+          </Tooltip>
+        </Marker>
+      )}
 
       {nearestCities?.map((city) => (
         <Marker
@@ -214,13 +216,14 @@ export function AttractionMap({
 }: AttractionMapProps) {
   const initialCenter: [number, number] = [latitude, longitude];
 
+  // Fetch nearest cities based on the current city or provided coordinates
   const {
     data: nearestCities,
     error,
     isLoading,
   } = api.geo.getNearestCities.useQuery({
-    latitude: currentCity.latitude,
-    longitude: currentCity.longitude,
+    latitude: currentCity ? currentCity.latitude : latitude,
+    longitude: currentCity ? currentCity.longitude : longitude,
     searchRadiusDegrees: SEARCH_RADIUS_DEGREES,
   });
 
