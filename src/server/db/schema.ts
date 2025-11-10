@@ -6,6 +6,7 @@ import {
   sqliteTable,
   sqliteTableCreator,
   text,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
 /**
@@ -48,7 +49,10 @@ export const tripDestinations = sqliteTable(
   },
   (table) => [
     index("trip_destinations_trip_idx").on(table.tripId),
-    index("trip_destinations_unique_idx").on(table.tripId, table.countryCode),
+    uniqueIndex("trip_destinations_unique_idx").on(
+      table.tripId,
+      table.countryCode,
+    ),
   ],
 );
 
