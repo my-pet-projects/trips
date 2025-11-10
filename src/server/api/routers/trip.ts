@@ -32,10 +32,25 @@ export const tripRouter = createTRPCRouter({
 
     const enrichedTrips = trips.map((trip) => ({
       ...trip,
-      destinations: trip.destinations.map((dest) => ({
-        ...dest,
-        country: countryMap.get(dest.countryCode) ?? null,
-      })),
+      destinations: trip.destinations
+        .map((dest) => {
+          const country = countryMap.get(dest.countryCode);
+          if (!country) {
+            console.warn(
+              `Destination ${dest.id} references non-existent country ${dest.countryCode}`,
+            );
+            return null;
+          }
+
+          return {
+            ...dest,
+            country: country,
+          };
+        })
+        .filter(
+          (destination): destination is NonNullable<typeof destination> =>
+            destination !== null,
+        ),
     }));
 
     return enrichedTrips;

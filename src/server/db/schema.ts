@@ -37,10 +37,6 @@ export const trips = sqliteTable("trips", {
   endDate: integer("end_date", { mode: "timestamp" }).notNull(),
 });
 
-export const tripsRelations = relations(trips, ({ many }) => ({
-  destinations: many(tripDestinations),
-}));
-
 export const tripDestinations = sqliteTable("trip_destinations", {
   id: integer("id").primaryKey(),
   tripId: integer("trip_id")
@@ -48,6 +44,10 @@ export const tripDestinations = sqliteTable("trip_destinations", {
     .references(() => trips.id, { onDelete: "cascade" }),
   countryCode: text("country_code", { length: 2 }).notNull(), // References countries.cca2 in the geo database (cross-database FK not supported)
 });
+
+export const tripsRelations = relations(trips, ({ many }) => ({
+  destinations: many(tripDestinations),
+}));
 
 export const tripDestinationsRelations = relations(
   tripDestinations,
