@@ -17,14 +17,17 @@ export const tripRouter = createTRPCRouter({
 
     const countryCodes = [
       ...new Set(
-        trips.map((trip) => trip.destinations.map((d) => d.countryCode)).flat(),
+        trips.flatMap((trip) => trip.destinations.map((d) => d.countryCode)),
       ),
     ];
 
-    const countries = await ctx.geoDb
-      .select()
-      .from(geoSchema.countries)
-      .where(inArray(geoSchema.countries.cca2, countryCodes));
+    const countries =
+      countryCodes.length > 0
+        ? await ctx.geoDb
+            .select()
+            .from(geoSchema.countries)
+            .where(inArray(geoSchema.countries.cca2, countryCodes))
+        : [];
 
     const countryMap = new Map(
       countries.map((country) => [country.cca2, country]),

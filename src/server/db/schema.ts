@@ -31,19 +31,26 @@ export const posts = createTable(
 );
 
 export const trips = sqliteTable("trips", {
-  id: integer("id").primaryKey(),
+  id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name", { length: 256 }).notNull(),
   startDate: integer("start_date", { mode: "timestamp" }).notNull(),
   endDate: integer("end_date", { mode: "timestamp" }).notNull(),
 });
 
-export const tripDestinations = sqliteTable("trip_destinations", {
-  id: integer("id").primaryKey(),
-  tripId: integer("trip_id")
-    .notNull()
-    .references(() => trips.id, { onDelete: "cascade" }),
-  countryCode: text("country_code", { length: 2 }).notNull(), // References countries.cca2 in the geo database (cross-database FK not supported)
-});
+export const tripDestinations = sqliteTable(
+  "trip_destinations",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    tripId: integer("trip_id")
+      .notNull()
+      .references(() => trips.id, { onDelete: "cascade" }),
+    countryCode: text("country_code", { length: 2 }).notNull(), // References countries.cca2 in the geo database (cross-database FK not supported)
+  },
+  (table) => [
+    index("trip_destinations_trip_idx").on(table.tripId),
+    index("trip_destinations_unique_idx").on(table.tripId, table.countryCode),
+  ],
+);
 
 export const tripsRelations = relations(trips, ({ many }) => ({
   destinations: many(tripDestinations),

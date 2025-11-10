@@ -2,6 +2,7 @@
 
 import { TRPCClientError } from "@trpc/client";
 import {
+  AlertCircle,
   Calendar,
   Loader2,
   MapPin,
@@ -35,6 +36,11 @@ import { api, type RouterOutputs } from "~/trpc/react";
 
 type Trip = RouterOutputs["trip"]["listTrips"][number];
 
+interface TripWithParsedDates extends Trip {
+  parsedStartDate: Date;
+  parsedEndDate: Date;
+}
+
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof TRPCClientError) {
     return error.message;
@@ -65,11 +71,13 @@ const getTripStatus = (
   label: string;
   color: string;
 } => {
-  const now = new Date();
+  const now = Date.now();
+  const start = startDate.getTime();
+  const end = endDate.getTime();
 
-  if (now < startDate) {
+  if (now < start) {
     return { label: "Upcoming", color: "bg-blue-100 text-blue-700" };
-  } else if (now > endDate) {
+  } else if (now > end) {
     return { label: "Completed", color: "bg-gray-100 text-gray-700" };
   } else {
     return { label: "In Progress", color: "bg-green-100 text-green-700" };
@@ -80,14 +88,10 @@ function TripCard({
   trip,
   onDelete,
 }: {
-  trip: Trip;
+  trip: TripWithParsedDates;
   onDelete: (id: number) => void;
 }) {
-  const { id, name, startDate, endDate, destinations } = trip;
-
-  const parsedStartDate = new Date(startDate);
-  const parsedEndDate = new Date(endDate);
-
+  const { id, name, parsedStartDate, parsedEndDate, destinations } = trip;
   const status = getTripStatus(parsedStartDate, parsedEndDate);
 
   return (
@@ -156,8 +160,8 @@ function TripCard({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100"
-              onClick={(e) => e.preventDefault()}
+              className="h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+              onPointerDown={(e) => e.stopPropagation()}
             >
               <MoreVertical className="h-4 w-4" />
             </Button>
@@ -172,6 +176,7 @@ function TripCard({
             <DropdownMenuItem
               onClick={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 onDelete(id);
               }}
               className="text-red-600 focus:text-red-700"
@@ -221,12 +226,43 @@ function LoadingState() {
   );
 }
 
+function ErrorState({
+  error,
+  onRetry,
+}: {
+  error: unknown;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="flex min-h-[400px] items-center justify-center rounded-lg border-2 border-red-200 bg-red-50">
+      <div className="text-center">
+        <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
+        <h3 className="mt-4 text-lg font-semibold text-gray-900">
+          Failed to load trips
+        </h3>
+        <p className="mt-2 text-sm text-gray-600">{getErrorMessage(error)}</p>
+        <Button
+          onClick={onRetry}
+          className="mt-6 bg-orange-500 hover:bg-orange-600"
+        >
+          Try Again
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function TripsList() {
   const utils = api.useUtils();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [tripToDelete, setTripToDelete] = useState<number | null>(null);
 
-  const { data: trips, isLoading } = api.trip.listTrips.useQuery();
+  const {
+    data: trips,
+    isLoading,
+    error,
+    refetch,
+  } = api.trip.listTrips.useQuery();
 
   const deleteMutation = api.trip.deleteTrip.useMutation({
     onSuccess: () => {
@@ -255,15 +291,25 @@ export function TripsList() {
     }
   };
 
-  const { upcomingTrips, activeTrips, pastTrips } = useMemo(() => {
-    const now = new Date();
-    const upcoming: Trip[] = [];
-    const active: Trip[] = [];
-    const past: Trip[] = [];
+  const tripsWithParsedDates = useMemo(() => {
+    return (
+      trips?.map((trip) => ({
+        ...trip,
+        parsedStartDate: new Date(trip.startDate),
+        parsedEndDate: new Date(trip.endDate),
+      })) ?? []
+    );
+  }, [trips]);
 
-    trips?.forEach((trip) => {
-      const start = new Date(trip.startDate);
-      const end = new Date(trip.endDate);
+  const { upcomingTrips, activeTrips, pastTrips } = useMemo(() => {
+    const now = Date.now();
+    const upcoming: TripWithParsedDates[] = [];
+    const active: TripWithParsedDates[] = [];
+    const past: TripWithParsedDates[] = [];
+
+    tripsWithParsedDates.forEach((trip) => {
+      const start = trip.parsedStartDate.getTime();
+      const end = trip.parsedEndDate.getTime();
 
       if (now < start) {
         upcoming.push(trip);
@@ -275,7 +321,7 @@ export function TripsList() {
     });
 
     return { upcomingTrips: upcoming, activeTrips: active, pastTrips: past };
-  }, [trips]);
+  }, [tripsWithParsedDates]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -289,7 +335,9 @@ export function TripsList() {
       {/* Content */}
       {isLoading ? (
         <LoadingState />
-      ) : !trips || trips.length === 0 ? (
+      ) : error ? (
+        <ErrorState error={error} onRetry={() => void refetch()} />
+      ) : !tripsWithParsedDates || tripsWithParsedDates.length === 0 ? (
         <EmptyState />
       ) : (
         <div className="space-y-8">
@@ -356,7 +404,7 @@ export function TripsList() {
             <AlertDialogTitle>Delete Trip</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete this trip? This action cannot be
-              undone.
+              undone and will remove all associated destinations.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
