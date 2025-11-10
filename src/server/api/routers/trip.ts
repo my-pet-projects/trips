@@ -1,9 +1,62 @@
+import { TRPCError } from "@trpc/server";
+import { eq, inArray } from "drizzle-orm";
+import z from "zod";
+
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import * as geoSchema from "~/server/db/geo-schema";
+import * as schema from "~/server/db/schema";
 
 export const tripRouter = createTRPCRouter({
-  getTrips: publicProcedure.query(async ({ ctx }) => {
-    const trips = await ctx.db.query.trips.findMany();
+  listTrips: publicProcedure.query(async ({ ctx }) => {
+    const trips = await ctx.db.query.trips.findMany({
+      orderBy: (trips, { desc }) => [desc(trips.startDate)],
+      with: {
+        destinations: true,
+      },
+    });
 
-    return trips ?? null;
+    const countryCodes = [
+      ...new Set(
+        trips.map((trip) => trip.destinations.map((d) => d.countryCode)).flat(),
+      ),
+    ];
+
+    const countries = await ctx.geoDb
+      .select()
+      .from(geoSchema.countries)
+      .where(inArray(geoSchema.countries.cca2, countryCodes));
+
+    const countryMap = new Map(
+      countries.map((country) => [country.cca2, country]),
+    );
+
+    const enrichedTrips = trips.map((trip) => ({
+      ...trip,
+      destinations: trip.destinations.map((dest) => ({
+        ...dest,
+        country: countryMap.get(dest.countryCode) ?? null,
+      })),
+    }));
+
+    return enrichedTrips;
   }),
+
+  deleteTrip: publicProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db.query.trips.findFirst({
+        where: eq(schema.trips.id, input.id),
+      });
+
+      if (!existing) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Trip not found",
+        });
+      }
+
+      await ctx.db.delete(schema.trips).where(eq(schema.trips.id, input.id));
+
+      return { success: true };
+    }),
 });

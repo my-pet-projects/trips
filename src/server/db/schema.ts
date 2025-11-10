@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   index,
   integer,
@@ -32,7 +32,32 @@ export const posts = createTable(
 
 export const trips = sqliteTable("trips", {
   id: integer("id").primaryKey(),
+  name: text("name", { length: 256 }).notNull(),
+  startDate: integer("start_date", { mode: "timestamp" }).notNull(),
+  endDate: integer("end_date", { mode: "timestamp" }).notNull(),
 });
+
+export const tripsRelations = relations(trips, ({ many }) => ({
+  destinations: many(tripDestinations),
+}));
+
+export const tripDestinations = sqliteTable("trip_destinations", {
+  id: integer("id").primaryKey(),
+  tripId: integer("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  countryCode: text("country_code", { length: 2 }).notNull(), // References countries.cca2 in the geo database (cross-database FK not supported)
+});
+
+export const tripDestinationsRelations = relations(
+  tripDestinations,
+  ({ one }) => ({
+    trip: one(trips, {
+      fields: [tripDestinations.tripId],
+      references: [trips.id],
+    }),
+  }),
+);
 
 export const attractions = sqliteTable(
   "attractions",
