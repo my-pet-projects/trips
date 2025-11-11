@@ -1,31 +1,22 @@
-import { Building, Calendar, Plus } from "lucide-react";
+import { Building, Calendar, Loader2, Plus } from "lucide-react";
 import Link from "next/link";
 
-import { TripsList } from "./_components/trip-list";
-
-export const metadata = {
-  title: "Trip List",
-  description: "Manage your travel plans",
-};
-
-export default async function TripsPage() {
+export default function Loading() {
   return (
     <div className="min-h-screen bg-linear-to-br from-sky-50 via-white to-orange-50">
-      {/* Header */}
+      {/* Header - matches list page with invisible spacer */}
       <header className="sticky top-0 z-10 border-b bg-white/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* Invisible spacer for consistent alignment with edit/detail pages */}
+              {/* Invisible spacer to maintain alignment */}
               <div className="h-10 w-10" />
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100">
                 <Calendar className="h-6 w-6 text-sky-600" />
               </div>
               <div>
                 <h1 className="text-foreground text-2xl font-bold">Trips</h1>
-                <p className="text-muted-foreground text-sm">
-                  Manage your travel plans
-                </p>
+                <p className="text-muted-foreground text-sm">Loading...</p>
               </div>
             </div>
             <nav className="flex items-center gap-4">
@@ -50,7 +41,14 @@ export default async function TripsPage() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
-        <TripsList />
+        <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <Loader2 className="mx-auto h-12 w-12 animate-spin text-sky-600" />
+              <p className="mt-4 text-gray-600">Loading trips...</p>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   );
