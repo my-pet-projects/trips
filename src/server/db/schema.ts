@@ -1,5 +1,6 @@
 import { relations, sql } from "drizzle-orm";
 import {
+  check,
   index,
   integer,
   real,
@@ -49,6 +50,10 @@ export const trips = sqliteTable(
     index("trips_start_date_idx").on(table.startDate),
     index("trips_end_date_idx").on(table.endDate),
     index("trips_name_idx").on(table.name),
+    check(
+      "trips_date_range_check",
+      sql`${table.endDate} >= ${table.startDate}`,
+    ),
   ],
 );
 
