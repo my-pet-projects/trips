@@ -1,11 +1,13 @@
-import { sql } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
+  check,
   index,
   integer,
   real,
   sqliteTable,
   sqliteTableCreator,
   text,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
 /**
@@ -30,9 +32,62 @@ export const posts = createTable(
   (t) => [index("name_idx").on(t.name)],
 );
 
-export const trips = sqliteTable("trips", {
-  id: integer("id").primaryKey(),
-});
+export const trips = sqliteTable(
+  "trips",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name", { length: 256 }).notNull(),
+    startDate: integer("start_date", { mode: "timestamp" }).notNull(),
+    endDate: integer("end_date", { mode: "timestamp" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .default(sql`(unixepoch())`)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).$onUpdate(
+      () => new Date(),
+    ),
+  },
+  (table) => [
+    index("trips_start_date_idx").on(table.startDate),
+    index("trips_end_date_idx").on(table.endDate),
+    index("trips_name_idx").on(table.name),
+    check(
+      "trips_date_range_check",
+      sql`${table.endDate} >= ${table.startDate}`,
+    ),
+  ],
+);
+
+export const tripDestinations = sqliteTable(
+  "trip_destinations",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    tripId: integer("trip_id")
+      .notNull()
+      .references(() => trips.id, { onDelete: "cascade" }),
+    countryCode: text("country_code", { length: 2 }).notNull(), // References countries.cca2 in the geo database (cross-database FK not supported)
+  },
+  (table) => [
+    index("trip_destinations_trip_idx").on(table.tripId),
+    uniqueIndex("trip_destinations_unique_idx").on(
+      table.tripId,
+      table.countryCode,
+    ),
+  ],
+);
+
+export const tripsRelations = relations(trips, ({ many }) => ({
+  destinations: many(tripDestinations),
+}));
+
+export const tripDestinationsRelations = relations(
+  tripDestinations,
+  ({ one }) => ({
+    trip: one(trips, {
+      fields: [tripDestinations.tripId],
+      references: [trips.id],
+    }),
+  }),
+);
 
 export const attractions = sqliteTable(
   "attractions",
