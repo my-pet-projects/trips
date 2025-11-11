@@ -9,11 +9,11 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { CountryCombobox } from "~/app/_components/geo/country-combobox";
 import { Button } from "~/app/_components/ui/button";
 import { Input } from "~/app/_components/ui/input";
 import { Label } from "~/app/_components/ui/label";
 import { api, type RouterOutputs } from "~/trpc/react";
-import { CountryCombobox } from "../geo/country-combobox";
 
 type Country = RouterOutputs["geo"]["getCountries"][number];
 type Trip = RouterOutputs["trip"]["getTripById"];

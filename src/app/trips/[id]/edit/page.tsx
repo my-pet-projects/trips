@@ -2,7 +2,7 @@ import { ArrowLeft, Calendar } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { TripForm } from "~/app/_components/forms/trip-form";
+import { TripForm } from "~/app/trips/_components/trip-form";
 import { api } from "~/trpc/server";
 
 export const metadata = {

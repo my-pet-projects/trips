@@ -1,7 +1,7 @@
 import { Building, Calendar, Plus } from "lucide-react";
 import Link from "next/link";
 
-import { TripsList } from "./_components/trip-list";
+import { TripsList } from "~/app/trips/_components/trip-list";
 
 export const metadata = {
   title: "Trip List",
@@ -16,7 +16,6 @@ export default async function TripsPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* Invisible spacer for consistent alignment with edit/detail pages */}
               <div className="h-10 w-10" />
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100">
                 <Calendar className="h-6 w-6 text-sky-600" />

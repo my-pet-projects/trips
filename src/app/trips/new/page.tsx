@@ -1,7 +1,7 @@
 import { ArrowLeft, Calendar } from "lucide-react";
 import Link from "next/link";
 
-import { TripForm } from "~/app/_components/forms/trip-form";
+import { TripForm } from "~/app/trips/_components/trip-form";
 
 export const metadata = {
   title: "Create New Trip",

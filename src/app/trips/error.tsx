@@ -16,12 +16,11 @@ export default function Error({ error, reset }: ErrorProps) {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-sky-50 via-white to-orange-50">
-      {/* Header - matches list page with invisible spacer */}
+      {/* Header */}
       <header className="sticky top-0 z-10 border-b bg-white/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* Invisible spacer to maintain alignment */}
               <div className="h-10 w-10" />
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100">
                 <Calendar className="h-6 w-6 text-sky-600" />
