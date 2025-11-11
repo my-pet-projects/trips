@@ -31,12 +31,26 @@ export const posts = createTable(
   (t) => [index("name_idx").on(t.name)],
 );
 
-export const trips = sqliteTable("trips", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  name: text("name", { length: 256 }).notNull(),
-  startDate: integer("start_date", { mode: "timestamp" }).notNull(),
-  endDate: integer("end_date", { mode: "timestamp" }).notNull(),
-});
+export const trips = sqliteTable(
+  "trips",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name", { length: 256 }).notNull(),
+    startDate: integer("start_date", { mode: "timestamp" }).notNull(),
+    endDate: integer("end_date", { mode: "timestamp" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .default(sql`(unixepoch())`)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).$onUpdate(
+      () => new Date(),
+    ),
+  },
+  (table) => [
+    index("trips_start_date_idx").on(table.startDate),
+    index("trips_end_date_idx").on(table.endDate),
+    index("trips_name_idx").on(table.name),
+  ],
+);
 
 export const tripDestinations = sqliteTable(
   "trip_destinations",
