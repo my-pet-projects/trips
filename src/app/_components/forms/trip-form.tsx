@@ -18,10 +18,15 @@ import { CountryCombobox } from "../geo/country-combobox";
 type Country = RouterOutputs["geo"]["getCountries"][number];
 type Trip = RouterOutputs["trip"]["getTripById"];
 
-type TripFormProps = {
-  mode: "create" | "edit";
-  trip?: Trip;
-};
+type TripFormProps =
+  | {
+      mode: "create";
+      trip?: never;
+    }
+  | {
+      mode: "edit";
+      trip: Trip;
+    };
 
 const tripSchema = z
   .object({

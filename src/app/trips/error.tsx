@@ -84,6 +84,7 @@ export default function Error({ error, reset }: ErrorProps) {
 
             <div className="flex flex-col gap-3 sm:flex-row">
               <button
+                type="button"
                 onClick={reset}
                 className="flex h-11 items-center justify-center gap-2 rounded-lg bg-red-600 px-6 font-medium text-white transition-colors hover:bg-red-700"
               >

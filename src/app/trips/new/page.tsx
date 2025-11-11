@@ -8,7 +8,7 @@ export const metadata = {
   description: "Plan a new travel adventure",
 };
 
-export default async function CreateTripPage() {
+export default function CreateTripPage() {
   return (
     <div className="min-h-screen bg-linear-to-br from-sky-50 via-white to-orange-50">
       {/* Header */}
