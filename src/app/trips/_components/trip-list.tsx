@@ -173,6 +173,15 @@ function TripCard({
                 Edit
               </Link>
             </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link
+                href={`/trips/${id}/itinerary`}
+                className="flex items-center"
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Itinerary
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={(e) => {
                 e.preventDefault();

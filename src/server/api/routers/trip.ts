@@ -110,6 +110,29 @@ export const tripRouter = createTRPCRouter({
       return trip;
     }),
 
+  getWithItinerary: publicProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const trip = await ctx.db.query.trips.findFirst({
+        where: eq(schema.trips.id, input.id),
+        with: {
+          destinations: true,
+          itineraryDays: {
+            orderBy: (day, { asc }) => [asc(day.dayNumber)],
+          },
+        },
+      });
+
+      if (!trip) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Trip not found",
+        });
+      }
+
+      return trip;
+    }),
+
   create: publicProcedure
     .input(tripCreateSchema)
     .mutation(async ({ ctx, input }) => {
