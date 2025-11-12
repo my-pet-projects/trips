@@ -1,4 +1,5 @@
-import { and, eq, gt, like, lt, ne } from "drizzle-orm";
+import { and, eq, gt, inArray, like, lt, ne } from "drizzle-orm";
+import type { LibSQLDatabase } from "drizzle-orm/libsql";
 import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
@@ -80,3 +81,41 @@ export const geoRouter = createTRPCRouter({
       return cities;
     }),
 });
+
+export type EnrichedCity = {
+  id: number;
+  name: string;
+  countryCode: string;
+  country: {
+    cca2: string;
+    cca3: string;
+    name: string;
+  };
+};
+
+export async function fetchCitiesWithCountries(
+  geoDb: LibSQLDatabase<typeof geoSchema>,
+  cityIds: number[],
+) {
+  if (cityIds.length === 0) return [];
+
+  const cities = await geoDb
+    .select({
+      id: geoSchema.cities.id,
+      name: geoSchema.cities.name,
+      countryCode: geoSchema.cities.countryCode,
+      country: {
+        cca2: geoSchema.countries.cca2,
+        cca3: geoSchema.countries.cca3,
+        name: geoSchema.countries.name,
+      },
+    })
+    .from(geoSchema.cities)
+    .innerJoin(
+      geoSchema.countries,
+      eq(geoSchema.cities.countryCode, geoSchema.countries.cca2),
+    )
+    .where(inArray(geoSchema.cities.id, cityIds));
+
+  return cities;
+}

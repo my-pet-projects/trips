@@ -89,6 +89,7 @@ export function ItineraryDay({
             </span>
           )}
           <button
+            type="button"
             onClick={handleRemoveClick}
             className="rounded p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
             disabled={isRemoving}
@@ -132,6 +133,7 @@ export function ItineraryDay({
 
               {/* Remove Button */}
               <button
+                type="button"
                 onClick={(e) => handleRemoveAttraction(e, attraction.id)}
                 className="shrink-0 rounded p-1 text-gray-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 focus:opacity-100"
               >

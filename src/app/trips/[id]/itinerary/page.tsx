@@ -1,4 +1,4 @@
-import { ArrowLeft, Calendar, MapPin } from "lucide-react";
+import { ArrowLeft, MapPin, Pencil } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -62,7 +62,7 @@ export default async function ItineraryPage({ params }: ItineraryPageProps) {
               href={`/trips/${tripId}/edit`}
               className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
             >
-              <Calendar className="mr-2 h-4 w-4" />
+              <Pencil className="mr-2 h-4 w-4" />
               Edit Trip
             </Link>
           </div>

@@ -16,7 +16,7 @@ type ItineraryPlannerProps = {
   tripAttractions: Attraction[];
 };
 
-type ItineraryDay = {
+type ItineraryDayData = {
   id: number;
   name: string;
   dayNumber: number;
@@ -46,7 +46,7 @@ export function ItineraryPlanner({
   trip,
   tripAttractions: attractions,
 }: ItineraryPlannerProps) {
-  const [itineraryDays, setItineraryDays] = useState<ItineraryDay[]>(() => {
+  const [itineraryDays, setItineraryDays] = useState<ItineraryDayData[]>(() => {
     if (!trip) return [];
 
     return trip.itineraryDays.map((day) => ({
@@ -116,28 +116,30 @@ export function ItineraryPlanner({
         toast.success("Day removed", {
           description: "Your itinerary has been updated.",
         });
-        setItineraryDays((prev) => {
-          const filtered = prev.filter((d) => d.id !== variables.dayId);
-          const reordered = filtered
-            .map((d, i) => ({ ...d, dayNumber: i + 1 }))
-            .sort((a, b) => a.dayNumber - b.dayNumber);
 
-          if (trip) {
-            const days = reordered.map((day) => ({
-              id: day.id,
-              name: day.name,
-              dayNumber: day.dayNumber,
+        const filtered = itineraryDays.filter((d) => d.id !== variables.dayId);
+        const reordered = filtered.map((d, i) => ({ ...d, dayNumber: i + 1 }));
+
+        setItineraryDays(reordered);
+
+        // Update day numbers if order changed
+        if (
+          reordered.some(
+            (d, i) =>
+              d.id !== itineraryDays[i]?.id ||
+              d.dayNumber !== itineraryDays[i]?.dayNumber,
+          )
+        ) {
+          void updateItineraryDaysMutation.mutateAsync({
+            tripId: trip.id,
+            days: reordered.map((d) => ({
+              id: d.id,
+              name: d.name,
+              dayNumber: d.dayNumber,
               attractions: [],
-            }));
-
-            updateItineraryDaysMutation.mutate({
-              tripId: trip.id,
-              days,
-            });
-          }
-
-          return reordered;
-        });
+            })),
+          });
+        }
 
         // Update selectedDay if the deleted day was selected
         if (selectedDay === variables.dayId) {
@@ -259,10 +261,18 @@ export function ItineraryPlanner({
   }, [trip, itineraryDays, updateItineraryDaysMutation]);
 
   const hasUnsavedChanges = useMemo(() => {
-    // You could implement logic here to track if there are unsaved changes
-    // For now, we'll assume changes are made when attractions are modified
-    return itineraryDays.some((day) => day.attractions.length > 0);
-  }, [itineraryDays]);
+    if (itineraryDays.length !== trip.itineraryDays.length) return true;
+
+    return itineraryDays.some((day, index) => {
+      const original = trip.itineraryDays[index];
+      return (
+        !original ||
+        day.name !== original.name ||
+        day.dayNumber !== original.dayNumber ||
+        day.attractions.length > 0
+      ); // Attractions are not persisted yet
+    });
+  }, [itineraryDays, trip.itineraryDays]);
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -274,6 +284,7 @@ export function ItineraryPlanner({
           </h2>
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={handleAddDay}
               disabled={createItineraryDayMutation.isPending}
               className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
@@ -282,6 +293,7 @@ export function ItineraryPlanner({
               {createItineraryDayMutation.isPending ? "Adding..." : "Add Day"}
             </button>
             <button
+              type="button"
               onClick={handleSave}
               disabled={updateItineraryDaysMutation.isPending}
               className="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
@@ -296,6 +308,7 @@ export function ItineraryPlanner({
           <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center">
             <p className="mb-4 text-gray-600">No days in your itinerary yet.</p>
             <button
+              type="button"
               onClick={handleAddDay}
               className="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-700"
             >
