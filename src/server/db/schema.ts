@@ -119,6 +119,12 @@ export const itineraryDays = sqliteTable(
       .notNull()
       .references(() => trips.id, { onDelete: "cascade" }),
     dayNumber: integer("day_number").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .default(sql`(unixepoch())`)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).$onUpdate(
+      () => new Date(),
+    ),
   },
   (table) => [
     index("itinerary_days_trip_idx").on(table.tripId),
@@ -126,6 +132,7 @@ export const itineraryDays = sqliteTable(
       table.tripId,
       table.dayNumber,
     ),
+    check("itinerary_days_day_number_check", sql`${table.dayNumber} >= 1`),
   ],
 );
 
