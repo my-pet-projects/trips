@@ -77,6 +77,7 @@ export const tripDestinations = sqliteTable(
 
 export const tripsRelations = relations(trips, ({ many }) => ({
   destinations: many(tripDestinations),
+  itineraryDays: many(itineraryDays),
 }));
 
 export const tripDestinationsRelations = relations(
@@ -108,3 +109,36 @@ export const attractions = sqliteTable(
     index("attractions_coords_idx").on(table.latitude, table.longitude),
   ],
 );
+
+export const itineraryDays = sqliteTable(
+  "itinerary_days",
+  {
+    id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+    name: text("name", { length: 256 }).notNull(),
+    tripId: integer("trip_id")
+      .notNull()
+      .references(() => trips.id, { onDelete: "cascade" }),
+    dayNumber: integer("day_number").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .default(sql`(unixepoch())`)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).$onUpdate(
+      () => new Date(),
+    ),
+  },
+  (table) => [
+    index("itinerary_days_trip_idx").on(table.tripId),
+    uniqueIndex("itinerary_days_trip_day_unique_idx").on(
+      table.tripId,
+      table.dayNumber,
+    ),
+    check("itinerary_days_day_number_check", sql`${table.dayNumber} >= 1`),
+  ],
+);
+
+export const itineraryDaysRelations = relations(itineraryDays, ({ one }) => ({
+  trip: one(trips, {
+    fields: [itineraryDays.tripId],
+    references: [trips.id],
+  }),
+}));
