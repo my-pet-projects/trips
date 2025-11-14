@@ -184,15 +184,15 @@ export function ItineraryPlanner({
         return filtered.map((d, i) => ({ ...d, dayNumber: i + 1 }));
       });
 
+      const filtered = prevDays.filter((d) => d.id !== variables.dayId);
+
       // Update selection after state update
       setSelectedDay((prev) =>
-        prev === variables.dayId ? (prevDays[0]?.id ?? null) : prev,
+        prev === variables.dayId ? (filtered[0]?.id ?? null) : prev,
       );
 
       // Check if reordering is needed
-      const filtered = prevDays.filter((d) => d.id !== variables.dayId);
       const needsReorder = filtered.some((d, i) => d.dayNumber !== i + 1);
-
       if (needsReorder && filtered.length > 0) {
         const reordered = filtered.map((d, i) => ({
           ...d,
