@@ -101,6 +101,22 @@ export const itineraryRouter = createTRPCRouter({
         });
       }
 
+      // Verify all provided days belong to this trip
+      const allowedDays = await ctx.db.query.itineraryDays.findMany({
+        where: eq(schema.itineraryDays.tripId, tripId),
+      });
+
+      const allowedDayIds = new Set(allowedDays.map((d) => d.id));
+
+      for (const day of days) {
+        if (!allowedDayIds.has(day.id)) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Day ${day.id} does not belong to trip ${tripId}`,
+          });
+        }
+      }
+
       try {
         await ctx.db.transaction(async (tx) => {
           // Update all day metadata
