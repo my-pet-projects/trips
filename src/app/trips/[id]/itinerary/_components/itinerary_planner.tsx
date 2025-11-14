@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import type { RouterOutputs } from "~/trpc/react";
 import { api } from "~/trpc/react";
 import { ItineraryDay } from "./itinerary-day";
-import { ItineraryMap } from "./itinerary-map";
 
 type Trip = RouterOutputs["trip"]["getWithItinerary"];
 type Attraction =
@@ -368,7 +367,7 @@ export function ItineraryPlanner({
 
       {/* Map */}
       <div className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
-        <ItineraryMap
+        {/* <ItineraryMap
           attractions={attractions}
           selectedDayAttractions={
             itineraryDays.find((d) => d.id === selectedDay)?.attractions ?? []
@@ -378,7 +377,7 @@ export function ItineraryPlanner({
           dayColors={dayColors}
           hoveredAttractionId={hoveredAttraction}
           onAttractionClick={handleAttractionClick}
-        />
+        /> */}
       </div>
     </div>
   );
