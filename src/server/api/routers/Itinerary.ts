@@ -116,9 +116,11 @@ export const itineraryRouter = createTRPCRouter({
 
           // Delete all existing places for these days
           const dayIds = days.map((d) => d.id);
-          await tx
-            .delete(schema.itineraryDayPlaces)
-            .where(inArray(schema.itineraryDayPlaces.itineraryDayId, dayIds));
+          if (dayIds.length > 0) {
+            await tx
+              .delete(schema.itineraryDayPlaces)
+              .where(inArray(schema.itineraryDayPlaces.itineraryDayId, dayIds));
+          }
 
           // Insert all new places
           const allPlaces = days.flatMap((day) =>
