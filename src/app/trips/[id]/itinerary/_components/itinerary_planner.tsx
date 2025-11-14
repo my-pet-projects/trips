@@ -44,24 +44,26 @@ const DAY_COLORS = [
 const generateDayColor = (index: number): string =>
   DAY_COLORS[index % DAY_COLORS.length]!;
 
+const transformTripDays = (trip: Trip): ItineraryDayData[] => {
+  if (!trip) return [];
+  return trip.itineraryDays.map((day) => ({
+    id: day.id,
+    name: day.name,
+    dayNumber: day.dayNumber,
+    attractions: day.itineraryDayPlaces
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map((place) => place.attraction),
+  }));
+};
+
 export function ItineraryPlanner({
   trip,
   tripAttractions: attractions,
 }: ItineraryPlannerProps) {
-  const [itineraryDays, setItineraryDays] = useState<ItineraryDayData[]>(() => {
-    if (!trip) return [];
-
-    return trip.itineraryDays.map((day) => ({
-      id: day.id,
-      name: day.name,
-      dayNumber: day.dayNumber,
-      attractions: day.itineraryDayPlaces
-        .slice()
-        .sort((a, b) => a.order - b.order)
-        .map((place) => place.attraction),
-    }));
-  });
-
+  const [itineraryDays, setItineraryDays] = useState<ItineraryDayData[]>(() =>
+    transformTripDays(trip),
+  );
   const [selectedDay, setSelectedDay] = useState<number | null>(
     itineraryDays[0]?.id ?? null,
   );
@@ -99,22 +101,11 @@ export function ItineraryPlanner({
     });
   }, [itineraryDays]);
 
-  // Update ref when trip changes
+  // Sync with server updates (only when no local changes)
   useEffect(() => {
-    // Only sync on trip changes when clean; preserve baseline during edits
     if (!hasUnsavedChanges) {
       originalItineraryRef.current = trip.itineraryDays;
-      setItineraryDays(
-        trip.itineraryDays.map((day) => ({
-          id: day.id,
-          name: day.name,
-          dayNumber: day.dayNumber,
-          attractions: day.itineraryDayPlaces
-            .slice()
-            .sort((a, b) => a.order - b.order)
-            .map((place) => place.attraction),
-        })),
-      );
+      setItineraryDays(transformTripDays(trip));
     }
   }, [trip.itineraryDays, hasUnsavedChanges]);
 
@@ -130,13 +121,10 @@ export function ItineraryPlanner({
 
   const createDay = api.itinerary.createItineraryDay.useMutation({
     onMutate: async (newDayData) => {
-      // Cancel any in-flight queries
       await utils.trip.getWithItinerary.cancel();
+      const previousState = { days: [...itineraryDays], selected: selectedDay };
 
-      // Snapshot current state
-      const previousDays = [...itineraryDays];
-
-      // For better UI optimistically add the new day instantly with a temp ID to avoid conflicts
+      // Optimistic update with temp ID
       const tempId = -Date.now();
       setItineraryDays((prev) => [
         ...prev,
@@ -149,26 +137,24 @@ export function ItineraryPlanner({
       ]);
       setSelectedDay(tempId);
 
-      return { previousDays, tempId };
+      return { previousState, tempId };
     },
     onSuccess: (newDay, _, context) => {
       // Replace temp ID with real ID from server
       setItineraryDays((prev) =>
         prev.map((day) =>
-          day.id === context.tempId ? { ...day, id: newDay.id } : day,
+          day.id === context?.tempId ? { ...day, id: newDay.id } : day,
         ),
       );
       setSelectedDay(newDay.id);
-      toast.success("Day added successfully", {
-        description: `${newDay.name} has been added to your itinerary.`,
-      });
+      toast.success("Day added successfully");
       void utils.trip.invalidate();
     },
     onError: (err, _, context) => {
       // Rollback optimistic update
-      if (context) {
-        setItineraryDays(context.previousDays);
-        setSelectedDay(context.previousDays[0]?.id ?? null);
+      if (context?.previousState) {
+        setItineraryDays(context.previousState.days);
+        setSelectedDay(context.previousState.selected);
       }
       toast.error("Failed to add day", {
         description: err.message || "Please try again.",
@@ -178,63 +164,63 @@ export function ItineraryPlanner({
 
   const deleteDay = api.itinerary.deleteItineraryDay.useMutation({
     onSuccess: async (_, variables) => {
-      const prevDays = itineraryDays;
       setItineraryDays((prevDays) => {
         const filtered = prevDays.filter((d) => d.id !== variables.dayId);
-        return filtered.map((d, i) => ({ ...d, dayNumber: i + 1 }));
+        const reordered = filtered.map((d, i) => ({ ...d, dayNumber: i + 1 }));
+
+        // Update selected day if needed
+        setSelectedDay((prevSelected) =>
+          prevSelected === variables.dayId
+            ? (reordered[0]?.id ?? null)
+            : prevSelected,
+        );
+
+        // Check if we need to send reordering to backend
+        const needsReorder = filtered.some((d, i) => d.dayNumber !== i + 1);
+
+        if (needsReorder && reordered.length > 0) {
+          updateDays.mutate(
+            {
+              tripId: trip.id,
+              days: reordered.map((d) => ({
+                id: d.id,
+                name: d.name,
+                dayNumber: d.dayNumber,
+                attractions: d.attractions.map((a, idx) => ({
+                  attractionId: a.id,
+                  order: idx + 1,
+                })),
+              })),
+            },
+            {
+              onError: (err) => {
+                toast.error("Failed to reorder remaining days", {
+                  description:
+                    err.message || "The day was deleted but reordering failed.",
+                });
+              },
+            },
+          );
+        }
+
+        return reordered;
       });
 
-      const filtered = prevDays.filter((d) => d.id !== variables.dayId);
-
-      // Update selection after state update
-      setSelectedDay((prev) =>
-        prev === variables.dayId ? (filtered[0]?.id ?? null) : prev,
-      );
-
-      // Check if reordering is needed
-      const needsReorder = filtered.some((d, i) => d.dayNumber !== i + 1);
-      if (needsReorder && filtered.length > 0) {
-        const reordered = filtered.map((d, i) => ({
-          ...d,
-          dayNumber: i + 1,
-        }));
-
-        updateDays.mutate(
-          {
-            tripId: trip.id,
-            days: reordered.map((d) => ({
-              id: d.id,
-              name: d.name,
-              dayNumber: d.dayNumber,
-              attractions: d.attractions.map((a, idx) => ({
-                attractionId: a.id,
-                order: idx + 1,
-              })),
-            })),
-          },
-          {
-            onError: (err) => {
-              toast.error("Failed to reorder remaining days", {
-                description:
-                  err.message || "The day was deleted but reordering failed.",
-              });
-            },
-          },
-        );
-      }
       toast.success("Day removed");
       void utils.trip.invalidate();
     },
-    onSettled: () => setDayBeingRemoved(null),
     onError: (err) => {
       toast.error("Failed to remove day", {
         description: err.message || "Please try again.",
       });
     },
+    onSettled: () => setDayBeingRemoved(null),
   });
 
   const updateDays = api.itinerary.updateItineraryDays.useMutation({
     onSuccess: () => {
+      // Update baseline after successful save
+      originalItineraryRef.current = trip.itineraryDays;
       toast.success("Itinerary saved");
       void utils.trip.invalidate();
     },
@@ -244,16 +230,6 @@ export function ItineraryPlanner({
       });
     },
   });
-
-  // Mutation cleanup on unmount
-  useEffect(() => {
-    return () => {
-      createDay.reset();
-      deleteDay.reset();
-      updateDays.reset();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Handlers
   const handleAddDay = useCallback(() => {
