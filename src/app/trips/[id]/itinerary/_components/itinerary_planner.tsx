@@ -73,32 +73,6 @@ export function ItineraryPlanner({
   const originalItineraryRef = useRef(trip.itineraryDays);
   const utils = api.useUtils();
 
-  // Update ref when trip changes
-  useEffect(() => {
-    originalItineraryRef.current = trip.itineraryDays;
-    setItineraryDays(
-      trip.itineraryDays.map((day) => ({
-        id: day.id,
-        name: day.name,
-        dayNumber: day.dayNumber,
-        attractions: day.itineraryDayPlaces
-          .slice()
-          .sort((a, b) => a.order - b.order)
-          .map((place) => place.attraction),
-      })),
-    );
-  }, [trip.itineraryDays]);
-
-  const attractionToDayMap = useMemo(() => {
-    const map = new Map<number, ItineraryDayData>();
-    itineraryDays.forEach((day) => {
-      day.attractions.forEach((attraction) => {
-        map.set(attraction.id, day);
-      });
-    });
-    return map;
-  }, [itineraryDays]);
-
   // Check for unsaved changes
   const hasUnsavedChanges = useMemo(() => {
     if (itineraryDays.length !== originalItineraryRef.current.length)
@@ -123,6 +97,35 @@ export function ItineraryPlanner({
         originalIds.some((id, idx) => id !== currentIds[idx])
       );
     });
+  }, [itineraryDays]);
+
+  // Update ref when trip changes
+  useEffect(() => {
+    originalItineraryRef.current = trip.itineraryDays;
+    // Only sync if no unsaved changes to avoid data loss
+    if (!hasUnsavedChanges) {
+      setItineraryDays(
+        trip.itineraryDays.map((day) => ({
+          id: day.id,
+          name: day.name,
+          dayNumber: day.dayNumber,
+          attractions: day.itineraryDayPlaces
+            .slice()
+            .sort((a, b) => a.order - b.order)
+            .map((place) => place.attraction),
+        })),
+      );
+    }
+  }, [trip.itineraryDays, hasUnsavedChanges]);
+
+  const attractionToDayMap = useMemo(() => {
+    const map = new Map<number, ItineraryDayData>();
+    itineraryDays.forEach((day) => {
+      day.attractions.forEach((attraction) => {
+        map.set(attraction.id, day);
+      });
+    });
+    return map;
   }, [itineraryDays]);
 
   const createDay = api.itinerary.createItineraryDay.useMutation({
@@ -196,18 +199,28 @@ export function ItineraryPlanner({
           dayNumber: i + 1,
         }));
 
-        updateDays.mutate({
-          tripId: trip.id,
-          days: reordered.map((d) => ({
-            id: d.id,
-            name: d.name,
-            dayNumber: d.dayNumber,
-            attractions: d.attractions.map((a, idx) => ({
-              attractionId: a.id,
-              order: idx + 1,
+        updateDays.mutate(
+          {
+            tripId: trip.id,
+            days: reordered.map((d) => ({
+              id: d.id,
+              name: d.name,
+              dayNumber: d.dayNumber,
+              attractions: d.attractions.map((a, idx) => ({
+                attractionId: a.id,
+                order: idx + 1,
+              })),
             })),
-          })),
-        });
+          },
+          {
+            onError: (err) => {
+              toast.error("Failed to reorder remaining days", {
+                description:
+                  err.message || "The day was deleted but reordering failed.",
+              });
+            },
+          },
+        );
       }
       toast.success("Day removed");
       void utils.trip.invalidate();
@@ -299,7 +312,7 @@ export function ItineraryPlanner({
   );
 
   const handleSave = useCallback(async () => {
-    await updateDays.mutateAsync({
+    updateDays.mutate({
       tripId: trip.id,
       days: itineraryDays.map((day) => ({
         id: day.id,
