@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import z from "zod";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
@@ -101,18 +101,68 @@ export const itineraryRouter = createTRPCRouter({
         });
       }
 
-      await ctx.db.transaction(async (tx) => {
-        for (const day of days) {
-          await tx
-            .update(schema.itineraryDays)
-            .set({
-              name: day.name,
-              dayNumber: day.dayNumber,
-            })
-            .where(eq(schema.itineraryDays.id, day.id));
-        }
+      // Verify all provided days belong to this trip
+      const allowedDays = await ctx.db.query.itineraryDays.findMany({
+        where: eq(schema.itineraryDays.tripId, tripId),
       });
 
-      return { success: true, updatedCount: days.length };
+      const allowedDayIds = new Set(allowedDays.map((d) => d.id));
+
+      for (const day of days) {
+        if (!allowedDayIds.has(day.id)) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Day ${day.id} does not belong to trip ${tripId}`,
+          });
+        }
+      }
+
+      try {
+        await ctx.db.transaction(async (tx) => {
+          // Update all day metadata
+          for (const day of days) {
+            await tx
+              .update(schema.itineraryDays)
+              .set({
+                name: day.name,
+                dayNumber: day.dayNumber,
+              })
+              .where(eq(schema.itineraryDays.id, day.id));
+          }
+
+          // Delete all existing places for these days
+          const dayIds = days.map((d) => d.id);
+          if (dayIds.length > 0) {
+            await tx
+              .delete(schema.itineraryDayPlaces)
+              .where(inArray(schema.itineraryDayPlaces.itineraryDayId, dayIds));
+          }
+
+          // Insert all new places
+          const allPlaces = days.flatMap((day) =>
+            day.attractions.map((attr) => ({
+              itineraryDayId: day.id,
+              attractionId: attr.attractionId,
+              order: attr.order,
+            })),
+          );
+
+          if (allPlaces.length > 0) {
+            await tx.insert(schema.itineraryDayPlaces).values(allPlaces);
+          }
+        });
+
+        return {
+          success: true,
+          updatedCount: days.length,
+        };
+      } catch (error) {
+        console.error("Error updating itinerary days:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update itinerary days",
+          cause: error,
+        });
+      }
     }),
 });

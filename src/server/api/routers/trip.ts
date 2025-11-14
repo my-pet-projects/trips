@@ -119,6 +119,14 @@ export const tripRouter = createTRPCRouter({
           destinations: true,
           itineraryDays: {
             orderBy: (day, { asc }) => [asc(day.dayNumber)],
+            with: {
+              itineraryDayPlaces: {
+                orderBy: (place, { asc }) => [asc(place.order)],
+                with: {
+                  attraction: true,
+                },
+              },
+            },
           },
         },
       });

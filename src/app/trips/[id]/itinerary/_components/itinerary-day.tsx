@@ -3,14 +3,15 @@
 import { GripVertical, MapPin, Trash2 } from "lucide-react";
 import type { RouterOutputs } from "~/trpc/react";
 
-type Attraction =
-  RouterOutputs["attraction"]["getAttractionsByCountries"][number];
+type Trip = RouterOutputs["trip"]["getWithItinerary"];
+type BasicAttraction =
+  Trip["itineraryDays"][number]["itineraryDayPlaces"][number]["attraction"];
 
 type ItineraryDay = {
   id: number;
   name: string;
   dayNumber: number;
-  attractions: Attraction[];
+  attractions: BasicAttraction[];
 };
 
 type ItineraryDayProps = {
@@ -125,9 +126,6 @@ export function ItineraryDay({
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-gray-900">
                   {attraction.name}
-                </p>
-                <p className="truncate text-xs text-gray-500">
-                  {attraction.city.name}
                 </p>
               </div>
 
