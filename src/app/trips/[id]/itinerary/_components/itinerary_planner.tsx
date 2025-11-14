@@ -101,9 +101,9 @@ export function ItineraryPlanner({
 
   // Update ref when trip changes
   useEffect(() => {
-    originalItineraryRef.current = trip.itineraryDays;
-    // Only sync if no unsaved changes to avoid data loss
+    // Only sync on trip changes when clean; preserve baseline during edits
     if (!hasUnsavedChanges) {
+      originalItineraryRef.current = trip.itineraryDays;
       setItineraryDays(
         trip.itineraryDays.map((day) => ({
           id: day.id,
@@ -245,6 +245,16 @@ export function ItineraryPlanner({
     },
   });
 
+  // Mutation cleanup on unmount
+  useEffect(() => {
+    return () => {
+      createDay.reset();
+      deleteDay.reset();
+      updateDays.reset();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Handlers
   const handleAddDay = useCallback(() => {
     const newDayNumber = itineraryDays.length + 1;
@@ -311,7 +321,7 @@ export function ItineraryPlanner({
     [],
   );
 
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(() => {
     updateDays.mutate({
       tripId: trip.id,
       days: itineraryDays.map((day) => ({
