@@ -3,6 +3,7 @@
 import { Plus, Save } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+
 import type { RouterOutputs } from "~/trpc/react";
 import { api } from "~/trpc/react";
 import { ItineraryDay } from "./itinerary-day";
@@ -10,6 +11,7 @@ import { ItineraryDay } from "./itinerary-day";
 type Trip = RouterOutputs["trip"]["getWithItinerary"];
 type Attraction =
   RouterOutputs["attraction"]["getAttractionsByCountries"][number];
+type BasicAttraction = Omit<Attraction, "city">;
 
 type ItineraryPlannerProps = {
   trip: Trip;
@@ -20,7 +22,7 @@ type ItineraryDayData = {
   id: number;
   name: string;
   dayNumber: number;
-  attractions: Attraction[];
+  attractions: BasicAttraction[];
 };
 
 const DAY_COLORS = [
@@ -53,7 +55,9 @@ export function ItineraryPlanner({
       id: day.id,
       name: day.name,
       dayNumber: day.dayNumber,
-      attractions: [],
+      attractions: day.itineraryDayPlaces
+        .sort((a, b) => a.order - b.order)
+        .map((place) => place.attraction),
     }));
   });
 
@@ -68,7 +72,7 @@ export function ItineraryPlanner({
   const utils = api.useUtils();
 
   const allDaysAttractions = useMemo(() => {
-    const map = new Map<number, Attraction[]>();
+    const map = new Map<number, BasicAttraction[]>();
     itineraryDays.forEach((day) => {
       map.set(day.id, day.attractions);
     });
@@ -112,42 +116,44 @@ export function ItineraryPlanner({
 
   const deleteItineraryDayMutation =
     api.itinerary.deleteItineraryDay.useMutation({
-      onSuccess: (_, variables) => {
-        toast.success("Day removed", {
-          description: "Your itinerary has been updated.",
-        });
-
+      onSuccess: async (_, variables) => {
         const filtered = itineraryDays.filter((d) => d.id !== variables.dayId);
-        const reordered = filtered.map((d, i) => ({ ...d, dayNumber: i + 1 }));
+        const reordered = filtered.map((d, i) => ({
+          ...d,
+          dayNumber: i + 1,
+        }));
 
         setItineraryDays(reordered);
 
-        // Update day numbers if order changed
-        if (
-          reordered.some(
-            (d, i) =>
-              d.id !== itineraryDays[i]?.id ||
-              d.dayNumber !== itineraryDays[i]?.dayNumber,
-          )
-        ) {
-          void updateItineraryDaysMutation.mutateAsync({
+        // Update selectedDay if the deleted day was selected
+        if (selectedDay === variables.dayId) {
+          setSelectedDay(reordered[0]?.id ?? null);
+        }
+
+        // Save the reordered days
+        const orderChanged = reordered.some(
+          (d, i) =>
+            d.id !== itineraryDays[i]?.id ||
+            d.dayNumber !== itineraryDays[i]?.dayNumber,
+        );
+        if (orderChanged) {
+          await updateItineraryDaysMutation.mutateAsync({
             tripId: trip.id,
             days: reordered.map((d) => ({
               id: d.id,
               name: d.name,
               dayNumber: d.dayNumber,
-              attractions: [],
+              attractions: d.attractions.map((a, idx) => ({
+                attractionId: a.id,
+                order: idx + 1,
+              })),
             })),
           });
         }
 
-        // Update selectedDay if the deleted day was selected
-        if (selectedDay === variables.dayId) {
-          const remaining = itineraryDays.filter(
-            (d) => d.id !== variables.dayId,
-          );
-          setSelectedDay(remaining[0]?.id ?? null);
-        }
+        toast.success("Day removed", {
+          description: "Your itinerary has been updated.",
+        });
 
         void utils.trip.invalidate();
       },
@@ -196,7 +202,7 @@ export function ItineraryPlanner({
   );
 
   const handleAttractionClick = useCallback(
-    (attraction: Attraction) => {
+    (attraction: BasicAttraction) => {
       if (!selectedDay) {
         toast.error("No day selected", {
           description: "Please select a day to add attractions.",
@@ -251,7 +257,10 @@ export function ItineraryPlanner({
       id: day.id,
       name: day.name,
       dayNumber: day.dayNumber,
-      attractions: [],
+      attractions: day.attractions.map((attraction, index) => ({
+        attractionId: attraction.id,
+        order: index + 1,
+      })),
     }));
 
     await updateItineraryDaysMutation.mutateAsync({
@@ -260,17 +269,32 @@ export function ItineraryPlanner({
     });
   }, [trip, itineraryDays, updateItineraryDaysMutation]);
 
+  // Check if there are unsaved changes
   const hasUnsavedChanges = useMemo(() => {
     if (itineraryDays.length !== trip.itineraryDays.length) return true;
 
-    return itineraryDays.some((day, index) => {
-      const original = trip.itineraryDays[index];
-      return (
-        !original ||
-        day.name !== original.name ||
-        day.dayNumber !== original.dayNumber ||
-        day.attractions.length > 0
-      ); // Attractions are not persisted yet
+    return itineraryDays.some((day) => {
+      const original = trip.itineraryDays.find((d) => d.id === day.id);
+      if (!original) return true;
+
+      // Check day metadata
+      if (day.name !== original.name || day.dayNumber !== original.dayNumber) {
+        return true;
+      }
+
+      // Check attractions
+      const originalAttractions = original.itineraryDayPlaces
+        .sort((a, b) => a.order - b.order)
+        .map((p) => p.attractionId);
+      const currentAttractions = day.attractions.map((a) => a.id);
+
+      if (originalAttractions.length !== currentAttractions.length) {
+        return true;
+      }
+
+      return !originalAttractions.every(
+        (id, idx) => id === currentAttractions[idx],
+      );
     });
   }, [itineraryDays, trip.itineraryDays]);
 
@@ -295,7 +319,9 @@ export function ItineraryPlanner({
             <button
               type="button"
               onClick={handleSave}
-              disabled={updateItineraryDaysMutation.isPending}
+              disabled={
+                updateItineraryDaysMutation.isPending || !hasUnsavedChanges
+              }
               className="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Save className="h-4 w-4" />

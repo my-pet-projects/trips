@@ -10,7 +10,7 @@ type ItineraryDay = {
   id: number;
   name: string;
   dayNumber: number;
-  attractions: Attraction[];
+  attractions: Omit<Attraction, "city">[];
 };
 
 type ItineraryDayProps = {
@@ -125,9 +125,6 @@ export function ItineraryDay({
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-gray-900">
                   {attraction.name}
-                </p>
-                <p className="truncate text-xs text-gray-500">
-                  {attraction.city.name}
                 </p>
               </div>
 
