@@ -136,9 +136,53 @@ export const itineraryDays = sqliteTable(
   ],
 );
 
-export const itineraryDaysRelations = relations(itineraryDays, ({ one }) => ({
-  trip: one(trips, {
-    fields: [itineraryDays.tripId],
-    references: [trips.id],
+export const itineraryDaysRelations = relations(
+  itineraryDays,
+  ({ one, many }) => ({
+    trip: one(trips, {
+      fields: [itineraryDays.tripId],
+      references: [trips.id],
+    }),
+    itineraryDayPlaces: many(itineraryDayPlaces),
   }),
-}));
+);
+
+export const itineraryDayPlaces = sqliteTable(
+  "itinerary_day_places",
+  {
+    id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+    itineraryDayId: integer("itinerary_day_id")
+      .notNull()
+      .references(() => itineraryDays.id, { onDelete: "cascade" }),
+    attractionId: integer("attraction_id")
+      .notNull()
+      .references(() => attractions.id, { onDelete: "restrict" }),
+    order: integer("order").notNull(),
+  },
+  (table) => [
+    index("itinerary_day_places_day_idx").on(table.itineraryDayId),
+    uniqueIndex("itinerary_day_places_unique_idx").on(
+      table.itineraryDayId,
+      table.attractionId,
+    ),
+    uniqueIndex("itinerary_day_places_order_unique_idx").on(
+      table.itineraryDayId,
+      table.order,
+    ),
+    check("itinerary_day_places_order_check", sql`${table.order} >= 1`),
+  ],
+);
+
+export const itineraryDayPlacesRelations = relations(
+  itineraryDayPlaces,
+  ({ one }) => ({
+    itineraryDay: one(itineraryDays, {
+      fields: [itineraryDayPlaces.itineraryDayId],
+      references: [itineraryDays.id],
+    }),
+    attraction: one(attractions, {
+      fields: [itineraryDayPlaces.attractionId],
+      references: [attractions.id],
+    }),
+  }),
+);
