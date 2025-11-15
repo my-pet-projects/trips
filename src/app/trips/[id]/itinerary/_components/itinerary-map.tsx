@@ -56,9 +56,7 @@ export function ItineraryMap({
   useEffect(() => {
     if (selectedAttractionId) {
       const attraction = attractions.find((a) => a.id === selectedAttractionId);
-      if (attraction) {
-        setSelectedAttraction(attraction);
-      }
+      setSelectedAttraction(attraction ?? null);
     } else {
       setSelectedAttraction(null);
     }
@@ -117,7 +115,7 @@ export function ItineraryMap({
     const dayId = attractionToDayMap.get(selectedAttraction.id);
     return {
       dayId,
-      isInAnyDay: dayId ?? false,
+      isInAnyDay: dayId !== undefined,
       isInSelectedDay: dayId === selectedDayId,
     };
   }, [selectedAttraction, attractionToDayMap, selectedDayId]);
@@ -146,50 +144,32 @@ export function ItineraryMap({
           <div className="p-4">
             {/* Header */}
             <div className="mb-3 flex items-start justify-between gap-3">
-              <div className="flex min-w-0 flex-1 items-start gap-3">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
                 <div className="shrink-0">
-                  <div className="rounded-full bg-sky-100 p-2">
+                  <div className="rounded-full bg-sky-100 px-2 py-1">
                     <MapPin className="h-5 w-5 text-sky-600" />
                   </div>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="mb-1 text-lg font-semibold text-gray-900">
+                  <h3 className="text-lg leading-tight font-semibold text-gray-900">
                     {selectedAttraction.name}
                   </h3>
                   {selectedAttraction.nameLocal &&
                     selectedAttraction.nameLocal !==
                       selectedAttraction.name && (
-                      <p className="mb-1 text-sm text-gray-600">
+                      <p className="text-sm leading-tight text-gray-600">
                         {selectedAttraction.nameLocal}
                       </p>
                     )}
-                  <p className="text-sm text-gray-500">
+                  <p className="mt-1 text-sm leading-tight text-gray-500">
                     {selectedAttraction.city.name},{" "}
                     {selectedAttraction.city.country.name}
                   </p>
-
-                  {/* Status Badge */}
-                  {attractionStatus.isInAnyDay && attractionStatus.dayId && (
-                    <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-gray-100 px-2.5 py-1">
-                      <div
-                        className="h-2.5 w-2.5 rounded-full border border-white shadow-sm"
-                        style={{
-                          backgroundColor: dayColors.get(
-                            attractionStatus.dayId,
-                          ),
-                        }}
-                      />
-                      <span className="text-xs font-medium text-gray-700">
-                        {attractionStatus.isInSelectedDay
-                          ? "In this day"
-                          : "In another day"}
-                      </span>
-                    </div>
-                  )}
                 </div>
               </div>
 
               <button
+                type="button"
                 onClick={handleClose}
                 className="shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
                 aria-label="Close"
@@ -237,6 +217,7 @@ export function ItineraryMap({
             {/* Action Buttons */}
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={handleAddToDay}
                 disabled={!selectedDayId}
                 className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
@@ -254,6 +235,7 @@ export function ItineraryMap({
                     : "Add to Day"}
               </button>
               <button
+                type="button"
                 onClick={handleClose}
                 className="rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
               >
