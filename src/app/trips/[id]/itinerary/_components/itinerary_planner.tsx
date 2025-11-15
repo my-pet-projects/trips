@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import type { RouterOutputs } from "~/trpc/react";
 import { api } from "~/trpc/react";
 import { ItineraryDay } from "./itinerary-day";
+import { ItineraryMap } from "./itinerary-map";
 
 type Trip = RouterOutputs["trip"]["getWithItinerary"];
 type Attraction =
@@ -71,11 +72,39 @@ export function ItineraryPlanner({
   const [hoveredAttraction, setHoveredAttraction] = useState<number | null>(
     null,
   );
+  const [selectedAttractionId, setSelectedAttractionId] = useState<
+    number | null
+  >(null);
 
   const originalItineraryRef = useRef(trip.itineraryDays);
   const utils = api.useUtils();
 
-  // Check for unsaved changes
+  const allDaysAttractions = useMemo(() => {
+    const map = new Map<number, BasicAttraction[]>();
+    itineraryDays.forEach((day) => {
+      map.set(day.id, day.attractions);
+    });
+    return map;
+  }, [itineraryDays]);
+
+  const dayColors = useMemo(() => {
+    const map = new Map<number, string>();
+    itineraryDays.forEach((day, index) => {
+      map.set(day.id, generateDayColor(index));
+    });
+    return map;
+  }, [itineraryDays]);
+
+  const attractionToDayMap = useMemo(() => {
+    const map = new Map<number, ItineraryDayData>();
+    itineraryDays.forEach((day) => {
+      day.attractions.forEach((attraction) => {
+        map.set(attraction.id, day);
+      });
+    });
+    return map;
+  }, [itineraryDays]);
+
   const hasUnsavedChanges = useMemo(() => {
     if (itineraryDays.length !== originalItineraryRef.current.length)
       return true;
@@ -107,17 +136,7 @@ export function ItineraryPlanner({
       originalItineraryRef.current = trip.itineraryDays;
       setItineraryDays(transformTripDays(trip));
     }
-  }, [trip.itineraryDays, hasUnsavedChanges]);
-
-  const attractionToDayMap = useMemo(() => {
-    const map = new Map<number, ItineraryDayData>();
-    itineraryDays.forEach((day) => {
-      day.attractions.forEach((attraction) => {
-        map.set(attraction.id, day);
-      });
-    });
-    return map;
-  }, [itineraryDays]);
+  }, [trip, trip.itineraryDays, hasUnsavedChanges]);
 
   const createDay = api.itinerary.createItineraryDay.useMutation({
     onMutate: async (newDayData) => {
@@ -249,7 +268,27 @@ export function ItineraryPlanner({
     [deleteDay],
   );
 
-  const handleAttractionClick = useCallback(
+  const handleDayClick = useCallback((dayId: number) => {
+    setSelectedDay(dayId);
+    setSelectedAttractionId(null);
+  }, []);
+
+  const handleAttractionClickInList = useCallback(
+    (attractionId: number) => {
+      setSelectedAttractionId(attractionId);
+      setSelectedDay((prevDay) => {
+        const day = attractionToDayMap.get(attractionId);
+        return day ? day.id : prevDay;
+      });
+    },
+    [attractionToDayMap],
+  );
+
+  const handleMarkerClickOnMap = useCallback((attractionId: number | null) => {
+    setSelectedAttractionId(attractionId);
+  }, []);
+
+  const handleAddAttractionToDay = useCallback(
     (attraction: BasicAttraction) => {
       if (!selectedDay) {
         toast.error("No day selected", {
@@ -362,10 +401,12 @@ export function ItineraryPlanner({
                 day={day}
                 color={generateDayColor(index)}
                 isSelected={selectedDay === day.id}
-                onSelect={() => setSelectedDay(day.id)}
+                onSelect={() => handleDayClick(day.id)}
                 onRemove={() => handleRemoveDay(day.id)}
                 onRemoveAttraction={handleRemoveAttraction}
                 onAttractionHover={setHoveredAttraction}
+                onAttractionClick={handleAttractionClickInList}
+                selectedAttractionId={selectedAttractionId}
                 isRemoving={dayBeingRemoved === day.id}
                 isDragging={false}
               />
@@ -376,17 +417,19 @@ export function ItineraryPlanner({
 
       {/* Map */}
       <div className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
-        {/* <ItineraryMap
+        <ItineraryMap
           attractions={attractions}
           selectedDayAttractions={
             itineraryDays.find((d) => d.id === selectedDay)?.attractions ?? []
           }
           selectedDayId={selectedDay}
+          selectedAttractionId={selectedAttractionId}
           allDaysAttractions={allDaysAttractions}
           dayColors={dayColors}
           hoveredAttractionId={hoveredAttraction}
-          onAttractionClick={handleAttractionClick}
-        /> */}
+          onAttractionSelect={handleMarkerClickOnMap}
+          onAddAttractionToDay={handleAddAttractionToDay}
+        />
       </div>
     </div>
   );
