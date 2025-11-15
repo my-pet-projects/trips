@@ -67,6 +67,24 @@ const createMarkerIcon = (
   `;
 };
 
+// Calculate initial center from attractions
+const getInitialMapCenter = (attractions: Attraction[]): [number, number] => {
+  const validAttractions = attractions.filter((a) => a.latitude && a.longitude);
+
+  if (validAttractions.length === 0) {
+    return [48.8566, 2.3522]; // Fallback to Paris
+  }
+
+  const avgLat =
+    validAttractions.reduce((sum, a) => sum + a.latitude!, 0) /
+    validAttractions.length;
+  const avgLng =
+    validAttractions.reduce((sum, a) => sum + a.longitude!, 0) /
+    validAttractions.length;
+
+  return [avgLat, avgLng];
+};
+
 export default function LeafletMap({
   attractions,
   selectedDayAttractions,
@@ -96,10 +114,11 @@ export default function LeafletMap({
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
+    const center = getInitialMapCenter(attractions);
     const map = L.map(containerRef.current, {
       zoomControl: true,
       scrollWheelZoom: true,
-    }).setView([48.8566, 2.3522], 5);
+    }).setView(center, 5);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
@@ -115,7 +134,7 @@ export default function LeafletMap({
       mapRef.current = null;
       hasInitializedBounds.current = false;
     };
-  }, []);
+  }, [attractions]);
 
   // Center map on selected attraction with panel offset
   useEffect(() => {
