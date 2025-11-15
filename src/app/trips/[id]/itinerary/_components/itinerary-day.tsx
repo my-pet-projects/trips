@@ -22,6 +22,8 @@ type ItineraryDayProps = {
   onRemove: () => void;
   onRemoveAttraction: (dayId: number, attractionId: number) => void;
   onAttractionHover: (id: number | null) => void;
+  onAttractionClick?: (attractionId: number) => void;
+  selectedAttractionId?: number | null;
   isDragging?: boolean;
   isRemoving?: boolean;
 };
@@ -34,6 +36,8 @@ export function ItineraryDay({
   onRemove,
   onRemoveAttraction,
   onAttractionHover,
+  onAttractionClick,
+  selectedAttractionId,
   isDragging = false,
   isRemoving = false,
 }: ItineraryDayProps) {
@@ -50,6 +54,13 @@ export function ItineraryDay({
   ) => {
     e.stopPropagation();
     onRemoveAttraction(day.id, attractionId);
+  };
+
+  const handleAttractionClick = (e: React.MouseEvent, attractionId: number) => {
+    e.stopPropagation();
+    if (onAttractionClick) {
+      onAttractionClick(attractionId);
+    }
   };
 
   return (
@@ -107,38 +118,47 @@ export function ItineraryDay({
         </p>
       ) : (
         <div className="space-y-2">
-          {day.attractions.map((attraction, index) => (
-            <div
-              key={attraction.id}
-              className="group flex items-start gap-2 rounded-lg border border-gray-100 bg-gray-50 p-2.5 transition-all hover:-translate-y-0.5 hover:border-gray-200 hover:bg-white hover:shadow-md"
-              onMouseEnter={() => onAttractionHover(attraction.id)}
-              onMouseLeave={() => onAttractionHover(null)}
-            >
-              {/* Order Number */}
-              <span
-                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white shadow-sm ring-1 ring-white/30"
-                style={{ backgroundColor: color }}
-              >
-                {index + 1}
-              </span>
+          {day.attractions.map((attraction, index) => {
+            const isAttractionSelected = selectedAttractionId === attraction.id;
 
-              {/* Attraction Info */}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-gray-900">
-                  {attraction.name}
-                </p>
+            return (
+              <div
+                key={attraction.id}
+                className={`group flex cursor-pointer items-start gap-2 rounded-lg border p-2.5 transition-all hover:-translate-y-0.5 hover:shadow-md ${
+                  isAttractionSelected
+                    ? "border-sky-500 bg-sky-50 shadow-md"
+                    : "border-gray-100 bg-gray-50 hover:border-gray-200 hover:bg-white"
+                }`}
+                onMouseEnter={() => onAttractionHover(attraction.id)}
+                onMouseLeave={() => onAttractionHover(null)}
+                onClick={(e) => handleAttractionClick(e, attraction.id)}
+              >
+                {/* Order Number */}
+                <span
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white shadow-sm ring-1 ring-white/30"
+                  style={{ backgroundColor: color }}
+                >
+                  {index + 1}
+                </span>
+
+                {/* Attraction Info */}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-gray-900">
+                    {attraction.name}
+                  </p>
+                </div>
+
+                {/* Remove Button */}
+                <button
+                  type="button"
+                  onClick={(e) => handleRemoveAttraction(e, attraction.id)}
+                  className="shrink-0 rounded p-1 text-gray-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 focus:opacity-100"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
-
-              {/* Remove Button */}
-              <button
-                type="button"
-                onClick={(e) => handleRemoveAttraction(e, attraction.id)}
-                className="shrink-0 rounded p-1 text-gray-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 focus:opacity-100"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
