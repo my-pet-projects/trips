@@ -384,8 +384,8 @@ export function ItineraryPlanner({
           dayNumber: i + 1,
         }));
 
-        // Keep selected day the same
-        setSelectedDay(dayId);
+        // Preserve current selection; if nothing is selected, select the moved day
+        setSelectedDay((prevSelected) => prevSelected ?? dayId);
         return reorderedAndNumbered;
       });
     },

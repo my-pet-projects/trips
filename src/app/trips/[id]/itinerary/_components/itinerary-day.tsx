@@ -289,7 +289,8 @@ export function ItineraryDay({
                 onClick={(e) => handleAttractionClick(e, attraction.id)}
               >
                 {/* Drag Handle */}
-                <div
+                <button
+                  type="button"
                   className={`attraction-drag-handle cursor-grab rounded p-1 transition-all hover:bg-gray-200 ${
                     isDraggingThis ? "cursor-grabbing" : ""
                   }`}
@@ -299,7 +300,7 @@ export function ItineraryDay({
                   title="Drag to reorder"
                 >
                   <GripVertical className="h-4 w-4 text-gray-400 transition-colors group-hover/item:text-gray-600" />
-                </div>
+                </button>
 
                 {/* Order Number */}
                 <span
@@ -308,14 +309,12 @@ export function ItineraryDay({
                 >
                   {index + 1}
                 </span>
-
                 {/* Attraction Info */}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-gray-900 transition-colors group-hover/item:text-gray-950">
                     {attraction.name}
                   </p>
                 </div>
-
                 {/* Remove Button */}
                 <button
                   type="button"
