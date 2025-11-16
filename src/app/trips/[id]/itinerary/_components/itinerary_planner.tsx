@@ -288,6 +288,17 @@ export function ItineraryPlanner({
     setSelectedAttractionId(attractionId);
   }, []);
 
+  const handleReorderAttractions = useCallback(
+    (dayId: number, reorderedAttractions: BasicAttraction[]) => {
+      setItineraryDays((prev) =>
+        prev.map((d) =>
+          d.id === dayId ? { ...d, attractions: reorderedAttractions } : d,
+        ),
+      );
+    },
+    [],
+  );
+
   const handleAddAttractionToDay = useCallback(
     (attraction: BasicAttraction) => {
       if (!selectedDay) {
@@ -351,6 +362,36 @@ export function ItineraryPlanner({
     });
   }, [trip.id, itineraryDays, updateDays]);
 
+  const handleMoveDay = useCallback(
+    (dayId: number, direction: "up" | "down") => {
+      setItineraryDays((prevDays) => {
+        const newDays = [...prevDays];
+        const index = newDays.findIndex((d) => d.id === dayId);
+
+        if (index === -1) return prevDays;
+
+        const targetIndex = direction === "up" ? index - 1 : index + 1;
+
+        if (targetIndex < 0 || targetIndex >= newDays.length) return prevDays;
+
+        // Swap days
+        const [movedDay] = newDays.splice(index, 1);
+        newDays.splice(targetIndex, 0, movedDay!);
+
+        // Update day numbers
+        const reorderedAndNumbered = newDays.map((d, i) => ({
+          ...d,
+          dayNumber: i + 1,
+        }));
+
+        // Keep selected day the same
+        setSelectedDay(dayId);
+        return reorderedAndNumbered;
+      });
+    },
+    [],
+  );
+
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       {/* Days List */}
@@ -409,6 +450,9 @@ export function ItineraryPlanner({
                 selectedAttractionId={selectedAttractionId}
                 isRemoving={dayBeingRemoved === day.id}
                 isDragging={false}
+                onReorderAttractions={handleReorderAttractions}
+                onMoveUp={() => handleMoveDay(day.id, "up")}
+                onMoveDown={() => handleMoveDay(day.id, "down")}
               />
             ))}
           </div>
