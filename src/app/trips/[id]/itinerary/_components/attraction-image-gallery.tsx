@@ -45,6 +45,7 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
       <div className="p-4 text-red-600">
         <p>Error loading images: {error.message}</p>
         <button
+          type="button"
           onClick={() => void refetch()}
           className="mt-2 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
         >
@@ -74,6 +75,7 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
               <div className="flex aspect-video items-center justify-center bg-gray-300 text-sm text-gray-600">
                 Image Failed to Load
                 <button
+                  type="button"
                   onClick={() => {
                     setFailedImages((prev) => prev.filter((u) => u !== url));
                     setLoadedImages((prev) => prev.filter((u) => u !== url));
