@@ -155,7 +155,7 @@ export const attractionScraperRouter = createTRPCRouter({
       if (!parser) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Parser not found for host: ${parserKey}`,
+          message: `No parser found for host: ${parserKey}`,
         });
       }
 
@@ -211,6 +211,68 @@ export const attractionScraperRouter = createTRPCRouter({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: `Unexpected error during parsing: ${error instanceof Error ? error.message : "Unknown error"}`,
+        });
+      }
+    }),
+
+  findAttractionImages: publicProcedure
+    .input(
+      z.object({
+        name: z.string(),
+        city: z.string().optional(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const searchTerms = [input.name];
+      if (input.city) {
+        searchTerms.push(input.city);
+      }
+      const query = searchTerms
+        .map((term) => term.replaceAll(" ", "+"))
+        .join("+");
+
+      const url = `https://www.google.com/search?q=${query}&tbm=isch&tbs=isz:l`;
+
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000); // 10 seconds
+        let res;
+        try {
+          res = await fetch(url, { signal: controller.signal });
+        } finally {
+          clearTimeout(timeout);
+        }
+
+        const imageUrls: string[] = [];
+
+        const data = await res.text();
+        const $ = cheerio.load(data);
+        $("img").each((_, element) => {
+          const imgSrc = $(element).attr("src");
+          const dataSrc = $(element).attr("data-src");
+          const dataHdr = $(element).attr("data-hdr");
+
+          if (dataSrc?.startsWith("http")) {
+            imageUrls.push(dataSrc);
+          } else if (imgSrc?.startsWith("http")) {
+            if (
+              !imgSrc.includes("data:image/gif") &&
+              !imgSrc.includes("gstatic.com/images/icons/g")
+            ) {
+              imageUrls.push(imgSrc);
+            }
+          } else if (dataHdr?.startsWith("http")) {
+            imageUrls.push(dataHdr);
+          }
+        });
+
+        const uniqueImageUrls = Array.from(new Set(imageUrls)).slice(0, 20);
+
+        return uniqueImageUrls;
+      } catch (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Error during image scraping: ${error instanceof Error ? error.message : "Unknown error"}`,
         });
       }
     }),
