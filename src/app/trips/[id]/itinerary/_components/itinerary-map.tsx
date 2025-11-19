@@ -4,7 +4,8 @@ import { ExternalLink, MapPin, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import type { RouterOutputs } from "~/trpc/react";
+import { type RouterOutputs } from "~/trpc/react";
+import { AttractionImageGallery } from "./attraction-image-gallery";
 
 type Attraction =
   RouterOutputs["attraction"]["getAttractionsByCountries"][number];
@@ -213,6 +214,9 @@ export function ItineraryMap({
                 </a>
               </div>
             )}
+
+            {/* Attraction Images */}
+            <AttractionImageGallery attraction={selectedAttraction} />
 
             {/* Action Buttons */}
             <div className="flex gap-2">
