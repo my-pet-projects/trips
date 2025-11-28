@@ -5,6 +5,7 @@ import { attractionRouter } from "./routers/attraction";
 import { attractionScraperRouter } from "./routers/attraction-scraper";
 import { geoRouter } from "./routers/geo";
 import { itineraryRouter } from "./routers/itinerary";
+import { routeRouter } from "./routers/route";
 import { tripRouter } from "./routers/trip";
 
 /**
@@ -19,6 +20,7 @@ export const appRouter = createTRPCRouter({
   attraction: attractionRouter,
   attractionScraper: attractionScraperRouter,
   itinerary: itineraryRouter,
+  route: routeRouter,
 });
 
 // export type definition of API

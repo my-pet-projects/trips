@@ -186,3 +186,45 @@ export const itineraryDayPlacesRelations = relations(
     }),
   }),
 );
+
+export const routes = sqliteTable(
+  "routes",
+  {
+    id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+    fromAttractionId: integer("from_attraction_id")
+      .notNull()
+      .references(() => attractions.id, { onDelete: "cascade" }),
+    toAttractionId: integer("to_attraction_id")
+      .notNull()
+      .references(() => attractions.id, { onDelete: "cascade" }),
+    geoJson: text("geo_json").notNull(),
+    distanceMeters: real("distance_m").notNull(),
+    durationSeconds: real("duration_s").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .default(sql`(unixepoch())`)
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("routes_unique_idx").on(
+      table.fromAttractionId,
+      table.toAttractionId,
+    ),
+    index("routes_from_attraction_idx").on(table.fromAttractionId),
+    index("routes_to_attraction_idx").on(table.toAttractionId),
+    check(
+      "routes_no_self_reference_check",
+      sql`${table.fromAttractionId} != ${table.toAttractionId}`,
+    ),
+  ],
+);
+
+export const routesRelations = relations(routes, ({ one }) => ({
+  fromAttraction: one(attractions, {
+    fields: [routes.fromAttractionId],
+    references: [attractions.id],
+  }),
+  toAttraction: one(attractions, {
+    fields: [routes.toAttractionId],
+    references: [attractions.id],
+  }),
+}));
