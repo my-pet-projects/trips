@@ -11,6 +11,7 @@ export const env = createEnv({
     GEO_DATABASE_TOKEN: z.string(),
     TRIPS_DATABASE_URL: z.string().url(),
     TRIPS_DATABASE_TOKEN: z.string(),
+    OPENROUTE_API_KEY: z.string(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -32,6 +33,7 @@ export const env = createEnv({
   runtimeEnv: {
     GEO_DATABASE_URL: process.env.GEO_DATABASE_URL,
     GEO_DATABASE_TOKEN: process.env.GEO_DATABASE_TOKEN,
+    OPENROUTE_API_KEY: process.env.OPENROUTE_API_KEY,
     TRIPS_DATABASE_URL: process.env.TRIPS_DATABASE_URL,
     TRIPS_DATABASE_TOKEN: process.env.TRIPS_DATABASE_TOKEN,
     NODE_ENV: process.env.NODE_ENV,
