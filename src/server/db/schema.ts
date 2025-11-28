@@ -211,9 +211,9 @@ export const routes = sqliteTable(
     ),
     index("routes_from_attraction_idx").on(table.fromAttractionId),
     index("routes_to_attraction_idx").on(table.toAttractionId),
-    index("routes_from_to_idx").on(
-      table.fromAttractionId,
-      table.toAttractionId,
+    check(
+      "routes_no_self_reference_check",
+      sql`${table.fromAttractionId} != ${table.toAttractionId}`,
     ),
   ],
 );

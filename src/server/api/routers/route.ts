@@ -142,7 +142,9 @@ async function fetchRouteFromORS(
 
     if (error instanceof Error && error.name === "AbortError") {
       if (retryCount < MAX_RETRIES) {
-        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+        await new Promise((resolve) =>
+          setTimeout(resolve, RETRY_DELAY_MS * (retryCount + 1)),
+        );
         return fetchRouteFromORS(
           fromLng,
           fromLat,
@@ -178,7 +180,12 @@ export const routeRouter = createTRPCRouter({
             }),
           )
           .min(2, "At least two points required")
-          .max(25, "Maximum 25 points allowed"),
+          .max(25, "Maximum 25 points allowed")
+          .refine(
+            (points) =>
+              points.every((p, i) => i === 0 || p.id !== points[i - 1]!.id),
+            "Consecutive points cannot have the same attraction ID",
+          ),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -277,19 +284,22 @@ export const routeRouter = createTRPCRouter({
       let totalDistanceMeters = 0;
       let totalDurationSeconds = 0;
 
-      legs.forEach((leg, i) => {
-        const geometry = JSON.parse(leg.geoJson) as GeoJSON;
+      const parsedGeometries = legs.map(
+        (leg) => JSON.parse(leg.geoJson) as GeoJSON,
+      );
+
+      parsedGeometries.forEach((geometry, i) => {
         const coords =
           i === 0 ? geometry.coordinates : geometry.coordinates.slice(1);
         allCoordinates.push(...coords);
-        totalDistanceMeters += leg.distanceMeters;
-        totalDurationSeconds += leg.durationSeconds;
+        totalDistanceMeters += legs[i]!.distanceMeters;
+        totalDurationSeconds += legs[i]!.durationSeconds;
       });
 
       return {
         legs: legs.map((leg, i) => ({
           ...leg,
-          geometryGeojsonParsed: JSON.parse(leg.geoJson) as GeoJSON,
+          geometryGeojsonParsed: parsedGeometries[i]!,
           fromAttractionId: input.points[i]!.id,
           toAttractionId: input.points[i + 1]!.id,
         })),
