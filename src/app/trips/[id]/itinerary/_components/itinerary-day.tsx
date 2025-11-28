@@ -3,8 +3,10 @@
 import {
   ChevronDown,
   ChevronUp,
+  Clock,
   GripVertical,
   MapPin,
+  Route,
   Trash2,
 } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
@@ -13,6 +15,7 @@ import type { RouterOutputs } from "~/trpc/react";
 type Trip = RouterOutputs["trip"]["getWithItinerary"];
 type BasicAttraction =
   Trip["itineraryDays"][number]["itineraryDayPlaces"][number]["attraction"];
+type RouteData = RouterOutputs["route"]["buildRoute"];
 
 type ItineraryDay = {
   id: number;
@@ -39,6 +42,8 @@ type ItineraryDayProps = {
   selectedAttractionId?: number | null;
   isDragging?: boolean;
   isRemoving?: boolean;
+  routeData?: RouteData;
+  isLoadingRoute?: boolean;
 };
 
 export function ItineraryDay({
@@ -56,11 +61,11 @@ export function ItineraryDay({
   selectedAttractionId,
   isDragging = false,
   isRemoving = false,
+  routeData,
+  isLoadingRoute = false,
 }: ItineraryDayProps) {
   const attractionCount = day.attractions.length;
-
   const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
-
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [removingAttractionId, setRemovingAttractionId] = useState<
@@ -79,7 +84,6 @@ export function ItineraryDay({
   ) => {
     e.stopPropagation();
     setRemovingAttractionId(attractionId);
-    // Delay the actual removal to show animation
     setTimeout(() => {
       onRemoveAttraction(day.id, attractionId);
       setRemovingAttractionId(null);
@@ -93,25 +97,18 @@ export function ItineraryDay({
 
   const handleDragStart = useCallback((e: React.DragEvent, index: number) => {
     const target = e.target as HTMLElement;
-
-    // Only allow drag from handle
     if (!target.closest(".attraction-drag-handle")) {
       e.preventDefault();
       return;
     }
-
     setDraggedIndex(index);
-
-    // Use the stored row ref for this index
     const rowNode = rowRefs.current[index];
     if (rowNode) {
       const rect = rowNode.getBoundingClientRect();
-      // Anchor the preview to the pointer location (so it doesn't jump to center)
       const offsetX = e.clientX - rect.left;
       const offsetY = e.clientY - rect.top;
       e.dataTransfer.setDragImage(rowNode, offsetX, offsetY);
     }
-
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", index.toString());
   }, []);
@@ -128,15 +125,12 @@ export function ItineraryDay({
 
   const handleDrop = (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault();
-
     if (draggedIndex === null || draggedIndex === dropIndex) {
       setDraggedIndex(null);
       setDragOverIndex(null);
       return;
     }
-
     setIsReordering(true);
-
     const updated = [...day.attractions];
     const [item] = updated.splice(draggedIndex, 1);
     if (!item) {
@@ -146,9 +140,7 @@ export function ItineraryDay({
       return;
     }
     updated.splice(dropIndex, 0, item);
-
     onReorderAttractions(day.id, updated);
-
     setTimeout(() => {
       setDraggedIndex(null);
       setDragOverIndex(null);
@@ -208,10 +200,10 @@ export function ItineraryDay({
                 onMoveUp();
               }}
               disabled={day.dayNumber === 1 || isRemoving}
-              className="group/btn flex items-center justify-center px-2 py-1.5 text-gray-600 transition-all hover:bg-blue-50 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-gray-600"
+              className="group/btn flex items-center justify-center px-2 py-1.5 text-gray-600 transition-all hover:bg-blue-50 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
               title="Move day up"
             >
-              <ChevronUp className="group-hover/btn:not([disabled]):-translate-y-0.5 h-4 w-4 transition-transform" />
+              <ChevronUp className="h-4 w-4 transition-transform" />
             </button>
             <div className="h-full w-px bg-gray-300" />
             <button
@@ -221,14 +213,14 @@ export function ItineraryDay({
                 onMoveDown();
               }}
               disabled={isRemoving}
-              className="group/btn flex items-center justify-center px-2 py-1.5 text-gray-600 transition-all hover:bg-blue-50 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-gray-600"
+              className="group/btn flex items-center justify-center px-2 py-1.5 text-gray-600 transition-all hover:bg-blue-50 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
               title="Move day down"
             >
-              <ChevronDown className="group-hover/btn:not([disabled]):translate-y-0.5 h-4 w-4 transition-transform" />
+              <ChevronDown className="h-4 w-4 transition-transform" />
             </button>
           </div>
           {attractionCount > 0 && (
-            <span className="flex items-center gap-1 rounded-full bg-linear-to-br from-gray-100 to-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-gray-300/50 transition-transform group-hover/card:scale-105">
+            <span className="flex items-center gap-1 rounded-full bg-linear-to-br from-gray-100 to-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-gray-300/50">
               <MapPin className="h-3 w-3" />
               {attractionCount}
             </span>
@@ -244,6 +236,34 @@ export function ItineraryDay({
           </button>
         </div>
       </div>
+
+      {/* Route Summary */}
+      {attractionCount >= 2 && (
+        <div className="mb-3 flex items-center gap-3 rounded-lg bg-linear-to-r from-blue-50 to-sky-50 px-3 py-2 text-xs">
+          {isLoadingRoute ? (
+            <>
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-sky-300 border-t-sky-600" />
+              <span className="text-gray-600">Calculating route...</span>
+            </>
+          ) : routeData ? (
+            <>
+              <div className="flex items-center gap-1.5 text-gray-700">
+                <Route className="h-3.5 w-3.5 text-sky-600" />
+                <span className="font-semibold">
+                  {routeData.totalKm.toFixed(1)} km
+                </span>
+              </div>
+              <div className="h-3 w-px bg-sky-200" />
+              <div className="flex items-center gap-1.5 text-gray-700">
+                <Clock className="h-3.5 w-3.5 text-sky-600" />
+                <span className="font-semibold">
+                  {Math.round(routeData.totalDurationMinutes)} min
+                </span>
+              </div>
+            </>
+          ) : null}
+        </div>
+      )}
 
       {/* Attractions List */}
       {attractionCount === 0 ? (
@@ -261,69 +281,92 @@ export function ItineraryDay({
             const isDraggingThis = draggedIndex === index;
             const isDragOver = dragOverIndex === index;
             const isRemoving = removingAttractionId === attraction.id;
+            const legToNext = routeData?.legs[index];
 
             return (
-              <div
-                key={attraction.id}
-                ref={(el) => {
-                  rowRefs.current[index] = el;
-                }}
-                onDragOver={(e) => handleDragOver(e, index)}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, index)}
-                className={`group/item flex items-start gap-2 rounded-lg border p-2.5 transition-all duration-300 ${
-                  isSelectedAttr
-                    ? "border-blue-400 bg-blue-50 shadow-md ring-2 ring-blue-200"
-                    : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-white hover:shadow-sm"
-                } ${
-                  isDraggingThis
-                    ? "scale-[0.98] border-dashed border-blue-400 opacity-50 shadow-xl"
-                    : ""
-                } ${isDragOver ? "scale-[1.02] border-blue-400 bg-blue-100 shadow-md" : ""} ${
-                  isRemoving ? "scale-90 opacity-0 blur-sm" : ""
-                }`}
-                onMouseEnter={() =>
-                  !isDraggingThis && onAttractionHover(attraction.id)
-                }
-                onMouseLeave={() => onAttractionHover(null)}
-                onClick={(e) => handleAttractionClick(e, attraction.id)}
-              >
-                {/* Drag Handle */}
-                <button
-                  type="button"
-                  className={`attraction-drag-handle cursor-grab rounded p-1 transition-all hover:bg-gray-200 ${
-                    isDraggingThis ? "cursor-grabbing" : ""
+              <div key={attraction.id}>
+                {/* Attraction Card */}
+                <div
+                  ref={(el) => {
+                    rowRefs.current[index] = el;
+                  }}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, index)}
+                  className={`group/item flex items-start gap-2 rounded-lg border p-2.5 transition-all duration-300 ${
+                    isSelectedAttr
+                      ? "border-blue-400 bg-blue-50 shadow-md ring-2 ring-blue-200"
+                      : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-white hover:shadow-sm"
+                  } ${
+                    isDraggingThis
+                      ? "scale-[0.98] border-dashed border-blue-400 opacity-50 shadow-xl"
+                      : ""
+                  } ${isDragOver ? "scale-[1.02] border-blue-400 bg-blue-100 shadow-md" : ""} ${
+                    isRemoving ? "scale-90 opacity-0 blur-sm" : ""
                   }`}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, index)}
-                  onDragEnd={handleDragEnd}
-                  title="Drag to reorder"
+                  onMouseEnter={() =>
+                    !isDraggingThis && onAttractionHover(attraction.id)
+                  }
+                  onMouseLeave={() => onAttractionHover(null)}
+                  onClick={(e) => handleAttractionClick(e, attraction.id)}
                 >
-                  <GripVertical className="h-4 w-4 text-gray-400 transition-colors group-hover/item:text-gray-600" />
-                </button>
+                  {/* Drag Handle */}
+                  <button
+                    type="button"
+                    className={`attraction-drag-handle cursor-grab rounded p-1 transition-all hover:bg-gray-200 ${
+                      isDraggingThis ? "cursor-grabbing" : ""
+                    }`}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragEnd={handleDragEnd}
+                    title="Drag to reorder"
+                  >
+                    <GripVertical className="h-4 w-4 text-gray-400 transition-colors group-hover/item:text-gray-600" />
+                  </button>
 
-                {/* Order Number */}
-                <span
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-md ring-2 ring-white transition-transform group-hover/item:scale-110"
-                  style={{ backgroundColor: color }}
-                >
-                  {index + 1}
-                </span>
-                {/* Attraction Info */}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-gray-900 transition-colors group-hover/item:text-gray-950">
-                    {attraction.name}
-                  </p>
+                  {/* Order Number */}
+                  <span
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-md ring-2 ring-white transition-transform group-hover/item:scale-110"
+                    style={{ backgroundColor: color }}
+                  >
+                    {index + 1}
+                  </span>
+
+                  {/* Attraction Info */}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-gray-900 transition-colors group-hover/item:text-gray-950">
+                      {attraction.name}
+                    </p>
+                  </div>
+
+                  {/* Remove Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleRemoveAttraction(e, attraction.id)}
+                    className="shrink-0 rounded-lg p-1 text-gray-400 opacity-0 transition-all group-hover/item:opacity-100 hover:bg-red-50 hover:text-red-600 hover:shadow-sm active:scale-90"
+                    title="Remove attraction"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
-                {/* Remove Button */}
-                <button
-                  type="button"
-                  onClick={(e) => handleRemoveAttraction(e, attraction.id)}
-                  className="shrink-0 rounded-lg p-1 text-gray-400 opacity-0 transition-all group-hover/item:opacity-100 hover:bg-red-50 hover:text-red-600 hover:shadow-sm active:scale-90"
-                  title="Remove attraction"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+
+                {/* Route connector to next attraction */}
+                {legToNext && index < day.attractions.length - 1 && (
+                  <div className="ml-4 flex items-center gap-2 py-1.5 pl-3 text-xs text-gray-500">
+                    <div className="flex h-6 w-0.5 bg-linear-to-b from-gray-300 to-transparent" />
+                    <div className="flex items-center gap-2 rounded-md bg-gray-100 px-2 py-1">
+                      <Route className="h-3 w-3" />
+                      <span>
+                        {(legToNext.distanceMeters / 1000).toFixed(1)} km
+                      </span>
+                      <span className="text-gray-400">•</span>
+                      <Clock className="h-3 w-3" />
+                      <span>
+                        {Math.round(legToNext.durationSeconds / 60)} min
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}

@@ -12,6 +12,7 @@ type Attraction =
 type Trip = RouterOutputs["trip"]["getWithItinerary"];
 type BasicAttraction =
   Trip["itineraryDays"][number]["itineraryDayPlaces"][number]["attraction"];
+type RouteData = RouterOutputs["route"]["buildRoute"];
 
 type ItineraryMapProps = {
   attractions: Attraction[];
@@ -21,6 +22,7 @@ type ItineraryMapProps = {
   allDaysAttractions: Map<number, BasicAttraction[]>;
   dayColors: Map<number, string>;
   hoveredAttractionId: number | null;
+  dayRoutes: Map<number, RouteData>;
   onAttractionSelect: (attractionId: number | null) => void;
   onAddAttractionToDay: (attraction: BasicAttraction) => void;
 };
@@ -45,6 +47,7 @@ export function ItineraryMap({
   allDaysAttractions,
   dayColors,
   hoveredAttractionId,
+  dayRoutes,
   onAttractionSelect,
   onAddAttractionToDay,
 }: ItineraryMapProps) {
@@ -53,7 +56,6 @@ export function ItineraryMap({
   const [panelHeight, setPanelHeight] = useState(0);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Sync selectedAttraction with selectedAttractionId prop
   useEffect(() => {
     if (selectedAttractionId) {
       const attraction = attractions.find((a) => a.id === selectedAttractionId);
@@ -125,6 +127,7 @@ export function ItineraryMap({
     <div className="relative h-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
       {/* Map */}
       <LeafletMap
+        key={`map-${dayRoutes.size}`}
         attractions={attractions}
         selectedDayAttractions={selectedDayAttractions}
         selectedDayId={selectedDayId}
@@ -133,6 +136,7 @@ export function ItineraryMap({
         hoveredAttractionId={hoveredAttractionId}
         selectedAttractionId={selectedAttraction?.id ?? null}
         panelHeight={panelHeight}
+        dayRoutes={dayRoutes}
         onMarkerClick={handleMarkerClick}
       />
 
