@@ -294,7 +294,15 @@ export function ItineraryPlanner({
       toast.success("Day added successfully");
       void utils.trip.invalidate();
     },
-    onError: (err) => {
+    onError: (err, _, context) => {
+      if (context?.tempId) {
+        setItineraryDays((prev) =>
+          prev.filter((day) => day.id !== context.tempId),
+        );
+        setSelectedDay((prev) =>
+          prev === context.tempId ? (itineraryDays[0]?.id ?? null) : prev,
+        );
+      }
       toast.error("Failed to add day", {
         description: err.message || "Please try again.",
       });
@@ -452,119 +460,123 @@ export function ItineraryPlanner({
   }, [trip, hasUnsavedChanges]);
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <>
       {/* Fetch routes for all days */}
       <DayRoutesFetcher itineraryDays={itineraryDays} onUpdate={updateRoute} />
 
-      {/* Days List */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Daily Itinerary
-          </h2>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={handleAddDay}
-              disabled={createDay.isPending}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Plus className="h-4 w-4" />
-              {createDay.isPending ? "Adding..." : "Add Day"}
-            </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={updateDays.isPending || !hasUnsavedChanges}
-              className="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Save className="h-4 w-4" />
-              {updateDays.isPending ? "Saving..." : "Save"}
-            </button>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Days List */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Daily Itinerary
+            </h2>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleAddDay}
+                disabled={createDay.isPending}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Plus className="h-4 w-4" />
+                {createDay.isPending ? "Adding..." : "Add Day"}
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={updateDays.isPending || !hasUnsavedChanges}
+                className="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Save className="h-4 w-4" />
+                {updateDays.isPending ? "Saving..." : "Save"}
+              </button>
+            </div>
           </div>
+
+          {itineraryDays.length === 0 ? (
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center">
+              <p className="mb-4 text-gray-600">
+                No days in your itinerary yet.
+              </p>
+              <button
+                type="button"
+                onClick={handleAddDay}
+                className="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-700"
+              >
+                <Plus className="h-4 w-4" />
+                Add First Day
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {itineraryDays.map((day, index) => (
+                <ItineraryDay
+                  key={day.id}
+                  day={day}
+                  color={generateDayColor(index)}
+                  isSelected={selectedDay === day.id}
+                  onSelect={() => setSelectedDay(day.id)}
+                  onRemove={() => handleRemoveDay(day.id)}
+                  onRemoveAttraction={(dayId, attractionId) =>
+                    setItineraryDays((prev) =>
+                      prev.map((d) =>
+                        d.id === dayId
+                          ? {
+                              ...d,
+                              attractions: d.attractions.filter(
+                                (a) => a.id !== attractionId,
+                              ),
+                            }
+                          : d,
+                      ),
+                    )
+                  }
+                  onAttractionHover={setHoveredAttraction}
+                  onAttractionClick={(attractionId) => {
+                    setSelectedAttractionId(attractionId);
+                    const day = attractionToDayMap.get(attractionId);
+                    if (day) setSelectedDay(day.id);
+                  }}
+                  selectedAttractionId={selectedAttractionId}
+                  isRemoving={dayBeingRemoved === day.id}
+                  isDragging={false}
+                  onReorderAttractions={(dayId, reorderedAttractions) =>
+                    setItineraryDays((prev) =>
+                      prev.map((d) =>
+                        d.id === dayId
+                          ? { ...d, attractions: reorderedAttractions }
+                          : d,
+                      ),
+                    )
+                  }
+                  onMoveUp={() => handleMoveDay(day.id, "up")}
+                  onMoveDown={() => handleMoveDay(day.id, "down")}
+                  routeData={dayRoutes.get(day.id)}
+                  isLoadingRoute={loadingRoutes.get(day.id) ?? false}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        {itineraryDays.length === 0 ? (
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center">
-            <p className="mb-4 text-gray-600">No days in your itinerary yet.</p>
-            <button
-              type="button"
-              onClick={handleAddDay}
-              className="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-700"
-            >
-              <Plus className="h-4 w-4" />
-              Add First Day
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {itineraryDays.map((day, index) => (
-              <ItineraryDay
-                key={day.id}
-                day={day}
-                color={generateDayColor(index)}
-                isSelected={selectedDay === day.id}
-                onSelect={() => setSelectedDay(day.id)}
-                onRemove={() => handleRemoveDay(day.id)}
-                onRemoveAttraction={(dayId, attractionId) =>
-                  setItineraryDays((prev) =>
-                    prev.map((d) =>
-                      d.id === dayId
-                        ? {
-                            ...d,
-                            attractions: d.attractions.filter(
-                              (a) => a.id !== attractionId,
-                            ),
-                          }
-                        : d,
-                    ),
-                  )
-                }
-                onAttractionHover={setHoveredAttraction}
-                onAttractionClick={(attractionId) => {
-                  setSelectedAttractionId(attractionId);
-                  const day = attractionToDayMap.get(attractionId);
-                  if (day) setSelectedDay(day.id);
-                }}
-                selectedAttractionId={selectedAttractionId}
-                isRemoving={dayBeingRemoved === day.id}
-                isDragging={false}
-                onReorderAttractions={(dayId, reorderedAttractions) =>
-                  setItineraryDays((prev) =>
-                    prev.map((d) =>
-                      d.id === dayId
-                        ? { ...d, attractions: reorderedAttractions }
-                        : d,
-                    ),
-                  )
-                }
-                onMoveUp={() => handleMoveDay(day.id, "up")}
-                onMoveDown={() => handleMoveDay(day.id, "down")}
-                routeData={dayRoutes.get(day.id)}
-                isLoadingRoute={loadingRoutes.get(day.id) ?? false}
-              />
-            ))}
-          </div>
-        )}
+        {/* Map */}
+        <div className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
+          <ItineraryMap
+            attractions={attractions}
+            selectedDayAttractions={
+              itineraryDays.find((d) => d.id === selectedDay)?.attractions ?? []
+            }
+            selectedDayId={selectedDay}
+            selectedAttractionId={selectedAttractionId}
+            allDaysAttractions={allDaysAttractions}
+            dayColors={dayColors}
+            hoveredAttractionId={hoveredAttraction}
+            dayRoutes={dayRoutes}
+            onAttractionSelect={setSelectedAttractionId}
+            onAddAttractionToDay={handleAddAttractionToDay}
+          />
+        </div>
       </div>
-
-      {/* Map */}
-      <div className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
-        <ItineraryMap
-          attractions={attractions}
-          selectedDayAttractions={
-            itineraryDays.find((d) => d.id === selectedDay)?.attractions ?? []
-          }
-          selectedDayId={selectedDay}
-          selectedAttractionId={selectedAttractionId}
-          allDaysAttractions={allDaysAttractions}
-          dayColors={dayColors}
-          hoveredAttractionId={hoveredAttraction}
-          dayRoutes={dayRoutes}
-          onAttractionSelect={setSelectedAttractionId}
-          onAddAttractionToDay={handleAddAttractionToDay}
-        />
-      </div>
-    </div>
+    </>
   );
 }
