@@ -149,6 +149,48 @@ function useDayRouteFetch(
   }, [route, isFetching, shouldFetch, dayId, onUpdate]);
 }
 
+function DayRoutesFetcher({
+  itineraryDays,
+  onUpdate,
+}: {
+  itineraryDays: ItineraryDayData[];
+  onUpdate: (
+    dayId: number,
+    route: RouteData | null,
+    isLoading: boolean,
+  ) => void;
+}) {
+  return (
+    <>
+      {itineraryDays.map((day) => (
+        <DayRouteFetcherItem
+          key={day.id}
+          dayId={day.id}
+          attractions={day.attractions}
+          onUpdate={onUpdate}
+        />
+      ))}
+    </>
+  );
+}
+
+function DayRouteFetcherItem({
+  dayId,
+  attractions,
+  onUpdate,
+}: {
+  dayId: number;
+  attractions: BasicAttraction[];
+  onUpdate: (
+    dayId: number,
+    route: RouteData | null,
+    isLoading: boolean,
+  ) => void;
+}) {
+  useDayRouteFetch(dayId, attractions, onUpdate);
+  return null;
+}
+
 export function ItineraryPlanner({
   trip,
   tripAttractions: attractions,
@@ -173,12 +215,6 @@ export function ItineraryPlanner({
   // Route management
   const { dayRoutes, loadingRoutes, updateRoute, clearRoute } =
     useRouteManager();
-
-  // Fetch routes for all days
-  itineraryDays.forEach((day) => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useDayRouteFetch(day.id, day.attractions, updateRoute);
-  });
 
   // Computed values
   const allDaysAttractions = useMemo(() => {
@@ -417,6 +453,9 @@ export function ItineraryPlanner({
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {/* Fetch routes for all days */}
+      <DayRoutesFetcher itineraryDays={itineraryDays} onUpdate={updateRoute} />
+
       {/* Days List */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">

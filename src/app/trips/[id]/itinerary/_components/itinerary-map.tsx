@@ -127,7 +127,7 @@ export function ItineraryMap({
     <div className="relative h-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
       {/* Map */}
       <LeafletMap
-        key={`map-${dayRoutes.size}`}
+        key="map"
         attractions={attractions}
         selectedDayAttractions={selectedDayAttractions}
         selectedDayId={selectedDayId}
