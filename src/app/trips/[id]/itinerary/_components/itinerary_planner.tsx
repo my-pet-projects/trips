@@ -203,7 +203,9 @@ export function ItineraryPlanner({
     number | null
   >(null);
 
-  const originalItineraryRef = useRef(trip.itineraryDays);
+  const originalItineraryRef = useRef<ItineraryDayData[]>(
+    transformTripDays(trip),
+  );
   const utils = api.useUtils();
 
   // Route management
@@ -234,21 +236,16 @@ export function ItineraryPlanner({
   }, [itineraryDays]);
 
   const hasUnsavedChanges = useMemo(() => {
-    if (itineraryDays.length !== originalItineraryRef.current.length)
-      return true;
+    const originalDays = originalItineraryRef.current;
+    if (itineraryDays.length !== originalDays.length) return true;
 
-    return itineraryDays.some((day) => {
-      const original = originalItineraryRef.current.find(
-        (d) => d.id === day.id,
-      );
+    return itineraryDays.some((day, index) => {
+      const original = originalDays[index];
       if (!original) return true;
       if (day.name !== original.name || day.dayNumber !== original.dayNumber)
         return true;
 
-      const originalIds = original.itineraryDayPlaces
-        .slice()
-        .sort((a, b) => a.order - b.order)
-        .map((p) => p.attractionId);
+      const originalIds = original.attractions.map((a) => a.id);
       const currentIds = day.attractions.map((a) => a.id);
 
       return (
@@ -349,7 +346,8 @@ export function ItineraryPlanner({
 
   const updateDays = api.itinerary.updateItineraryDays.useMutation({
     onSuccess: () => {
-      originalItineraryRef.current = trip.itineraryDays;
+      // Snapshot current local state as the new saved baseline.
+      originalItineraryRef.current = itineraryDays;
       toast.success("Itinerary saved");
       void utils.trip.invalidate();
     },
@@ -448,8 +446,9 @@ export function ItineraryPlanner({
   // Sync with server updates
   useEffect(() => {
     if (!hasUnsavedChanges) {
-      originalItineraryRef.current = trip.itineraryDays;
-      setItineraryDays(transformTripDays(trip));
+      const serverDays = transformTripDays(trip);
+      originalItineraryRef.current = serverDays;
+      setItineraryDays(serverDays);
     }
   }, [trip, hasUnsavedChanges]);
 
