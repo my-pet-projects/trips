@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  AlertCircle,
   ChevronDown,
   ChevronUp,
   Clock,
@@ -261,7 +262,12 @@ export function ItineraryDay({
                 </span>
               </div>
             </>
-          ) : null}
+          ) : (
+            <div className="flex items-center gap-2 text-amber-600">
+              <AlertCircle className="h-3.5 w-3.5" />
+              <span>Unable to calculate route</span>
+            </div>
+          )}
         </div>
       )}
 

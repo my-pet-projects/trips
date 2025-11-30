@@ -60,52 +60,37 @@ const transformTripDays = (trip: Trip): ItineraryDayData[] => {
 };
 
 function useRouteManager() {
-  const [dayRoutes, setDayRoutes] = useState<Map<number, RouteData>>(new Map());
-  const [loadingRoutes, setLoadingRoutes] = useState<Map<number, boolean>>(
-    new Map(),
-  );
+  const dayRoutesRef = useRef(new Map<number, RouteData>());
+  const loadingRoutesRef = useRef(new Map<number, boolean>());
+  const [, forceUpdate] = useState({});
 
   const updateRoute = useCallback(
     (dayId: number, route: RouteData | null, isLoading: boolean) => {
-      setLoadingRoutes((prev) => {
-        const next = new Map(prev);
-        next.set(dayId, isLoading);
-        return next;
-      });
+      loadingRoutesRef.current.set(dayId, isLoading);
 
-      // Only update route when we have data (keep old route while loading new one)
       if (route) {
-        setDayRoutes((prev) => {
-          const next = new Map(prev);
-          next.set(dayId, route);
-          return next;
-        });
+        dayRoutesRef.current.set(dayId, route);
       } else if (!isLoading) {
-        // Only clear route if we're not loading (i.e., there are fewer than 2 attractions)
-        setDayRoutes((prev) => {
-          const next = new Map(prev);
-          next.delete(dayId);
-          return next;
-        });
+        dayRoutesRef.current.delete(dayId);
       }
+
+      forceUpdate({});
     },
     [],
   );
 
   const clearRoute = useCallback((dayId: number) => {
-    setDayRoutes((prev) => {
-      const next = new Map(prev);
-      next.delete(dayId);
-      return next;
-    });
-    setLoadingRoutes((prev) => {
-      const next = new Map(prev);
-      next.delete(dayId);
-      return next;
-    });
+    dayRoutesRef.current.delete(dayId);
+    loadingRoutesRef.current.delete(dayId);
+    forceUpdate({});
   }, []);
 
-  return { dayRoutes, loadingRoutes, updateRoute, clearRoute };
+  return {
+    dayRoutes: dayRoutesRef.current,
+    loadingRoutes: loadingRoutesRef.current,
+    updateRoute,
+    clearRoute,
+  };
 }
 
 function useDayRouteFetch(
@@ -115,6 +100,7 @@ function useDayRouteFetch(
     dayId: number,
     route: RouteData | null,
     isLoading: boolean,
+    error?: Error,
   ) => void,
 ) {
   const validAttractions = attractions.filter(
@@ -123,7 +109,11 @@ function useDayRouteFetch(
 
   const shouldFetch = validAttractions.length >= 2;
 
-  const { data: route, isFetching } = api.route.buildRoute.useQuery(
+  const {
+    data: route,
+    isFetching,
+    error,
+  } = api.route.buildRoute.useQuery(
     {
       points: validAttractions.map((a) => ({
         id: a.id,
@@ -139,14 +129,18 @@ function useDayRouteFetch(
     },
   );
 
-  // Update parent whenever route or loading state changes
   useEffect(() => {
     if (shouldFetch) {
-      onUpdate(dayId, route ?? null, isFetching);
+      onUpdate(
+        dayId,
+        route ?? null,
+        isFetching,
+        error ? new Error(error.message) : undefined,
+      );
     } else {
       onUpdate(dayId, null, false);
     }
-  }, [route, isFetching, shouldFetch, dayId, onUpdate]);
+  }, [route, isFetching, error, shouldFetch, dayId, onUpdate]);
 }
 
 function DayRoutesFetcher({
