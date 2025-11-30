@@ -11,6 +11,7 @@ type Attraction =
 type Trip = RouterOutputs["trip"]["getWithItinerary"];
 type BasicAttraction =
   Trip["itineraryDays"][number]["itineraryDayPlaces"][number]["attraction"];
+type RouteData = RouterOutputs["route"]["buildRoute"];
 
 type LeafletMapProps = {
   attractions: Attraction[];
@@ -22,6 +23,7 @@ type LeafletMapProps = {
   selectedAttractionId: number | null;
   panelHeight: number;
   onMarkerClick: (attraction: Attraction) => void;
+  dayRoutes: Map<number, RouteData>;
 };
 
 const createMarkerIcon = (
@@ -38,7 +40,7 @@ const createMarkerIcon = (
       height: ${size}px;
       border-radius: 50%;
       border: 3px solid white;
-      box-shadow: 0 2px 8px rgba(0,0,0,${isHighlighted ? "0.4" : "0.3"});
+      box-shadow: 0 ${isHighlighted ? "4" : "2"}px ${isHighlighted ? "12" : "8"}px rgba(0,0,0,${isHighlighted ? "0.4" : "0.3"});
       cursor: pointer;
       transition: all 0.2s ease;
       ${isHighlighted ? "transform: scale(1.15);" : ""}
@@ -67,7 +69,6 @@ const createMarkerIcon = (
   `;
 };
 
-// Calculate initial center from attractions
 const getInitialMapCenter = (attractions: Attraction[]): [number, number] => {
   const validAttractions = attractions.filter((a) => a.latitude && a.longitude);
 
@@ -95,9 +96,11 @@ export default function LeafletMap({
   selectedAttractionId,
   panelHeight,
   onMarkerClick,
+  dayRoutes,
 }: LeafletMapProps) {
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<Map<number, L.Marker>>(new Map());
+  const polylinesRef = useRef<L.Polyline[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const hasInitializedBounds = useRef(false);
 
@@ -136,7 +139,83 @@ export default function LeafletMap({
     };
   }, [attractions]);
 
-  // Center map on selected attraction with panel offset
+  // Render routes
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const map = mapRef.current;
+
+    // Clear existing polylines
+    polylinesRef.current.forEach((polyline) => polyline.remove());
+    polylinesRef.current = [];
+
+    // Render all day routes
+    dayRoutes.forEach((route, dayId) => {
+      const color = dayColors.get(dayId) ?? "#3b82f6";
+      const isSelectedDay = dayId === selectedDayId;
+
+      // Main route polyline (full route for the day)
+      const latLngs = route.geojson.geometry.coordinates.map(
+        ([lng, lat]) => [lat, lng] as [number, number],
+      );
+
+      const mainPolyline = L.polyline(latLngs, {
+        color: color,
+        weight: isSelectedDay ? 4 : 3,
+        opacity: isSelectedDay ? 0.8 : 0.5,
+        lineJoin: "round",
+        lineCap: "round",
+      }).addTo(map);
+
+      polylinesRef.current.push(mainPolyline);
+
+      // Highlighted leg polylines (for hovered/selected attractions)
+      if (isSelectedDay && route.legs) {
+        route.legs.forEach((leg) => {
+          const isLegSelected =
+            selectedAttractionId === leg.fromAttractionId ||
+            selectedAttractionId === leg.toAttractionId;
+          const isLegHovered =
+            hoveredAttractionId === leg.fromAttractionId ||
+            hoveredAttractionId === leg.toAttractionId;
+
+          if (!isLegSelected && !isLegHovered) return;
+
+          const legLatLngs = leg.geometryGeojsonParsed.coordinates.map(
+            ([lng, lat]) => [lat, lng] as [number, number],
+          );
+
+          // Use the day's color with different opacity/brightness for highlight
+          const highlightPolyline = L.polyline(legLatLngs, {
+            color: color, // Use the day's color
+            weight: isLegSelected ? 7 : 5,
+            opacity: 1,
+            lineJoin: "round",
+            lineCap: "round",
+          }).addTo(map);
+
+          // Add pulsing effect for selected legs
+          if (isLegSelected) {
+            const pathElement = highlightPolyline.getElement();
+            if (pathElement instanceof SVGPathElement) {
+              pathElement.style.animation =
+                "route-pulse 1.5s ease-in-out infinite";
+            }
+          }
+
+          polylinesRef.current.push(highlightPolyline);
+        });
+      }
+    });
+  }, [
+    dayRoutes,
+    selectedDayId,
+    dayColors,
+    hoveredAttractionId,
+    selectedAttractionId,
+  ]);
+
+  // Center map on selected attraction
   useEffect(() => {
     if (!mapRef.current || !selectedAttractionId) return;
 
@@ -166,7 +245,7 @@ export default function LeafletMap({
     return () => clearTimeout(timeoutId);
   }, [selectedAttractionId, attractions, panelHeight]);
 
-  // Center map on selected day's attractions when day changes (but not when attraction is selected)
+  // Center map on selected day attractions
   useEffect(() => {
     if (!mapRef.current || !selectedDayId || selectedAttractionId) return;
 
@@ -201,7 +280,7 @@ export default function LeafletMap({
     return () => clearTimeout(timeoutId);
   }, [selectedDayId, selectedDayAttractions, selectedAttractionId]);
 
-  // Update markers when attractions or state changes
+  // Render markers
   useEffect(() => {
     if (!mapRef.current) return;
 
@@ -268,7 +347,6 @@ export default function LeafletMap({
       })
         .addTo(map)
         .on("click", (e) => {
-          // Stop event propagation to prevent triggering other clicks
           L.DomEvent.stopPropagation(e);
           onMarkerClick(attraction);
         });
@@ -302,5 +380,20 @@ export default function LeafletMap({
     onMarkerClick,
   ]);
 
-  return <div ref={containerRef} className="h-full w-full" />;
+  return (
+    <div ref={containerRef} className="h-full w-full">
+      <style>{`
+        @keyframes route-pulse {
+          0%, 100% {
+            opacity: 1;
+            stroke-width: 6;
+          }
+          50% {
+            opacity: 0.6;
+            stroke-width: 8;
+          }
+        }
+      `}</style>
+    </div>
+  );
 }
