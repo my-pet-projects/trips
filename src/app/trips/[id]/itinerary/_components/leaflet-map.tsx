@@ -1,10 +1,15 @@
 "use client";
 
-import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { useEffect, useMemo, useRef } from "react";
+import { MapPin, Navigation } from "lucide-react";
+import { useMemo, useRef } from "react";
 
 import type { RouterOutputs } from "~/trpc/react";
+import { useGeolocationTracking } from "./hooks/useGeolocationTracking";
+import { useLeafletMap } from "./hooks/useLeafletMap";
+import { useLeafletMarkers } from "./hooks/useLeafletMarkers";
+import { useLeafletRoutes } from "./hooks/useLeafletRoutes";
+import { useMapCenteringAndBounds } from "./hooks/useMapCenteringAndBounds";
 
 type Attraction =
   RouterOutputs["attraction"]["getAttractionsByCountries"][number];
@@ -24,66 +29,8 @@ type LeafletMapProps = {
   panelHeight: number;
   onMarkerClick: (attraction: Attraction) => void;
   dayRoutes: Map<number, RouteData>;
-};
-
-const createMarkerIcon = (
-  color: string,
-  size: number,
-  isInDay: boolean,
-  isHighlighted: boolean,
-  orderNumber?: number,
-) => {
-  return `
-    <div style="
-      background-color: ${color};
-      width: ${size}px;
-      height: ${size}px;
-      border-radius: 50%;
-      border: 3px solid white;
-      box-shadow: 0 ${isHighlighted ? "4" : "2"}px ${isHighlighted ? "12" : "8"}px rgba(0,0,0,${isHighlighted ? "0.4" : "0.3"});
-      cursor: pointer;
-      transition: all 0.2s ease;
-      ${isHighlighted ? "transform: scale(1.15);" : ""}
-      position: relative;
-      overflow: hidden;
-    ">
-      <div style="
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: 600;
-        font-size: ${size > 28 ? "14px" : "12px"};
-        line-height: 1;
-        white-space: nowrap;
-        text-align: center;
-      ">
-        ${orderNumber ?? (isInDay ? "●" : "")}
-      </div>
-    </div>
-  `;
-};
-
-const getInitialMapCenter = (attractions: Attraction[]): [number, number] => {
-  const validAttractions = attractions.filter((a) => a.latitude && a.longitude);
-
-  if (validAttractions.length === 0) {
-    return [48.8566, 2.3522]; // Fallback to Paris
-  }
-
-  const avgLat =
-    validAttractions.reduce((sum, a) => sum + a.latitude!, 0) /
-    validAttractions.length;
-  const avgLng =
-    validAttractions.reduce((sum, a) => sum + a.longitude!, 0) /
-    validAttractions.length;
-
-  return [avgLat, avgLng];
+  enableLocationTracking?: boolean;
+  isLoadingRoutes: boolean;
 };
 
 export default function LeafletMap({
@@ -97,14 +44,16 @@ export default function LeafletMap({
   panelHeight,
   onMarkerClick,
   dayRoutes,
+  enableLocationTracking = false,
+  isLoadingRoutes,
 }: LeafletMapProps) {
-  const mapRef = useRef<L.Map | null>(null);
-  const markersRef = useRef<Map<number, L.Marker>>(new Map());
-  const polylinesRef = useRef<L.Polyline[]>([]);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const hasInitializedBounds = useRef(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // Get order number for attractions in selected day
+  const { mapRef, hasInitializedBounds } = useLeafletMap(
+    containerRef,
+    attractions,
+  );
+
   const selectedDayAttractionOrders = useMemo(() => {
     const map = new Map<number, number>();
     selectedDayAttractions.forEach((attr, index) => {
@@ -113,287 +62,91 @@ export default function LeafletMap({
     return map;
   }, [selectedDayAttractions]);
 
-  // Initialize map
-  useEffect(() => {
-    if (!containerRef.current || mapRef.current) return;
-
-    const center = getInitialMapCenter(attractions);
-    const map = L.map(containerRef.current, {
-      zoomControl: true,
-      scrollWheelZoom: true,
-    }).setView(center, 5);
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19,
-      minZoom: 3,
-    }).addTo(map);
-
-    mapRef.current = map;
-
-    return () => {
-      map.remove();
-      mapRef.current = null;
-      hasInitializedBounds.current = false;
-    };
-  }, [attractions]);
-
-  // Render routes
-  useEffect(() => {
-    if (!mapRef.current) return;
-
-    const map = mapRef.current;
-
-    // Clear existing polylines
-    polylinesRef.current.forEach((polyline) => polyline.remove());
-    polylinesRef.current = [];
-
-    // Render all day routes
-    dayRoutes.forEach((route, dayId) => {
-      const color = dayColors.get(dayId) ?? "#3b82f6";
-      const isSelectedDay = dayId === selectedDayId;
-
-      // Main route polyline (full route for the day)
-      const latLngs = route.geojson.geometry.coordinates.map(
-        ([lng, lat]) => [lat, lng] as [number, number],
-      );
-
-      const mainPolyline = L.polyline(latLngs, {
-        color: color,
-        weight: isSelectedDay ? 4 : 3,
-        opacity: isSelectedDay ? 0.8 : 0.5,
-        lineJoin: "round",
-        lineCap: "round",
-      }).addTo(map);
-
-      polylinesRef.current.push(mainPolyline);
-
-      // Highlighted leg polylines (for hovered/selected attractions)
-      if (isSelectedDay && route.legs) {
-        route.legs.forEach((leg) => {
-          const isLegSelected =
-            selectedAttractionId === leg.fromAttractionId ||
-            selectedAttractionId === leg.toAttractionId;
-          const isLegHovered =
-            hoveredAttractionId === leg.fromAttractionId ||
-            hoveredAttractionId === leg.toAttractionId;
-
-          if (!isLegSelected && !isLegHovered) return;
-
-          const legLatLngs = leg.geometryGeojsonParsed.coordinates.map(
-            ([lng, lat]) => [lat, lng] as [number, number],
-          );
-
-          // Use the day's color with different opacity/brightness for highlight
-          const highlightPolyline = L.polyline(legLatLngs, {
-            color: color, // Use the day's color
-            weight: isLegSelected ? 7 : 5,
-            opacity: 1,
-            lineJoin: "round",
-            lineCap: "round",
-          }).addTo(map);
-
-          // Add pulsing effect for selected legs
-          if (isLegSelected) {
-            const pathElement = highlightPolyline.getElement();
-            if (pathElement instanceof SVGPathElement) {
-              pathElement.style.animation =
-                "route-pulse 1.5s ease-in-out infinite";
-            }
-          }
-
-          polylinesRef.current.push(highlightPolyline);
-        });
-      }
-    });
-  }, [
-    dayRoutes,
-    selectedDayId,
-    dayColors,
-    hoveredAttractionId,
-    selectedAttractionId,
-  ]);
-
-  // Center map on selected attraction
-  useEffect(() => {
-    if (!mapRef.current || !selectedAttractionId) return;
-
-    const attraction = attractions.find((a) => a.id === selectedAttractionId);
-    if (!attraction?.latitude || !attraction?.longitude) return;
-
-    const map = mapRef.current;
-
-    // Use setTimeout to ensure panel height is measured after DOM update
-    const timeoutId = setTimeout(() => {
-      const offset = panelHeight > 0 ? panelHeight / 2 : 0;
-      const targetLatLng = L.latLng(
-        attraction.latitude!,
-        attraction.longitude!,
-      );
-      const zoom = map.getZoom() < 15 ? 15 : map.getZoom();
-      const targetPoint = map.project(targetLatLng, zoom);
-      const offsetPoint = L.point(targetPoint.x, targetPoint.y + offset);
-      const offsetLatLng = map.unproject(offsetPoint, zoom);
-
-      map.setView(offsetLatLng, zoom, {
-        animate: true,
-        duration: 0.5,
-      });
-    }, 100);
-
-    return () => clearTimeout(timeoutId);
-  }, [selectedAttractionId, attractions, panelHeight]);
-
-  // Center map on selected day attractions
-  useEffect(() => {
-    if (!mapRef.current || !selectedDayId || selectedAttractionId) return;
-
-    const map = mapRef.current;
-    const validAttractions = selectedDayAttractions.filter(
-      (a) => a.latitude && a.longitude,
-    );
-
-    if (validAttractions.length === 0) return;
-
-    // Small delay to ensure markers are rendered
-    const timeoutId = setTimeout(() => {
-      if (validAttractions.length === 1) {
-        const attraction = validAttractions[0]!;
-        map.setView([attraction.latitude!, attraction.longitude!], 14, {
-          animate: true,
-          duration: 0.5,
-        });
-      } else {
-        const bounds = L.latLngBounds(
-          validAttractions.map((a) => [a.latitude!, a.longitude!]),
-        );
-        map.fitBounds(bounds, {
-          padding: [60, 60],
-          maxZoom: 15,
-          animate: true,
-          duration: 0.5,
-        });
-      }
-    }, 50);
-
-    return () => clearTimeout(timeoutId);
-  }, [selectedDayId, selectedDayAttractions, selectedAttractionId]);
-
-  // Render markers
-  useEffect(() => {
-    if (!mapRef.current) return;
-
-    const map = mapRef.current;
-    const markers = markersRef.current;
-
-    // Clear existing markers
-    markers.forEach((marker) => marker.remove());
-    markers.clear();
-
-    if (attractions.length === 0) return;
-
-    const bounds = L.latLngBounds([]);
-    let hasValidCoordinates = false;
-
-    // Add markers for each attraction
-    attractions.forEach((attraction) => {
-      if (!attraction.latitude || !attraction.longitude) return;
-
-      hasValidCoordinates = true;
-      const attractionDayId = attractionToDayMap.get(attraction.id);
-      const isInAnyDay = attractionDayId !== undefined;
-      const isInSelectedDay = attractionDayId === selectedDayId;
-      const isHovered = hoveredAttractionId === attraction.id;
-      const isSelected = selectedAttractionId === attraction.id;
-      const orderNumber = selectedDayAttractionOrders.get(attraction.id);
-
-      // Determine marker color
-      let color = "#9ca3af"; // gray for unassigned
-      if (isInAnyDay && attractionDayId !== undefined) {
-        color = dayColors.get(attractionDayId) ?? "#9ca3af";
-      }
-
-      // Determine marker size
-      const baseSize = 26;
-      const size = isSelected
-        ? baseSize + 8
-        : isHovered
-          ? baseSize + 4
-          : baseSize;
-
-      // Increase z-index for selected/hovered markers
-      const zIndexOffset = isSelected ? 1000 : isHovered ? 500 : 0;
-
-      const iconHtml = createMarkerIcon(
-        color,
-        size,
-        isInAnyDay,
-        isHovered || isSelected,
-        isInSelectedDay ? orderNumber : undefined,
-      );
-
-      const customIcon = L.divIcon({
-        html: iconHtml,
-        className: "custom-marker",
-        iconSize: [size, size],
-        iconAnchor: [size / 2, size / 2],
-      });
-
-      const marker = L.marker([attraction.latitude, attraction.longitude], {
-        icon: customIcon,
-        title: attraction.name,
-        zIndexOffset,
-      })
-        .addTo(map)
-        .on("click", (e) => {
-          L.DomEvent.stopPropagation(e);
-          onMarkerClick(attraction);
-        });
-
-      markers.set(attraction.id, marker);
-      bounds.extend([attraction.latitude, attraction.longitude]);
-    });
-
-    // Fit bounds on initial load only
-    if (
-      hasValidCoordinates &&
-      bounds.isValid() &&
-      !hasInitializedBounds.current &&
-      !selectedDayId &&
-      !selectedAttractionId
-    ) {
-      map.fitBounds(bounds, {
-        padding: [50, 50],
-        maxZoom: 12,
-      });
-      hasInitializedBounds.current = true;
-    }
-  }, [
+  useLeafletMarkers(
+    mapRef,
     attractions,
     attractionToDayMap,
-    selectedDayId,
     dayColors,
     hoveredAttractionId,
     selectedAttractionId,
+    selectedDayId,
     selectedDayAttractionOrders,
     onMarkerClick,
-  ]);
+  );
+
+  useLeafletRoutes(
+    mapRef,
+    dayRoutes,
+    dayColors,
+    selectedDayId,
+    hoveredAttractionId,
+    selectedAttractionId,
+    isLoadingRoutes,
+  );
+
+  const {
+    userLocation,
+    isTrackingLocation,
+    toggleLocationTracking,
+    centerOnUserLocation,
+  } = useGeolocationTracking(mapRef, enableLocationTracking);
+
+  useMapCenteringAndBounds(
+    mapRef,
+    hasInitializedBounds,
+    attractions,
+    selectedDayAttractions,
+    selectedDayId,
+    selectedAttractionId,
+    panelHeight,
+    userLocation,
+  );
+
+  const showLoadingRoutesMessage =
+    isLoadingRoutes && selectedDayId && selectedDayAttractions.length > 0;
 
   return (
-    <div ref={containerRef} className="h-full w-full">
-      <style>{`
-        @keyframes route-pulse {
-          0%, 100% {
-            opacity: 1;
-            stroke-width: 6;
-          }
-          50% {
-            opacity: 0.6;
-            stroke-width: 8;
-          }
-        }
-      `}</style>
+    <div className="relative h-full w-full">
+      <div ref={containerRef} className="h-full w-full" />
+
+      {/* Location controls */}
+      {enableLocationTracking && (
+        <div className="absolute top-4 right-4 z-1000 flex flex-col gap-2">
+          <button
+            onClick={toggleLocationTracking}
+            className={`rounded-lg p-3 shadow-lg transition-all ${
+              isTrackingLocation
+                ? "bg-blue-600 text-white"
+                : "bg-white text-gray-700 hover:bg-gray-50"
+            }`}
+            title={
+              isTrackingLocation
+                ? "Stop tracking location"
+                : "Track my location"
+            }
+          >
+            <Navigation
+              className={`h-5 w-5 ${isTrackingLocation ? "animate-pulse" : ""}`}
+            />
+          </button>
+          {userLocation && (
+            <button
+              onClick={centerOnUserLocation}
+              className="rounded-lg bg-white p-3 text-gray-700 shadow-lg transition-all hover:bg-gray-50"
+              title="Center on my location"
+            >
+              <MapPin className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Loading route indicator */}
+      {showLoadingRoutesMessage && (
+        <div className="absolute top-4 left-1/2 z-1000 -translate-x-1/2 rounded-lg bg-white p-3 font-medium whitespace-nowrap text-gray-700 shadow-md">
+          Calculating Routes...
+        </div>
+      )}
     </div>
   );
 }
