@@ -78,8 +78,12 @@ export const useGeolocationTracking = (
 
   // Effect to inject styles for the geolocation marker
   useEffect(() => {
+    // Avoid duplicate injection if style already exists
+    if (document.getElementById("geolocation-marker-styles")) {
+      return;
+    }
+
     const styleElement = document.createElement("style");
-    styleElement.type = "text/css";
     styleElement.id = "geolocation-marker-styles";
     styleElement.innerHTML = GEOLOCATION_MARKER_STYLES;
     document.head.appendChild(styleElement);
@@ -110,7 +114,7 @@ export const useGeolocationTracking = (
     }
 
     const map = mapRef.current;
-    let watchId: number;
+    let watchId: number | undefined;
 
     if ("geolocation" in navigator) {
       watchId = navigator.geolocation.watchPosition(

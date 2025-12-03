@@ -7,31 +7,29 @@ import type { RouterOutputs } from "~/trpc/react";
 type Attraction =
   RouterOutputs["attraction"]["getAttractionsByCountries"][number];
 
+const getInitialMapCenter = (attractions: Attraction[]): [number, number] => {
+  const validAttractions = attractions.filter((a) => a.latitude && a.longitude);
+
+  if (validAttractions.length === 0) {
+    return [48.8566, 2.3522]; // Fallback to Paris
+  }
+
+  const avgLat =
+    validAttractions.reduce((sum, a) => sum + a.latitude!, 0) /
+    validAttractions.length;
+  const avgLng =
+    validAttractions.reduce((sum, a) => sum + a.longitude!, 0) /
+    validAttractions.length;
+
+  return [avgLat, avgLng];
+};
+
 export const useLeafletMap = (
   containerRef: React.RefObject<HTMLDivElement | null>,
   attractions: Attraction[],
 ) => {
   const mapRef = useRef<L.Map | null>(null);
   const hasInitializedBounds = useRef(false);
-
-  const getInitialMapCenter = (attractions: Attraction[]): [number, number] => {
-    const validAttractions = attractions.filter(
-      (a) => a.latitude && a.longitude,
-    );
-
-    if (validAttractions.length === 0) {
-      return [48.8566, 2.3522]; // Fallback to Paris
-    }
-
-    const avgLat =
-      validAttractions.reduce((sum, a) => sum + a.latitude!, 0) /
-      validAttractions.length;
-    const avgLng =
-      validAttractions.reduce((sum, a) => sum + a.longitude!, 0) /
-      validAttractions.length;
-
-    return [avgLat, avgLng];
-  };
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;

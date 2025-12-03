@@ -92,10 +92,10 @@ export function ItineraryPlanner({
 
   const updateRoute = useCallback(
     (dayId: number, route: RouteData | null, isLoading: boolean) => {
-      setIsLoadingRoutes(isLoading);
       setLoadingRoutes((prev) => {
         const newMap = new Map(prev);
         newMap.set(dayId, isLoading);
+        setIsLoadingRoutes(Array.from(newMap.values()).some(Boolean));
         return newMap;
       });
 
@@ -121,6 +121,7 @@ export function ItineraryPlanner({
     setLoadingRoutes((prev) => {
       const newMap = new Map(prev);
       newMap.delete(dayId);
+      setIsLoadingRoutes(Array.from(newMap.values()).some(Boolean));
       return newMap;
     });
   }, []);

@@ -71,6 +71,7 @@ function DayRouteFetcherItem({
     dayId: number,
     route: RouteData | null,
     isLoading: boolean,
+    error?: Error,
   ) => void;
 }) {
   useDayRouteFetch(dayId, attractions, onUpdate);

@@ -113,6 +113,7 @@ export default function LeafletMap({
       {enableLocationTracking && (
         <div className="absolute top-4 right-4 z-1000 flex flex-col gap-2">
           <button
+            type="button"
             onClick={toggleLocationTracking}
             className={`rounded-lg p-3 shadow-lg transition-all ${
               isTrackingLocation
@@ -131,6 +132,7 @@ export default function LeafletMap({
           </button>
           {userLocation && (
             <button
+              type="button"
               onClick={centerOnUserLocation}
               className="rounded-lg bg-white p-3 text-gray-700 shadow-lg transition-all hover:bg-gray-50"
               title="Center on my location"

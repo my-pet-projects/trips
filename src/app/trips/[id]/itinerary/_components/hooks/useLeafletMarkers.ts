@@ -61,7 +61,10 @@ export const useLeafletMarkers = (
   onMarkerClick: (attraction: Attraction) => void,
 ) => {
   const markersRef = useRef<Map<number, L.Marker>>(new Map());
+  const previousHoveredIdRef = useRef<number | null>(null);
+  const previousSelectedIdRef = useRef<number | null>(null);
 
+  // Create all markers initially (runs when attractions/day structure changes)
   useEffect(() => {
     if (!mapRef.current) return;
 
@@ -80,8 +83,6 @@ export const useLeafletMarkers = (
       const attractionDayId = attractionToDayMap.get(attraction.id);
       const isInAnyDay = attractionDayId !== undefined;
       const isInSelectedDay = attractionDayId === selectedDayId;
-      const isHovered = hoveredAttractionId === attraction.id;
-      const isSelected = selectedAttractionId === attraction.id;
       const orderNumber = selectedDayAttractionOrders.get(attraction.id);
 
       let color = "#9ca3af";
@@ -90,32 +91,28 @@ export const useLeafletMarkers = (
       }
 
       const baseSize = 26;
-      const size = isSelected
-        ? baseSize + 8
-        : isHovered
-          ? baseSize + 4
-          : baseSize;
-      const zIndexOffset = isSelected ? 1000 : isHovered ? 500 : 0;
+      const zIndexOffset = 0;
 
       const iconHtml = createMarkerIcon(
         color,
-        size,
+        baseSize,
         isInAnyDay,
-        isHovered || isSelected,
+        false,
         isInSelectedDay ? orderNumber : undefined,
       );
 
       const customIcon = L.divIcon({
         html: iconHtml,
         className: "custom-marker",
-        iconSize: [size, size],
-        iconAnchor: [size / 2, size / 2],
+        iconSize: [baseSize, baseSize],
+        iconAnchor: [baseSize / 2, baseSize / 2],
       });
 
       const marker = L.marker([attraction.latitude, attraction.longitude], {
         icon: customIcon,
         title: attraction.name,
         zIndexOffset,
+        pane: "markerPane",
       })
         .addTo(map)
         .on("click", (e) => {
@@ -137,10 +134,86 @@ export const useLeafletMarkers = (
     attractionToDayMap,
     selectedDayId,
     dayColors,
-    hoveredAttractionId,
-    selectedAttractionId,
     selectedDayAttractionOrders,
     onMarkerClick,
+  ]);
+
+  // Update only affected markers when hover/selection changes
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const markers = markersRef.current;
+    const affectedIds = new Set<number>();
+
+    // Add currently hovered/selected
+    if (hoveredAttractionId) affectedIds.add(hoveredAttractionId);
+    if (selectedAttractionId) affectedIds.add(selectedAttractionId);
+
+    // Add previously hovered/selected to reset them
+    if (previousHoveredIdRef.current)
+      affectedIds.add(previousHoveredIdRef.current);
+    if (previousSelectedIdRef.current)
+      affectedIds.add(previousSelectedIdRef.current);
+
+    // Update each affected marker
+    affectedIds.forEach((attractionId) => {
+      const marker = markers.get(attractionId);
+      const attraction = attractions.find((a) => a.id === attractionId);
+
+      if (!marker || !attraction) return;
+
+      const attractionDayId = attractionToDayMap.get(attraction.id);
+      const isInAnyDay = attractionDayId !== undefined;
+      const isInSelectedDay = attractionDayId === selectedDayId;
+      const isHovered = hoveredAttractionId === attraction.id;
+      const isSelected = selectedAttractionId === attraction.id;
+      const orderNumber = selectedDayAttractionOrders.get(attraction.id);
+
+      let color = "#9ca3af";
+      if (isInAnyDay && attractionDayId !== undefined) {
+        color = dayColors.get(attractionDayId) ?? "#9ca3af";
+      }
+
+      const baseSize = 26;
+      const size = isSelected
+        ? baseSize + 8
+        : isHovered
+          ? baseSize + 4
+          : baseSize;
+
+      const zIndexOffset = isSelected ? 1000 : isHovered ? 500 : 0;
+
+      const iconHtml = createMarkerIcon(
+        color,
+        size,
+        isInAnyDay,
+        isHovered || isSelected,
+        isInSelectedDay ? orderNumber : undefined,
+      );
+
+      const customIcon = L.divIcon({
+        html: iconHtml,
+        className: "custom-marker",
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
+      });
+
+      marker.setIcon(customIcon);
+      marker.setZIndexOffset(zIndexOffset);
+    });
+
+    // Update refs for next render
+    previousHoveredIdRef.current = hoveredAttractionId;
+    previousSelectedIdRef.current = selectedAttractionId;
+  }, [
+    hoveredAttractionId,
+    selectedAttractionId,
+    attractions,
+    attractionToDayMap,
+    selectedDayId,
+    dayColors,
+    selectedDayAttractionOrders,
+    mapRef,
   ]);
 
   return markersRef.current;

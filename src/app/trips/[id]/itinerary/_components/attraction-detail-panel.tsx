@@ -46,7 +46,10 @@ export function AttractionDetailPanel({
     });
 
     resizeObserver.observe(panelRef.current);
-    return () => resizeObserver.disconnect();
+    return () => {
+      resizeObserver.disconnect();
+      onPanelHeightChange(0);
+    };
   }, [onPanelHeightChange]);
 
   return (
@@ -132,7 +135,7 @@ export function AttractionDetailPanel({
             <button
               type="button"
               onClick={onAddToDay}
-              disabled={!selectedDayId}
+              disabled={!selectedDayId || attractionStatus.isInAnyDay}
               className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
                 attractionStatus.isInAnyDay || !selectedDayId
                   ? "cursor-not-allowed bg-gray-100 text-gray-400"
