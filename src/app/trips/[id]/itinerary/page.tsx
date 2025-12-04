@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { api } from "~/trpc/server";
-import { ItineraryPlanner } from "./_components/itinerary_planner";
+import { ItineraryPlanner } from "./_components/itinerary-planner";
 
 type ItineraryPageProps = {
   params: Promise<{
