@@ -80,25 +80,15 @@ export const useLeafletMarkers = (
     attractions.forEach((attraction) => {
       if (!attraction.latitude || !attraction.longitude) return;
 
-      const attractionDayId = attractionToDayMap.get(attraction.id);
-      const isInAnyDay = attractionDayId !== undefined;
-      const isInSelectedDay = attractionDayId === selectedDayId;
-      const orderNumber = selectedDayAttractionOrders.get(attraction.id);
-
-      let color = "#9ca3af";
-      if (isInAnyDay && attractionDayId !== undefined) {
-        color = dayColors.get(attractionDayId) ?? "#9ca3af";
-      }
-
       const baseSize = 26;
-      const zIndexOffset = 0;
 
+      // Create with default appearance
       const iconHtml = createMarkerIcon(
-        color,
+        "#9ca3af", // Default gray color
         baseSize,
-        isInAnyDay,
         false,
-        isInSelectedDay ? orderNumber : undefined,
+        false,
+        undefined,
       );
 
       const customIcon = L.divIcon({
@@ -111,7 +101,7 @@ export const useLeafletMarkers = (
       const marker = L.marker([attraction.latitude, attraction.longitude], {
         icon: customIcon,
         title: attraction.name,
-        zIndexOffset,
+        zIndexOffset: 0,
         pane: "markerPane",
       })
         .addTo(map)
@@ -128,14 +118,55 @@ export const useLeafletMarkers = (
       markers.forEach((marker) => marker.remove());
       markers.clear();
     };
+  }, [mapRef, attractions, onMarkerClick]);
+
+  // Update all markers when day selection or day assignments change
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const markers = markersRef.current;
+
+    // Update all markers with current day/color information
+    attractions.forEach((attraction) => {
+      const marker = markers.get(attraction.id);
+      if (!marker) return;
+
+      const attractionDayId = attractionToDayMap.get(attraction.id);
+      const isInAnyDay = attractionDayId !== undefined;
+      const isInSelectedDay = attractionDayId === selectedDayId;
+      const orderNumber = selectedDayAttractionOrders.get(attraction.id);
+
+      let color = "#9ca3af";
+      if (isInAnyDay && attractionDayId !== undefined) {
+        color = dayColors.get(attractionDayId) ?? "#9ca3af";
+      }
+
+      const baseSize = 26;
+
+      const iconHtml = createMarkerIcon(
+        color,
+        baseSize,
+        isInAnyDay,
+        false, // Not highlighted yet
+        isInSelectedDay ? orderNumber : undefined,
+      );
+
+      const customIcon = L.divIcon({
+        html: iconHtml,
+        className: "custom-marker",
+        iconSize: [baseSize, baseSize],
+        iconAnchor: [baseSize / 2, baseSize / 2],
+      });
+
+      marker.setIcon(customIcon);
+    });
   }, [
-    mapRef,
     attractions,
     attractionToDayMap,
     selectedDayId,
     dayColors,
     selectedDayAttractionOrders,
-    onMarkerClick,
+    mapRef,
   ]);
 
   // Update only affected markers when hover/selection changes

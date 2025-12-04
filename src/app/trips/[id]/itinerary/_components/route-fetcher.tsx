@@ -90,6 +90,7 @@ export function DayRoutesFetcher({
     dayId: number,
     route: RouteData | null,
     isLoading: boolean,
+    error?: Error,
   ) => void;
 }) {
   return (

@@ -95,8 +95,12 @@ export function ItineraryPlanner({
       setLoadingRoutes((prev) => {
         const newMap = new Map(prev);
         newMap.set(dayId, isLoading);
-        setIsLoadingRoutes(Array.from(newMap.values()).some(Boolean));
         return newMap;
+      });
+
+      setLoadingRoutes((currentRoutes) => {
+        setIsLoadingRoutes(Array.from(currentRoutes.values()).some(Boolean));
+        return currentRoutes;
       });
 
       setDayRoutes((prev) => {
@@ -121,8 +125,11 @@ export function ItineraryPlanner({
     setLoadingRoutes((prev) => {
       const newMap = new Map(prev);
       newMap.delete(dayId);
-      setIsLoadingRoutes(Array.from(newMap.values()).some(Boolean));
       return newMap;
+    });
+    setLoadingRoutes((currentRoutes) => {
+      setIsLoadingRoutes(Array.from(currentRoutes.values()).some(Boolean));
+      return currentRoutes;
     });
   }, []);
 

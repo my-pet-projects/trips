@@ -29,12 +29,13 @@ export const useLeafletMap = (
   attractions: Attraction[],
 ) => {
   const mapRef = useRef<L.Map | null>(null);
+  const initialAttractionsRef = useRef(attractions);
   const hasInitializedBounds = useRef(false);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    const center = getInitialMapCenter(attractions);
+    const center = getInitialMapCenter(initialAttractionsRef.current);
     const map = L.map(containerRef.current, {
       zoomControl: true,
       scrollWheelZoom: true,
@@ -55,7 +56,7 @@ export const useLeafletMap = (
       mapRef.current = null;
       hasInitializedBounds.current = false;
     };
-  }, [attractions, containerRef]);
+  }, [containerRef]);
 
   return { mapRef, hasInitializedBounds };
 };
