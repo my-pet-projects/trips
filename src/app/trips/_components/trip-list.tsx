@@ -182,6 +182,12 @@ function TripCard({
                 Itinerary
               </Link>
             </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/trips/${id}/view`} className="flex items-center">
+                <Calendar className="mr-2 h-4 w-4" />
+                View
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={(e) => {
                 e.preventDefault();
