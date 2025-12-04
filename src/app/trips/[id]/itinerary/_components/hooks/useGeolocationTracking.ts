@@ -114,7 +114,7 @@ export const useGeolocationTracking = (
     }
 
     const map = mapRef.current;
-    let watchId: number | undefined;
+    let watchId: number | null = null;
 
     if ("geolocation" in navigator) {
       watchId = navigator.geolocation.watchPosition(
@@ -156,7 +156,7 @@ export const useGeolocationTracking = (
     }
 
     return () => {
-      if (watchId) {
+      if (watchId !== null) {
         navigator.geolocation.clearWatch(watchId);
       }
       if (currentLocationMarkerRef.current) {

@@ -90,17 +90,16 @@ export function ItineraryPlanner({
   );
   const [isLoadingRoutes, setIsLoadingRoutes] = useState<boolean>(false);
 
+  useEffect(() => {
+    setIsLoadingRoutes(Array.from(loadingRoutes.values()).some(Boolean));
+  }, [loadingRoutes]);
+
   const updateRoute = useCallback(
     (dayId: number, route: RouteData | null, isLoading: boolean) => {
       setLoadingRoutes((prev) => {
         const newMap = new Map(prev);
         newMap.set(dayId, isLoading);
         return newMap;
-      });
-
-      setLoadingRoutes((currentRoutes) => {
-        setIsLoadingRoutes(Array.from(currentRoutes.values()).some(Boolean));
-        return currentRoutes;
       });
 
       setDayRoutes((prev) => {
@@ -126,10 +125,6 @@ export function ItineraryPlanner({
       const newMap = new Map(prev);
       newMap.delete(dayId);
       return newMap;
-    });
-    setLoadingRoutes((currentRoutes) => {
-      setIsLoadingRoutes(Array.from(currentRoutes.values()).some(Boolean));
-      return currentRoutes;
     });
   }, []);
 

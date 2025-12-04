@@ -247,5 +247,5 @@ export const useLeafletMarkers = (
     mapRef,
   ]);
 
-  return markersRef.current;
+  return markersRef;
 };

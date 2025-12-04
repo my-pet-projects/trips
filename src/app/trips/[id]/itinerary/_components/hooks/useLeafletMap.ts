@@ -8,7 +8,9 @@ type Attraction =
   RouterOutputs["attraction"]["getAttractionsByCountries"][number];
 
 const getInitialMapCenter = (attractions: Attraction[]): [number, number] => {
-  const validAttractions = attractions.filter((a) => a.latitude && a.longitude);
+  const validAttractions = attractions.filter(
+    (a) => a.latitude != null && a.longitude != null,
+  );
 
   if (validAttractions.length === 0) {
     return [48.8566, 2.3522]; // Fallback to Paris
