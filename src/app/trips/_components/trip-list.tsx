@@ -4,6 +4,7 @@ import { TRPCClientError } from "@trpc/client";
 import {
   AlertCircle,
   Calendar,
+  Eye,
   Loader2,
   MapPin,
   MoreVertical,
@@ -180,6 +181,12 @@ function TripCard({
               >
                 <Calendar className="mr-2 h-4 w-4" />
                 Itinerary
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/trips/${id}/view`} className="flex items-center">
+                <Eye className="mr-2 h-4 w-4" />
+                View
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem
