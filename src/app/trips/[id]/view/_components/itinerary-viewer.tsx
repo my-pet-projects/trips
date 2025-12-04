@@ -125,33 +125,32 @@ export function ItineraryViewer({
     [dayColors, selectedDayId],
   );
 
-  const canGoPrevDay = selectedDay && selectedDay.dayNumber > 1;
+  const selectedDayIndex = itineraryDays.findIndex(
+    (d) => d.id === selectedDayId,
+  );
+  const canGoPrevDay = selectedDayIndex > 0;
   const canGoNextDay =
-    selectedDay && selectedDay.dayNumber < itineraryDays.length;
+    selectedDayIndex >= 0 && selectedDayIndex < itineraryDays.length - 1;
 
   const handlePrevDay = useCallback(() => {
     if (canGoPrevDay) {
-      const prevDay = itineraryDays.find(
-        (d) => d.dayNumber === selectedDay.dayNumber - 1,
-      );
+      const prevDay = itineraryDays[selectedDayIndex - 1];
       if (prevDay) {
         setSelectedDayId(prevDay.id);
         setSelectedAttractionId(null);
       }
     }
-  }, [canGoPrevDay, itineraryDays, selectedDay]);
+  }, [canGoPrevDay, itineraryDays, selectedDayIndex]);
 
   const handleNextDay = useCallback(() => {
     if (canGoNextDay) {
-      const nextDay = itineraryDays.find(
-        (d) => d.dayNumber === selectedDay.dayNumber + 1,
-      );
+      const nextDay = itineraryDays[selectedDayIndex + 1];
       if (nextDay) {
         setSelectedDayId(nextDay.id);
         setSelectedAttractionId(null);
       }
     }
-  }, [canGoNextDay, itineraryDays, selectedDay]);
+  }, [canGoNextDay, itineraryDays, selectedDayIndex]);
 
   const handleAddAttractionToDay = useCallback(() => {
     // Do nothing - this is view-only mode
@@ -167,6 +166,7 @@ export function ItineraryViewer({
         <div className="border-b border-gray-200 bg-white px-4 py-3 shadow-sm">
           <div className="flex items-center justify-between">
             <button
+              type="button"
               onClick={handlePrevDay}
               disabled={!canGoPrevDay}
               className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
@@ -189,6 +189,7 @@ export function ItineraryViewer({
             </div>
 
             <button
+              type="button"
               onClick={handleNextDay}
               disabled={!canGoNextDay}
               className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
@@ -229,6 +230,7 @@ export function ItineraryViewer({
               <div className="max-h-48 space-y-2 overflow-y-auto">
                 {selectedDay.attractions.map((attraction, index) => (
                   <button
+                    type="button"
                     key={attraction.id}
                     onClick={() => setSelectedAttractionId(attraction.id)}
                     className="flex w-full items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 text-left transition-colors hover:bg-gray-100 active:bg-gray-200"
