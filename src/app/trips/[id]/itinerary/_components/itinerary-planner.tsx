@@ -88,11 +88,11 @@ export function ItineraryPlanner({
   const [loadingRoutes, setLoadingRoutes] = useState<Map<number, boolean>>(
     new Map(),
   );
-  const [isLoadingRoutes, setIsLoadingRoutes] = useState<boolean>(false);
 
-  useEffect(() => {
-    setIsLoadingRoutes(Array.from(loadingRoutes.values()).some(Boolean));
-  }, [loadingRoutes]);
+  const isLoadingRoutes = useMemo(
+    () => Array.from(loadingRoutes.values()).some(Boolean),
+    [loadingRoutes],
+  );
 
   const updateRoute = useCallback(
     (dayId: number, route: RouteData | null, isLoading: boolean) => {

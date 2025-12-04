@@ -78,7 +78,7 @@ export const useLeafletMarkers = (
     if (attractions.length === 0) return;
 
     attractions.forEach((attraction) => {
-      if (!attraction.latitude || !attraction.longitude) return;
+      if (attraction.latitude == null || attraction.longitude == null) return;
 
       const baseSize = 26;
 

@@ -43,7 +43,7 @@ export const useLeafletRoutes = (
 
     const styleElement = document.createElement("style");
     styleElement.id = "leaflet-route-styles";
-    styleElement.innerHTML = ROUTE_STYLES;
+    styleElement.textContent = ROUTE_STYLES;
     document.head.appendChild(styleElement);
 
     return () => {

@@ -11,6 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
+
 import type { RouterOutputs } from "~/trpc/react";
 
 type Trip = RouterOutputs["trip"]["getWithItinerary"];

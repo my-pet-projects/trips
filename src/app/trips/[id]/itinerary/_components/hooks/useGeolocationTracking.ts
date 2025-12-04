@@ -85,7 +85,7 @@ export const useGeolocationTracking = (
 
     const styleElement = document.createElement("style");
     styleElement.id = "geolocation-marker-styles";
-    styleElement.innerHTML = GEOLOCATION_MARKER_STYLES;
+    styleElement.textContent = GEOLOCATION_MARKER_STYLES;
     document.head.appendChild(styleElement);
 
     // Clean up the style element when the component unmounts
