@@ -4,11 +4,11 @@ import { Plus, Save } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { ItineraryMap } from "~/app/_components/map/itinerary-map";
+import { DayRoutesFetcher } from "~/app/_components/map/route-fetcher";
 import type { RouterOutputs } from "~/trpc/react";
 import { api } from "~/trpc/react";
 import { ItineraryDay } from "./itinerary-day";
-import { ItineraryMap } from "./itinerary-map";
-import { DayRoutesFetcher } from "./route-fetcher";
 
 type Trip = RouterOutputs["trip"]["getWithItinerary"];
 type Attraction =
@@ -84,9 +84,11 @@ export function ItineraryPlanner({
   const utils = api.useUtils();
 
   // Route management
-  const [dayRoutes, setDayRoutes] = useState<Map<number, RouteData>>(new Map());
+  const [dayRoutes, setDayRoutes] = useState<Map<number, RouteData>>(
+    () => new Map(),
+  );
   const [loadingRoutes, setLoadingRoutes] = useState<Map<number, boolean>>(
-    new Map(),
+    () => new Map(),
   );
 
   const isLoadingRoutes = useMemo(
