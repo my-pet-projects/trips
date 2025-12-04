@@ -90,7 +90,7 @@ export function ItineraryPlanner({
   );
 
   const isLoadingRoutes = useMemo(
-    () => Array.from(loadingRoutes.values()).some(Boolean),
+    () => [...loadingRoutes.values()].some(Boolean),
     [loadingRoutes],
   );
 

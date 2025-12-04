@@ -1,10 +1,12 @@
 import L from "leaflet";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import type { RouterOutputs } from "~/trpc/react";
 
 type Attraction =
   RouterOutputs["attraction"]["getAttractionsByCountries"][number];
+
+const BASE_MARKER_SIZE = 26;
 
 const createMarkerIcon = (
   color: string,
@@ -63,6 +65,9 @@ export const useLeafletMarkers = (
   const markersRef = useRef<Map<number, L.Marker>>(new Map());
   const previousHoveredIdRef = useRef<number | null>(null);
   const previousSelectedIdRef = useRef<number | null>(null);
+  const attractionsMap = useMemo<Map<number, Attraction>>(() => {
+    return new Map(attractions.map((a) => [a.id, a]));
+  }, [attractions]);
 
   // Create all markers initially (runs when attractions/day structure changes)
   useEffect(() => {
@@ -80,7 +85,7 @@ export const useLeafletMarkers = (
     attractions.forEach((attraction) => {
       if (attraction.latitude == null || attraction.longitude == null) return;
 
-      const baseSize = 26;
+      const baseSize = BASE_MARKER_SIZE;
 
       // Create with default appearance
       const iconHtml = createMarkerIcon(
@@ -141,7 +146,7 @@ export const useLeafletMarkers = (
         color = dayColors.get(attractionDayId) ?? "#9ca3af";
       }
 
-      const baseSize = 26;
+      const baseSize = BASE_MARKER_SIZE;
 
       const iconHtml = createMarkerIcon(
         color,
@@ -189,7 +194,7 @@ export const useLeafletMarkers = (
     // Update each affected marker
     affectedIds.forEach((attractionId) => {
       const marker = markers.get(attractionId);
-      const attraction = attractions.find((a) => a.id === attractionId);
+      const attraction = attractionsMap.get(attractionId);
 
       if (!marker || !attraction) return;
 
@@ -205,7 +210,7 @@ export const useLeafletMarkers = (
         color = dayColors.get(attractionDayId) ?? "#9ca3af";
       }
 
-      const baseSize = 26;
+      const baseSize = BASE_MARKER_SIZE;
       const size = isSelected
         ? baseSize + 8
         : isHovered
@@ -239,7 +244,7 @@ export const useLeafletMarkers = (
   }, [
     hoveredAttractionId,
     selectedAttractionId,
-    attractions,
+    attractionsMap,
     attractionToDayMap,
     selectedDayId,
     dayColors,

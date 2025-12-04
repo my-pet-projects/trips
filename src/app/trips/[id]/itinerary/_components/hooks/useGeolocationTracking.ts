@@ -1,6 +1,8 @@
 import L from "leaflet";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+const USER_LOCATION_ZOOM = 16;
+
 const createCurrentLocationMarkerIcon = (size: number) => {
   const innerDotSize = Math.max(6, size / 3);
   const blueDotSize = size;
@@ -78,11 +80,6 @@ export const useGeolocationTracking = (
 
   // Effect to inject styles for the geolocation marker
   useEffect(() => {
-    // Avoid duplicate injection if style already exists
-    if (document.getElementById("geolocation-marker-styles")) {
-      return;
-    }
-
     const styleElement = document.createElement("style");
     styleElement.id = "geolocation-marker-styles";
     styleElement.textContent = GEOLOCATION_MARKER_STYLES;
@@ -172,7 +169,9 @@ export const useGeolocationTracking = (
 
   const centerOnUserLocation = useCallback(() => {
     if (userLocation && mapRef.current) {
-      mapRef.current.setView(userLocation, 16, { animate: true });
+      mapRef.current.setView(userLocation, USER_LOCATION_ZOOM, {
+        animate: true,
+      });
     }
   }, [userLocation, mapRef]);
 

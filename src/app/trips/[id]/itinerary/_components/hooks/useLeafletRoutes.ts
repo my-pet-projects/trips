@@ -36,11 +36,6 @@ export const useLeafletRoutes = (
 
   // Effect to inject styles for route animations
   useEffect(() => {
-    // Avoid duplicate injection if style already exists
-    if (document.getElementById("leaflet-route-styles")) {
-      return;
-    }
-
     const styleElement = document.createElement("style");
     styleElement.id = "leaflet-route-styles";
     styleElement.textContent = ROUTE_STYLES;
