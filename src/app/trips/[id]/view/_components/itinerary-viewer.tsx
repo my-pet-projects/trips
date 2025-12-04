@@ -81,7 +81,15 @@ export function ItineraryViewer({
   );
 
   const updateRoute = useCallback(
-    (dayId: number, route: RouteData | null, isLoading: boolean) => {
+    (
+      dayId: number,
+      route: RouteData | null,
+      isLoading: boolean,
+      error?: Error,
+    ) => {
+      if (error) {
+        console.error("Failed to build route for day", dayId, error);
+      }
       setLoadingRoutes((prev) => {
         const newMap = new Map(prev);
         newMap.set(dayId, isLoading);
