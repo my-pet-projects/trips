@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { eq, inArray } from "drizzle-orm";
 import z from "zod";
 
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 import * as geoSchema from "~/server/db/geo-schema";
 import * as schema from "~/server/db/schema";
 
@@ -38,7 +38,7 @@ const tripUpdateSchema = z
   });
 
 export const tripRouter = createTRPCRouter({
-  listTrips: publicProcedure.query(async ({ ctx }) => {
+  listTrips: protectedProcedure.query(async ({ ctx }) => {
     const trips = await ctx.db.query.trips.findMany({
       orderBy: (trips, { desc }) => [desc(trips.startDate)],
       with: {
