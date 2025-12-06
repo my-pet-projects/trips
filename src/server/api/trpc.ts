@@ -117,7 +117,7 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
  * Protected (authenticated) procedure
  *
  * If you want a query or mutation to ONLY be accessible to logged in users, use this. It verifies
- * the session is valid and guarantees `ctx.session.user` is not null.
+ * the session is valid and guarantees `ctx.auth` is not null.
  *
  * @see https://trpc.io/docs/procedures
  */
@@ -130,7 +130,8 @@ export const protectedProcedure = t.procedure
   type SignedInAuthContext = typeof ctx.auth & { userId: string };
     return next({
       ctx: {
-      auth: ctx.auth as SignedInAuthContext,
+        ...ctx,
+        auth: ctx.auth as SignedInAuthContext,
       },
     });
   });
