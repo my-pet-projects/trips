@@ -2,7 +2,11 @@ import { TRPCError } from "@trpc/server";
 import { and, count, eq, inArray, like, or } from "drizzle-orm";
 import z from "zod";
 
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "~/server/api/trpc";
 import * as geoSchema from "~/server/db/geo-schema";
 import * as schema from "~/server/db/schema";
 import { fetchCitiesWithCountries, type EnrichedCity } from "./geo";
@@ -247,21 +251,31 @@ export const attractionRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { ...createData } = input;
+      try {
+        const result = await ctx.db
+          .insert(schema.attractions)
+          .values(input)
+          .returning();
 
-      const result = await ctx.db
-        .insert(schema.attractions)
-        .values(createData)
-        .returning();
+        if (!result[0]) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create attraction",
+          });
+        }
 
-      if (!result[0]) {
+        return result[0];
+      } catch (error) {
+        console.error("Error creating attraction:", error);
+        if (error instanceof TRPCError) {
+          throw error;
+        }
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to create attraction",
+          cause: error,
         });
       }
-
-      return result[0];
     }),
 });
 
