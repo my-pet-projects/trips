@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { and, count, eq, inArray, like, or } from "drizzle-orm";
 import z from "zod";
 
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 import * as geoSchema from "~/server/db/geo-schema";
 import * as schema from "~/server/db/schema";
 import { fetchCitiesWithCountries, type EnrichedCity } from "./geo";
@@ -185,7 +185,7 @@ export const attractionRouter = createTRPCRouter({
       }
     }),
 
-  update: publicProcedure
+  update: protectedProcedure
     .input(
       z.object({
         id: z.number(),
@@ -232,7 +232,7 @@ export const attractionRouter = createTRPCRouter({
       return result[0];
     }),
 
-  create: publicProcedure
+  create: protectedProcedure
     .input(
       z.object({
         name: z.string().min(1, "Name is required").max(256),
