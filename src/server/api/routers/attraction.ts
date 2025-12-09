@@ -251,12 +251,10 @@ export const attractionRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { ...createData } = input;
-
       try {
         const result = await ctx.db
           .insert(schema.attractions)
-          .values(createData)
+          .values(input)
           .returning();
 
         if (!result[0]) {
@@ -269,6 +267,9 @@ export const attractionRouter = createTRPCRouter({
         return result[0];
       } catch (error) {
         console.error("Error creating attraction:", error);
+        if (error instanceof TRPCError) {
+          throw error;
+        }
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to create attraction",
