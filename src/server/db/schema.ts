@@ -103,6 +103,12 @@ export const attractions = sqliteTable(
     sourceUrl: text("source_url", { length: 256 }),
     cityId: integer("city_id").notNull(), // References cities.id in the geo database (cross-database FK not supported)
     countryCode: text("country_code", { length: 2 }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .default(sql`(unixepoch())`)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).$onUpdate(
+      () => new Date(),
+    ),
   },
   (table) => [
     index("attractions_city_idx").on(table.cityId),
