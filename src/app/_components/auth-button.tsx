@@ -10,9 +10,9 @@ export function AuthButton() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const currentUrl = encodeURIComponent(
-    `${pathname}?${searchParams.toString()}`,
-  );
+  const search = searchParams.toString();
+  const rawUrl = search ? `${pathname}?${search}` : pathname;
+  const currentUrl = encodeURIComponent(rawUrl);
 
   if (!isLoaded) {
     return (
@@ -31,7 +31,6 @@ export function AuthButton() {
   } else {
     return (
       <Link
-        type="button"
         href={`/sign-in?redirect_url=${currentUrl}`}
         className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
       >

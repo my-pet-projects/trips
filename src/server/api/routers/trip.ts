@@ -2,7 +2,11 @@ import { TRPCError } from "@trpc/server";
 import { eq, inArray } from "drizzle-orm";
 import z from "zod";
 
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "~/server/api/trpc";
 import * as geoSchema from "~/server/db/geo-schema";
 import * as schema from "~/server/db/schema";
 
@@ -141,7 +145,7 @@ export const tripRouter = createTRPCRouter({
       return trip;
     }),
 
-  create: publicProcedure
+  create: protectedProcedure
     .input(tripCreateSchema)
     .mutation(async ({ ctx, input }) => {
       const { destinations, ...tripData } = input;
