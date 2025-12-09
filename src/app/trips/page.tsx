@@ -1,7 +1,7 @@
-import { UserButton } from "@clerk/nextjs";
 import { Building, Calendar, Plus } from "lucide-react";
 import Link from "next/link";
 
+import { AuthButton } from "~/app/_components/auth-button";
 import { TripsList } from "~/app/trips/_components/trip-list";
 
 export const metadata = {
@@ -43,7 +43,7 @@ export default async function TripsPage() {
                 <Plus className="mr-2 h-4 w-4" />
                 New Trip
               </Link>
-              <UserButton />
+              <AuthButton />
             </nav>
           </div>
         </div>

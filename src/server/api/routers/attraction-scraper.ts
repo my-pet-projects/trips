@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import * as cheerio from "cheerio";
 import z from "zod";
 
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 
 const parsedAttractionSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -125,7 +125,7 @@ const SITE_PARSERS: Record<string, SiteParser> = {
 };
 
 export const attractionScraperRouter = createTRPCRouter({
-  parseUrl: publicProcedure
+  parseUrl: protectedProcedure
     .input(z.object({ url: z.string().url() }))
     .mutation(async ({ input }) => {
       const { url } = input;

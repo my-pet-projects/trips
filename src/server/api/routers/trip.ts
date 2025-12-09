@@ -38,7 +38,7 @@ const tripUpdateSchema = z
   });
 
 export const tripRouter = createTRPCRouter({
-  listTrips: protectedProcedure.query(async ({ ctx }) => {
+  listTrips: publicProcedure.query(async ({ ctx }) => {
     const trips = await ctx.db.query.trips.findMany({
       orderBy: (trips, { desc }) => [desc(trips.startDate)],
       with: {
@@ -173,7 +173,7 @@ export const tripRouter = createTRPCRouter({
       return trip;
     }),
 
-  update: publicProcedure
+  update: protectedProcedure
     .input(tripUpdateSchema)
     .mutation(async ({ ctx, input }) => {
       const { id, destinations, ...updateData } = input;
@@ -221,7 +221,7 @@ export const tripRouter = createTRPCRouter({
       return trip;
     }),
 
-  deleteTrip: publicProcedure
+  deleteTrip: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const existing = await ctx.db.query.trips.findFirst({
