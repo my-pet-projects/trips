@@ -124,7 +124,6 @@ export function AttractionForm({ mode, attraction }: AttractionFormProps) {
           longitude: undefined,
           sourceUrl: undefined,
           countryCode: country ?? undefined,
-          cityId: city ? parseInt(city, 10) : undefined,
         },
   });
 
