@@ -1,4 +1,4 @@
-import { ArrowLeft, MapPin } from "lucide-react";
+import { ArrowLeft, MapPin, Plus } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -26,17 +26,11 @@ export default async function EditAttractionPage({
     notFound();
   }
 
-  let attraction;
-  let error = null;
-
-  try {
-    attraction = await api.attraction.getAttractionById({ id: attractionId });
-    if (!attraction) {
-      notFound();
-    }
-  } catch (err) {
-    error = err instanceof Error ? err.message : "Failed to load attraction";
-    console.error("Error fetching attraction:", err);
+  const attraction = await api.attraction.getAttractionById({
+    id: attractionId,
+  });
+  if (!attraction) {
+    notFound();
   }
 
   return (
@@ -64,24 +58,23 @@ export default async function EditAttractionPage({
                 </p>
               </div>
             </div>
+
+            <nav className="flex items-center gap-4">
+              <Link
+                href={`/attractions/new?isNew=true&country=${attraction.countryCode}&city=${attraction.city.name}`}
+                className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                New Attraction in Same Location
+              </Link>
+            </nav>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        {error ? (
-          <div className="mx-auto max-w-4xl">
-            <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
-              <h2 className="mb-2 text-xl font-semibold text-red-900">
-                Error Loading Attraction
-              </h2>
-              <p className="text-red-700">{error}</p>
-            </div>
-          </div>
-        ) : attraction ? (
-          <AttractionForm attraction={attraction} mode="edit" />
-        ) : null}
+        <AttractionForm attraction={attraction} mode="edit" />
       </main>
     </div>
   );

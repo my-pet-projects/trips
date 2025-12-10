@@ -13,7 +13,7 @@ import {
   Scan,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -86,12 +86,17 @@ const DynamicAttractionMap = dynamic(
 
 export function AttractionForm({ mode, attraction }: AttractionFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const params = new URLSearchParams(searchParams.toString());
+  const isNew = params.get("isNew") === "true";
+  const country = isNew ? (params.get("country") ?? undefined) : undefined;
+  const city = isNew ? (params.get("city") ?? undefined) : undefined;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(
-    mode === "edit" ? attraction?.countryCode : "",
+    mode === "edit" ? attraction?.countryCode : country,
   );
   const [selectedCity, setSelectedCity] = useState(
-    mode === "edit" ? attraction?.city?.name : "",
+    mode === "edit" ? attraction?.city?.name : city,
   );
 
   const isEditMode = mode === "edit";
@@ -118,7 +123,8 @@ export function AttractionForm({ mode, attraction }: AttractionFormProps) {
           latitude: undefined,
           longitude: undefined,
           sourceUrl: undefined,
-          countryCode: "",
+          countryCode: country ?? undefined,
+          cityId: city ? parseInt(city, 10) : undefined,
         },
   });
 
@@ -160,7 +166,9 @@ export function AttractionForm({ mode, attraction }: AttractionFormProps) {
       toast.success("Attraction created!", {
         description: "The attraction has been created successfully.",
       });
-      router.push(`/attractions/${data.id}/edit`);
+      router.push(
+        `/attractions/${data.id}/edit?isNew=true&country=${data.countryCode}&city=${data.cityId}`,
+      );
     },
     onError: (err) => {
       toast.error("Failed to create attraction", {
