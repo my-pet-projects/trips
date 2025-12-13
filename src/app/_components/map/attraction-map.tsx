@@ -216,14 +216,14 @@ export function AttractionMap({
 }: AttractionMapProps) {
   const initialCenter: [number, number] = [latitude, longitude];
 
-  // Fetch nearest cities based on the current city or provided coordinates
+  // Fetch nearest cities based on provided coordinates
   const {
     data: nearestCities,
     error,
     isLoading,
   } = api.geo.getNearestCities.useQuery({
-    latitude: currentCity ? currentCity.latitude : latitude,
-    longitude: currentCity ? currentCity.longitude : longitude,
+    latitude: latitude,
+    longitude: longitude,
     searchRadiusDegrees: SEARCH_RADIUS_DEGREES,
   });
 
