@@ -1,6 +1,6 @@
 "use client";
 
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Loader2, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -68,7 +68,7 @@ export function AttractionTableActions({
           disabled={deleteAttractionMutation.isPending}
         >
           {deleteAttractionMutation.isPending ? (
-            <span className="animate-spin">🌀</span>
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <Trash2 className="h-4 w-4" />
           )}
