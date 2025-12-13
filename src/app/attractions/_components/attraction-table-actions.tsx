@@ -16,15 +16,14 @@ export function AttractionTableActions({
 
   return (
     <div className="flex items-center justify-end gap-1">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 text-sky-600 opacity-0 transition-all group-hover:opacity-100 hover:bg-sky-50 hover:text-sky-700"
+      <a
+        href={`/attractions/${attractionId}/edit`}
+        className="group relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-sky-600 opacity-0 transition-all group-hover:opacity-100 hover:bg-sky-50 hover:text-sky-700"
         title="Edit attraction"
-        onClick={() => router.push(`/attractions/${attractionId}/edit`)}
+        onClick={(e) => router.push(`/attractions/${attractionId}/edit`)}
       >
         <Edit className="h-4 w-4" />
-      </Button>
+      </a>
       <Button
         variant="ghost"
         size="icon"
