@@ -277,6 +277,37 @@ export const attractionRouter = createTRPCRouter({
         });
       }
     }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.number().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db.query.attractions.findFirst({
+        where: eq(schema.attractions.id, input.id),
+      });
+
+      if (!existing) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Attraction with ID ${input.id} not found`,
+        });
+      }
+
+      try {
+        await ctx.db
+          .delete(schema.attractions)
+          .where(eq(schema.attractions.id, input.id))
+          .returning();
+
+        return { success: true };
+      } catch (error) {
+        console.error("Error deleting attraction:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to delete attraction",
+          cause: error,
+        });
+      }
+    }),
 });
 
 function enrichAttractionsWithCities<T extends { cityId: number }>(
