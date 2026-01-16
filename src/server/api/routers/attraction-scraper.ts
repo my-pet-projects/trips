@@ -2,7 +2,11 @@ import { TRPCError } from "@trpc/server";
 import * as cheerio from "cheerio";
 import z from "zod";
 
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "~/server/api/trpc";
 
 const parsedAttractionSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -200,7 +204,7 @@ export const attractionScraperRouter = createTRPCRouter({
           throw error;
         }
         if (error instanceof z.ZodError) {
-          const errorMessages = error.errors
+          const errorMessages = error.issues
             .map((e) => `${e.path.join(".")}: ${e.message}`)
             .join(", ");
           throw new TRPCError({

@@ -6,14 +6,18 @@
       "description": "Group all minor and patch updates into a single PR",
       "matchUpdateTypes": ["minor", "patch"],
       "groupName": "minor-patch-updates",
-      "prTitle": "chore: minor and patch updates",
+      "commitMessagePrefix": "chore",
+      "commitMessageAction": "update",
+      "commitMessageTopic": "minor and patch updates",
       "prBody": "This PR combines all minor and patch dependency updates for a streamlined maintenance workflow.\n\nAutomated merge enabled.",
       "automerge": true
     },
     {
       "description": "Separate PRs for major updates",
       "matchUpdateTypes": ["major"],
-      "prTitle": "chore: major update {{depName}} to v{{newMajor}}",
+      "commitMessagePrefix": "chore",
+      "commitMessageAction": "update",
+      "commitMessageTopic": "major update {{depName}} to v{{newMajor}}",
       "prBody": "This PR updates `{{depName}}` to its next major version (`v{{newMajor}}`).\n\nPlease review carefully as major versions may contain breaking changes.",
       "automerge": false
     }
