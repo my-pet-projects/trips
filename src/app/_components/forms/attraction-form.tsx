@@ -40,12 +40,12 @@ const attractionSchema = z.object({
   nameLocal: z.string().max(256).optional(),
   description: z.string().optional(),
   address: z.string().max(256).optional(),
-  latitude: z.coerce.number().min(-90).max(90).optional().nullable(),
-  longitude: z.coerce.number().min(-180).max(180).optional().nullable(),
+  latitude: z.coerce.number().min(-90).max(90).nullable().optional(),
+  longitude: z.coerce.number().min(-180).max(180).nullable().optional(),
   sourceUrl: z
     .union([z.string().url().max(256), z.literal("")])
-    .optional()
-    .nullable(),
+    .nullable()
+    .optional(),
   cityId: z.number().min(1, "City is required"),
   countryCode: z.string().length(2, "Country is required"),
 });
@@ -109,9 +109,9 @@ export function AttractionForm({ mode, attraction }: AttractionFormProps) {
           nameLocal: attraction?.nameLocal ?? "",
           description: attraction?.description ?? "",
           address: attraction?.address ?? "",
-          latitude: attraction?.latitude ?? undefined,
-          longitude: attraction?.longitude ?? undefined,
-          sourceUrl: attraction?.sourceUrl ?? undefined,
+          latitude: attraction?.latitude ?? null,
+          longitude: attraction?.longitude ?? null,
+          sourceUrl: attraction?.sourceUrl ?? null,
           countryCode: attraction?.countryCode ?? "",
           cityId: attraction?.city?.id,
         }
@@ -120,10 +120,10 @@ export function AttractionForm({ mode, attraction }: AttractionFormProps) {
           nameLocal: "",
           description: "",
           address: "",
-          latitude: undefined,
-          longitude: undefined,
-          sourceUrl: undefined,
-          countryCode: country ?? undefined,
+          latitude: null,
+          longitude: null,
+          sourceUrl: null,
+          countryCode: country ?? "",
         },
   });
 
