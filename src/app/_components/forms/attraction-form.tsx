@@ -40,8 +40,8 @@ const attractionSchema = z.object({
   nameLocal: z.string().max(256).optional(),
   description: z.string().optional(),
   address: z.string().max(256).optional(),
-  latitude: z.coerce.number().min(-90).max(90).nullable().optional(),
-  longitude: z.coerce.number().min(-180).max(180).nullable().optional(),
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
   sourceUrl: z
     .union([z.string().url().max(256), z.literal("")])
     .nullable()
