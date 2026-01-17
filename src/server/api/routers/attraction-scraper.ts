@@ -121,11 +121,63 @@ const parseVotpuskSiteContent = async (
   };
 };
 
+const parseOpenariumSiteContent = async (
+  html: string,
+): Promise<ParsedAttraction> => {
+  const $ = cheerio.load(html);
+
+  // Extract description from the <p> tags within the .page-content section
+  // Join all text from <p> tags found in the .box-text section, then normalize.
+  const description = normalizeText(
+    $(".box-text p")
+      .map((i, el) => $(el).text())
+      .get()
+      .join("\n"),
+  );
+
+  // Extract name from the <h1> tag
+  const name = $("h1.mb-0").text().trim();
+
+  // Extract local name from the <h2> tag
+  const localName = $("h2.mt-0").text().trim();
+
+  // Extract coordinates.
+  let latitude: number = 0;
+  let longitude: number = 0;
+
+  // Search for an <em> tag in .box-text whose text matches the coordinate pattern
+  $(".box-text em").each((i, el) => {
+    const text = $(el).text().trim();
+    const coordsMatch = /^(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)$/.exec(text);
+    if (coordsMatch) {
+      latitude = parseFloat(coordsMatch[1] ?? "0");
+      longitude = parseFloat(coordsMatch[2] ?? "0");
+      return false;
+    }
+  });
+
+  if (!name || !description) {
+    throw new TRPCError({
+      code: "PARSE_ERROR",
+      message: "Failed to extract required fields from Openarium page",
+    });
+  }
+
+  return {
+    name,
+    localName,
+    latitude,
+    longitude,
+    description,
+  };
+};
+
 type SiteParser = (html: string) => Promise<ParsedAttraction>;
 
 const SITE_PARSERS: Record<string, SiteParser> = {
   "rutraveller.ru": parseRutravellerSiteContent,
   "votpusk.ru": parseVotpuskSiteContent,
+  "openarium.ru": parseOpenariumSiteContent,
 };
 
 export const attractionScraperRouter = createTRPCRouter({
