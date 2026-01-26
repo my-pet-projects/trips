@@ -74,7 +74,7 @@ const DynamicAttractionMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-[400px] w-full items-center justify-center rounded-lg border border-gray-200 bg-gray-50">
+      <div className="flex h-100 w-full items-center justify-center rounded-lg border border-gray-200 bg-gray-50">
         <div className="text-center">
           <Loader2 className="mx-auto h-8 w-8 animate-spin text-gray-400" />
           <p className="mt-2 text-sm text-gray-600">Loading map...</p>
@@ -401,7 +401,7 @@ export function AttractionForm({ mode, attraction }: AttractionFormProps) {
               <Textarea
                 id="description"
                 {...form.register("description")}
-                className="mt-1.5 min-h-[120px] resize-none"
+                className="mt-1.5 min-h-30 resize-none"
                 placeholder="Enter a description of the attraction"
               />
               {form.formState.errors.description && (
@@ -610,7 +610,7 @@ export function AttractionForm({ mode, attraction }: AttractionFormProps) {
                 longitude={mapLongitude}
                 currentCity={currentCity}
                 onCoordinatesChange={handleMapCoordinatesChange}
-                className="h-[400px] w-full"
+                className="h-100 w-full"
               />
               <p className="mt-1.5 text-xs text-gray-500">
                 {hasValidLatitude && hasValidLongitude
