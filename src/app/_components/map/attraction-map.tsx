@@ -216,16 +216,27 @@ export function AttractionMap({
 }: AttractionMapProps) {
   const initialCenter: [number, number] = [latitude, longitude];
 
-  // Fetch nearest cities based on provided coordinates
   const {
-    data: nearestCities,
+    data: nearby,
     error,
     isLoading,
   } = api.geo.getNearestCities.useQuery({
-    latitude: latitude,
-    longitude: longitude,
+    latitude,
+    longitude,
     searchRadiusDegrees: SEARCH_RADIUS_DEGREES,
   });
+
+  const { data: extended, isLoading: loadingExtended } =
+    api.geo.getNearestCities.useQuery(
+      {
+        latitude,
+        longitude,
+        searchRadiusDegrees: SEARCH_RADIUS_DEGREES * 9,
+      },
+      { enabled: !error && !isLoading && nearby?.length === 0 },
+    );
+
+  const nearestCities = nearby?.length ? nearby : (extended ?? []);
 
   return (
     <div className={className}>
@@ -237,7 +248,7 @@ export function AttractionMap({
         </div>
       )}
 
-      {isLoading && (
+      {(isLoading || loadingExtended) && (
         <div className="mb-2 rounded-lg border border-blue-200 bg-blue-50 p-3">
           <p className="text-sm text-blue-800">Loading nearby cities...</p>
         </div>
