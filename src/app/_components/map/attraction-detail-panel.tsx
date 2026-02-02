@@ -101,16 +101,6 @@ export function AttractionDetailPanel({
           </div>
         )}
 
-        {/* Address */}
-        {attraction.address && (
-          <div className="mb-4">
-            <p className="mb-1.5 text-xs font-semibold tracking-wide text-gray-500 uppercase">
-              Address
-            </p>
-            <p className="text-sm text-gray-700">{attraction.address}</p>
-          </div>
-        )}
-
         {/* External Link */}
         {attraction.sourceUrl && (
           <div className="mb-4">

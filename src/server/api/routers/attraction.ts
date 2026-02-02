@@ -196,12 +196,12 @@ export const attractionRouter = createTRPCRouter({
         name: z.string().min(1, "Name is required").max(256),
         nameLocal: z.string().max(256).optional(),
         description: z.string().optional(),
-        address: z.string().max(256).optional(),
         latitude: z.coerce.number().min(-90).max(90).optional().nullable(),
         longitude: z.coerce.number().min(-180).max(180).optional().nullable(),
         sourceUrl: z.string().max(256).optional().nullable(),
         cityId: z.number().min(1, "City is required"),
         countryCode: z.string().length(2, "Country is required"),
+        isVerified: z.boolean().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -242,12 +242,12 @@ export const attractionRouter = createTRPCRouter({
         name: z.string().min(1, "Name is required").max(256),
         nameLocal: z.string().max(256).optional(),
         description: z.string().optional(),
-        address: z.string().max(256).optional(),
         latitude: z.coerce.number().min(-90).max(90).optional().nullable(),
         longitude: z.coerce.number().min(-180).max(180).optional().nullable(),
         sourceUrl: z.string().max(256).optional().nullable(),
         cityId: z.number().min(1, "City is required"),
         countryCode: z.string().length(2, "Country is required"),
+        isVerified: z.boolean().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
