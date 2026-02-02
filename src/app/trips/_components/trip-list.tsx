@@ -209,7 +209,7 @@ function TripCard({
 
 function EmptyState() {
   return (
-    <div className="flex min-h-[400px] items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50">
+    <div className="flex min-h-100 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50">
       <div className="text-center">
         <MapPin className="mx-auto h-12 w-12 text-gray-400" />
         <h3 className="mt-4 text-lg font-semibold text-gray-900">
@@ -231,7 +231,7 @@ function EmptyState() {
 
 function LoadingState() {
   return (
-    <div className="flex min-h-[400px] items-center justify-center">
+    <div className="flex min-h-100 items-center justify-center">
       <div className="text-center">
         <Loader2 className="mx-auto h-12 w-12 animate-spin text-gray-400" />
         <p className="mt-4 text-sm text-gray-600">
@@ -250,7 +250,7 @@ function ErrorState({
   onRetry: () => void;
 }) {
   return (
-    <div className="flex min-h-[400px] items-center justify-center rounded-lg border-2 border-red-200 bg-red-50">
+    <div className="flex min-h-100 items-center justify-center rounded-lg border-2 border-red-200 bg-red-50">
       <div className="text-center">
         <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
         <h3 className="mt-4 text-lg font-semibold text-gray-900">
