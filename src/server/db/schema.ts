@@ -97,7 +97,6 @@ export const attractions = sqliteTable(
     name: text("name", { length: 256 }).notNull(),
     nameLocal: text("name_local", { length: 256 }),
     description: text("description"),
-    address: text("address", { length: 256 }),
     latitude: real("latitude"),
     longitude: real("longitude"),
     sourceUrl: text("source_url", { length: 256 }),
@@ -109,6 +108,9 @@ export const attractions = sqliteTable(
     updatedAt: integer("updated_at", { mode: "timestamp" }).$onUpdate(
       () => new Date(),
     ),
+    isVerified: integer("is_verified", { mode: "boolean" })
+      .default(false)
+      .notNull(),
   },
   (table) => [
     index("attractions_city_idx").on(table.cityId),
