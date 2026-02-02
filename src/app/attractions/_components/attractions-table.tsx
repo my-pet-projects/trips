@@ -1,4 +1,10 @@
-import { Globe, MapPin, Search } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle,
+  Globe,
+  MapPin,
+  Search,
+} from "lucide-react";
 
 import {
   Table,
@@ -10,6 +16,7 @@ import {
 } from "~/app/_components/ui/table";
 import type { RouterOutputs } from "~/trpc/react";
 
+import { cn } from "~/lib/utils";
 import { AttractionTableActions } from "./attraction-table-actions";
 import { Pagination } from "./pagination";
 
@@ -84,9 +91,6 @@ export function AttractionsTable({
                         <div className="flex items-center gap-2">Location</div>
                       </TableHead>
                       <TableHead className="h-11 px-6 font-semibold text-gray-700">
-                        Address
-                      </TableHead>
-                      <TableHead className="h-11 px-6 font-semibold text-gray-700">
                         Coordinates
                       </TableHead>
                       <TableHead className="h-11 px-6 text-right font-semibold text-gray-700">
@@ -130,29 +134,32 @@ export function AttractionsTable({
                         </TableCell>
 
                         <TableCell className="px-6 py-3">
-                          <div className="max-w-[250px] text-sm text-gray-600">
-                            {attraction.address ? (
-                              <span className="line-clamp-2">
-                                {attraction.address}
-                              </span>
-                            ) : (
-                              <span className="text-xs text-gray-400 italic">
-                                No address provided
-                              </span>
-                            )}
-                          </div>
-                        </TableCell>
-
-                        <TableCell className="px-6 py-3">
                           {attraction.latitude && attraction.longitude ? (
-                            <div className="space-y-0.5 font-mono text-xs text-gray-600">
-                              <div>
-                                <span className="text-gray-500">Lat:</span>{" "}
-                                {attraction.latitude.toFixed(6)}
+                            <div className="inline-flex items-start gap-2">
+                              <div
+                                className={cn(
+                                  "space-y-0.5 font-mono text-xs",
+                                  attraction.isVerified
+                                    ? "text-gray-600"
+                                    : "text-gray-400",
+                                )}
+                              >
+                                <div>
+                                  <span className="text-gray-500">Lat:</span>{" "}
+                                  {attraction.latitude.toFixed(6)}
+                                </div>
+                                <div>
+                                  <span className="text-gray-500">Lng:</span>{" "}
+                                  {attraction.longitude.toFixed(6)}
+                                </div>
                               </div>
-                              <div>
-                                <span className="text-gray-500">Lng:</span>{" "}
-                                {attraction.longitude.toFixed(6)}
+
+                              <div className="pt-0.5">
+                                {attraction.isVerified ? (
+                                  <CheckCircle className="h-4 w-4 text-green-600" />
+                                ) : (
+                                  <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                                )}
                               </div>
                             </div>
                           ) : (

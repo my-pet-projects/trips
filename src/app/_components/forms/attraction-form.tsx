@@ -3,6 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TRPCClientError } from "@trpc/client";
 import {
+  AlertTriangle,
+  CheckCircle,
   Clipboard,
   Globe,
   Loader2,
@@ -11,6 +13,7 @@ import {
   Plus,
   Save,
   Scan,
+  XCircle,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -39,7 +42,6 @@ const attractionSchema = z.object({
   name: z.string().min(1, "Name is required").max(256),
   nameLocal: z.string().max(256).optional(),
   description: z.string().optional(),
-  address: z.string().max(256).optional(),
   latitude: z.number().min(-90).max(90).nullable().optional(),
   longitude: z.number().min(-180).max(180).nullable().optional(),
   sourceUrl: z
@@ -48,6 +50,7 @@ const attractionSchema = z.object({
     .optional(),
   cityId: z.number().min(1, "City is required"),
   countryCode: z.string().length(2, "Country is required"),
+  isVerified: z.boolean(),
 });
 
 type AttractionFormData = z.infer<typeof attractionSchema>;
@@ -108,22 +111,22 @@ export function AttractionForm({ mode, attraction }: AttractionFormProps) {
           name: attraction?.name ?? "",
           nameLocal: attraction?.nameLocal ?? "",
           description: attraction?.description ?? "",
-          address: attraction?.address ?? "",
           latitude: attraction?.latitude ?? null,
           longitude: attraction?.longitude ?? null,
           sourceUrl: attraction?.sourceUrl ?? null,
           countryCode: attraction?.countryCode ?? "",
           cityId: attraction?.city?.id,
+          isVerified: attraction?.isVerified ?? false,
         }
       : {
           name: "",
           nameLocal: "",
           description: "",
-          address: "",
           latitude: null,
           longitude: null,
           sourceUrl: null,
           countryCode: country ?? "",
+          isVerified: false,
         },
   });
 
@@ -462,9 +465,7 @@ export function AttractionForm({ mode, attraction }: AttractionFormProps) {
             </div>
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Location</h2>
-              <p className="text-sm text-gray-500">
-                Geographic information and address
-              </p>
+              <p className="text-sm text-gray-500">Geographic information</p>
             </div>
           </div>
 
@@ -485,28 +486,6 @@ export function AttractionForm({ mode, attraction }: AttractionFormProps) {
                 <p className="mt-1 text-sm text-red-600">
                   {form.formState.errors.countryCode?.message ??
                     form.formState.errors.cityId?.message}
-                </p>
-              )}
-            </div>
-
-            {/* Address */}
-            <div>
-              <Label
-                htmlFor="address"
-                className="text-sm font-medium text-gray-700"
-              >
-                Address
-              </Label>
-              <Input
-                id="address"
-                autoComplete="nope"
-                {...form.register("address")}
-                className="mt-1.5 h-12"
-                placeholder="Enter street address"
-              />
-              {form.formState.errors.address && (
-                <p className="mt-1 text-sm text-red-600">
-                  {form.formState.errors.address.message}
                 </p>
               )}
             </div>
@@ -618,6 +597,65 @@ export function AttractionForm({ mode, attraction }: AttractionFormProps) {
                   : "Enter coordinates or click on the map to set the location."}
               </p>
             </div>
+          </div>
+
+          {/* Verification */}
+          <div className="rounded-md border border-dashed border-gray-300 bg-gray-50 p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-900">
+                  Location verification
+                </h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  Confirm that the marker points to the correct real-world
+                  attraction.
+                </p>
+              </div>
+
+              <div className="flex flex-col items-end gap-2">
+                {form.watch("isVerified") ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+                    <CheckCircle className="h-4 w-4" />
+                    Verified
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700">
+                    <AlertTriangle className="h-4 w-4" />
+                    Not verified
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-4 flex gap-2">
+              {!form.watch("isVerified") ? (
+                <Button
+                  type="button"
+                  onClick={() => form.setValue("isVerified", true)}
+                  disabled={!hasValidLatitude || !hasValidLongitude}
+                  className="gap-2"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Mark as verified
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => form.setValue("isVerified", false)}
+                  className="gap-2"
+                >
+                  <XCircle className="h-4 w-4" />
+                  Unverify
+                </Button>
+              )}
+            </div>
+
+            {!hasValidLatitude || !hasValidLongitude ? (
+              <p className="mt-2 text-xs text-gray-500">
+                Coordinates are required before verification.
+              </p>
+            ) : null}
           </div>
         </div>
 
