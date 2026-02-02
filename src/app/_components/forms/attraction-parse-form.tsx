@@ -46,26 +46,21 @@ type UrlProcessingStatus = {
 
 function useUrlListValidation(initialValue: string = "") {
   const [raw, setRaw] = useState(initialValue);
-  const [error, setError] = useState<string | null>(null);
 
-  const parsedUrls = useMemo(() => {
+  const parseResult = useMemo(() => {
     const result = urlListSchema.safeParse(raw);
-    return result.success ? result.data : [];
+    return result;
   }, [raw]);
+
+  const parsedUrls = parseResult.success ? parseResult.data : [];
+  const error = parseResult.success
+    ? null
+    : z.treeifyError(parseResult.error).errors.join(", ");
+  const isValid = parseResult.success;
 
   const onChange = useCallback((v: string) => {
     setRaw(v);
-    const result = urlListSchema.safeParse(v);
-    if (!result.success) {
-      setError(z.treeifyError(result.error).errors.join(", "));
-    } else {
-      setError(null);
-    }
   }, []);
-
-  const isValid = useMemo(() => {
-    return urlListSchema.safeParse(raw).success;
-  }, [raw]);
 
   return { raw, urls: parsedUrls, onChange, error, isValid };
 }
