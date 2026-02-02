@@ -64,6 +64,13 @@ export default async function AttractionsPage({ searchParams }: SearchParams) {
                 <Plus className="mr-2 h-4 w-4" />
                 New Attraction
               </Link>
+              <Link
+                href="/attractions/parse"
+                className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Parse Attractions
+              </Link>
             </nav>
           </div>
         </div>
