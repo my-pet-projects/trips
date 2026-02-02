@@ -247,6 +247,7 @@ export const attractionRouter = createTRPCRouter({
         sourceUrl: z.string().max(256).optional().nullable(),
         cityId: z.number().min(1, "City is required"),
         countryCode: z.string().length(2, "Country is required"),
+        isVerified: z.boolean().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
