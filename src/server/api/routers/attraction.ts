@@ -193,7 +193,7 @@ export const attractionRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.number(),
-        name: z.string().min(1, "Name is required").max(256),
+        name: z.string().min(1, "Name is required").max(256).trim(),
         nameLocal: z.string().max(256).optional(),
         description: z.string().optional(),
         latitude: z.coerce.number().min(-90).max(90).optional().nullable(),
@@ -239,7 +239,7 @@ export const attractionRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
-        name: z.string().min(1, "Name is required").max(256),
+        name: z.string().min(1, "Name is required").max(256).trim(),
         nameLocal: z.string().max(256).optional(),
         description: z.string().optional(),
         latitude: z.coerce.number().min(-90).max(90).optional().nullable(),
