@@ -105,8 +105,8 @@ ${pulse ? `<circle class='pulse' cx='${halfOuter}' cy='${halfOuter}' r='${outerT
 }
 
 // Create icons once
-const CUSTOM_MARKER_ICON = createDivIcon(BuildingIcon, "blue", 32);
-const NEAREST_MARKER_ICON = createDivIcon(BuildingIcon, "green", 32);
+const CURRENT_CITY_MARKER_ICON = createDivIcon(BuildingIcon, "blue", 32);
+const NEAREST_CITY_MARKER_ICON = createDivIcon(BuildingIcon, "green", 32);
 const ATTRACTION_MARKER_ICON = createAttractionIcon({});
 
 function MapController({
@@ -177,7 +177,7 @@ function MapController({
         <Marker
           draggable={false}
           position={[currentCity.latitude, currentCity.longitude]}
-          icon={CUSTOM_MARKER_ICON}
+          icon={CURRENT_CITY_MARKER_ICON}
         >
           <Tooltip>
             <span>Current City: {currentCity.name}</span>
@@ -189,7 +189,7 @@ function MapController({
         <Marker
           key={city.id}
           position={[city.latitude, city.longitude]}
-          icon={NEAREST_MARKER_ICON}
+          icon={NEAREST_CITY_MARKER_ICON}
         >
           <Tooltip>
             <span className="text-sm font-medium text-gray-900">
@@ -217,7 +217,7 @@ export function AttractionMap({
   const initialCenter: [number, number] = [latitude, longitude];
 
   const {
-    data: nearby,
+    data: nearbyCities,
     error,
     isLoading,
   } = api.geo.getNearestCities.useQuery({
@@ -226,17 +226,19 @@ export function AttractionMap({
     searchRadiusDegrees: SEARCH_RADIUS_DEGREES,
   });
 
-  const { data: extended, isLoading: loadingExtended } =
+  const { data: extendedNearbyCities, isLoading: loadingExtended } =
     api.geo.getNearestCities.useQuery(
       {
         latitude,
         longitude,
         searchRadiusDegrees: SEARCH_RADIUS_DEGREES * 9,
       },
-      { enabled: !error && !isLoading && nearby?.length === 0 },
+      { enabled: !error && !isLoading && nearbyCities?.length === 0 },
     );
 
-  const nearestCities = nearby?.length ? nearby : (extended ?? []);
+  const cities = (
+    nearbyCities?.length ? nearbyCities : (extendedNearbyCities ?? [])
+  ).filter((city) => city.id !== currentCity?.id);
 
   return (
     <div className={className}>
@@ -267,7 +269,7 @@ export function AttractionMap({
           latitude={latitude}
           longitude={longitude}
           currentCity={currentCity}
-          nearestCities={nearestCities}
+          nearestCities={cities}
           onCoordinatesChange={onCoordinatesChange}
         />
       </MapContainer>
