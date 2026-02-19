@@ -12,9 +12,9 @@ export default async function Home() {
         <div className="container mx-auto px-4 py-16">
           {/* Hero Section */}
           <div className="mb-16 text-center">
-            <h1 className="mb-4 text-4xl font-bold text-gray-900 sm:text-5xl">
+            <h2 className="mb-4 text-4xl font-bold text-gray-900 sm:text-5xl">
               Plan Your Perfect Journey
-            </h1>
+            </h2>
             <p className="mx-auto max-w-2xl text-lg text-gray-600">
               Organize your trips, discover attractions, and create memorable
               itineraries all in one place.
