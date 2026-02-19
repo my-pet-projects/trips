@@ -4,8 +4,9 @@ import { useAuth, UserButton } from "@clerk/nextjs";
 import { LogIn } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export function AuthButton() {
+function AuthButtonInner() {
   const { isLoaded, isSignedIn } = useAuth();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -39,4 +40,22 @@ export function AuthButton() {
       </Link>
     );
   }
+}
+
+export function AuthButton() {
+  return (
+    <Suspense
+      fallback={
+        <button
+          type="button"
+          disabled
+          className="inline-flex cursor-not-allowed items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-400"
+        >
+          Loading...
+        </button>
+      }
+    >
+      <AuthButtonInner />
+    </Suspense>
+  );
 }
