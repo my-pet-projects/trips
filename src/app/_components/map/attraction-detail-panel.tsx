@@ -1,7 +1,7 @@
 "use client";
 
 import { ExternalLink, MapPin, X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { RouterOutputs } from "~/trpc/react";
 import { AttractionImageGallery } from "./attraction-image-gallery";
@@ -33,6 +33,13 @@ export function AttractionDetailPanel({
   onPanelHeightChange,
 }: AttractionDetailPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    // Small delay to ensure CSS transition works
+    const timer = setTimeout(() => setIsVisible(true), 10);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Track panel height for map padding
   useEffect(() => {
@@ -55,9 +62,16 @@ export function AttractionDetailPanel({
   return (
     <div
       ref={panelRef}
-      className="absolute right-0 bottom-0 left-0 z-1000 max-h-[60%] overflow-y-auto border-t border-gray-200 bg-white shadow-lg"
+      className={`absolute right-0 bottom-0 left-0 z-1000 max-h-[60%] overflow-y-auto rounded-t-2xl border-t border-gray-200 bg-white shadow-2xl transition-transform duration-300 ease-out ${
+        isVisible ? "translate-y-0" : "translate-y-full"
+      }`}
     >
-      <div className="p-4">
+      {/* Drag handle indicator */}
+      <div className="sticky top-0 z-10 flex justify-center bg-white pt-3 pb-2">
+        <div className="h-1 w-10 rounded-full bg-gray-300" />
+      </div>
+
+      <div className="px-4 pb-4">
         {/* Header */}
         <div className="mb-3 flex items-start justify-between gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-3">
