@@ -58,7 +58,7 @@ export const attractionRouter = createTRPCRouter({
       }
     }),
 
-  getAllAttractions: publicProcedure.query(async ({ ctx, input }) => {
+  getAllAttractions: publicProcedure.query(async ({ ctx }) => {
     try {
       const attractions = await ctx.db
         .select()

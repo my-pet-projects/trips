@@ -20,7 +20,6 @@ type RouteData = RouterOutputs["route"]["buildRoute"];
 
 type LeafletMapProps = {
   attractions: Attraction[];
-  attractionsMap: Map<number, Attraction>;
   selectedDayAttractions: BasicAttraction[];
   selectedDayId: number | null;
   attractionToDayMap: Map<number, number>;
@@ -37,7 +36,6 @@ type LeafletMapProps = {
 
 export default function LeafletMap({
   attractions,
-  attractionsMap,
   selectedDayAttractions,
   selectedDayId,
   attractionToDayMap,
@@ -51,6 +49,11 @@ export default function LeafletMap({
   enableClustering = false,
   isLoadingRoutes,
 }: LeafletMapProps) {
+  const attractionsMap = useMemo(
+  () => new Map(attractions.map((a) => [a.id, a])),
+  [attractions],
+);
+
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const { mapRef, hasInitializedBounds } = useLeafletMap(

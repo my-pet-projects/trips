@@ -119,7 +119,6 @@ export function ItineraryMap({
       <LeafletMap
         key="map"
         attractions={attractions}
-        attractionsMap={attractionsMap}
         selectedDayAttractions={selectedDayAttractions}
         selectedDayId={selectedDayId}
         attractionToDayMap={attractionToDayMap}

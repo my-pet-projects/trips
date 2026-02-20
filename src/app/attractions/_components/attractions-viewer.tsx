@@ -11,10 +11,6 @@ type AttractionsViewerProps = {
   attractions: Attraction[];
 };
 
-// Empty maps and arrays - we don't need itinerary features for this view
-const EMPTY_MAP = new Map();
-const EMPTY_ARRAY: never[] = [];
-
 export const AttractionsViewer = ({ attractions }: AttractionsViewerProps) => {
   const [selectedAttractionId, setSelectedAttractionId] = useState<
     number | null
@@ -24,25 +20,22 @@ export const AttractionsViewer = ({ attractions }: AttractionsViewerProps) => {
     setSelectedAttractionId(id);
   }, []);
 
-  // No-op for add to day - not needed in this view
-  const handleAddToDay = useCallback(() => {}, []);
-
   return (
     <div className="h-[calc(100vh-12rem)]">
       <ItineraryMap
         attractions={attractions}
-        selectedDayAttractions={EMPTY_ARRAY}
+        selectedDayAttractions={[]}
         selectedDayId={null}
         selectedAttractionId={selectedAttractionId}
         hoveredAttractionId={null}
         viewMode="viewer"
         isLoadingRoutes={false}
         enableClustering={true}
-        allDaysAttractions={EMPTY_MAP}
-        dayColors={EMPTY_MAP}
-        dayRoutes={EMPTY_MAP}
+        allDaysAttractions={new Map()}
+        dayColors={new Map()}
+        dayRoutes={new Map()}
         onAttractionSelect={handleAttractionSelect}
-        onAddAttractionToDay={handleAddToDay}
+        onAddAttractionToDay={() => {}}
       />
     </div>
   );
