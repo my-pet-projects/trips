@@ -69,23 +69,42 @@ const formatDateRange = (startDate: Date, endDate: Date): string => {
   return `${startStr} - ${endStr}`;
 };
 
+type TripStatusKey = "upcoming" | "active" | "completed";
+
 const getTripStatus = (
   startDate: Date,
   endDate: Date,
 ): {
+  key: TripStatusKey;
   label: string;
-  color: string;
+  badgeColor: string;
+  headerGradient: string;
 } => {
   const now = Date.now();
   const start = startDate.getTime();
   const end = endDate.getTime();
 
   if (now < start) {
-    return { label: "Upcoming", color: "bg-blue-100 text-blue-700" };
+    return {
+      key: "upcoming",
+      label: "Upcoming",
+      badgeColor: "bg-blue-100 text-blue-700",
+      headerGradient: "bg-linear-to-br from-sky-50 to-indigo-50",
+    };
   } else if (now > end) {
-    return { label: "Completed", color: "bg-gray-100 text-gray-700" };
+    return {
+      key: "completed",
+      label: "Completed",
+      badgeColor: "bg-gray-100 text-gray-700",
+      headerGradient: "bg-linear-to-br from-slate-50 to-gray-100",
+    };
   } else {
-    return { label: "In Progress", color: "bg-green-100 text-green-700" };
+    return {
+      key: "active",
+      label: "In Progress",
+      badgeColor: "bg-green-100 text-green-700",
+      headerGradient: "bg-linear-to-br from-emerald-50 to-teal-50",
+    };
   }
 };
 
@@ -102,15 +121,7 @@ function TripCard({
   return (
     <div className="group relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-gray-300">
       {/* Header */}
-      <div
-        className={`px-5 py-4 ${
-          status.label === "In Progress"
-            ? "bg-linear-to-br from-emerald-50 to-teal-50"
-            : status.label === "Upcoming"
-              ? "bg-linear-to-br from-sky-50 to-indigo-50"
-              : "bg-linear-to-br from-slate-50 to-gray-100"
-        }`}
-      >
+      <div className={`px-5 py-4 ${status.headerGradient}`}>
         {/* Trip name */}
         <h3 className="line-clamp-2 text-lg font-semibold text-gray-900 transition-colors group-hover:text-gray-700">
           {name}
