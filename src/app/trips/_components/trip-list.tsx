@@ -4,11 +4,14 @@ import { TRPCClientError } from "@trpc/client";
 import {
   AlertCircle,
   Calendar,
+  Clock,
   Eye,
+  History,
   Loader2,
   MapPin,
   MoreVertical,
   Pencil,
+  Plane,
   Plus,
   Trash2,
 } from "lucide-react";
@@ -33,6 +36,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/app/_components/ui/dropdown-menu";
+import { getFlagEmoji } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Trip = RouterOutputs["trip"]["listTrips"][number];
@@ -65,23 +69,42 @@ const formatDateRange = (startDate: Date, endDate: Date): string => {
   return `${startStr} - ${endStr}`;
 };
 
+type TripStatusKey = "upcoming" | "active" | "completed";
+
 const getTripStatus = (
   startDate: Date,
   endDate: Date,
 ): {
+  key: TripStatusKey;
   label: string;
-  color: string;
+  badgeColor: string;
+  headerGradient: string;
 } => {
   const now = Date.now();
   const start = startDate.getTime();
   const end = endDate.getTime();
 
   if (now < start) {
-    return { label: "Upcoming", color: "bg-blue-100 text-blue-700" };
+    return {
+      key: "upcoming",
+      label: "Upcoming",
+      badgeColor: "bg-blue-100 text-blue-700",
+      headerGradient: "bg-linear-to-br from-sky-50 to-indigo-50",
+    };
   } else if (now > end) {
-    return { label: "Completed", color: "bg-gray-100 text-gray-700" };
+    return {
+      key: "completed",
+      label: "Completed",
+      badgeColor: "bg-gray-100 text-gray-700",
+      headerGradient: "bg-linear-to-br from-slate-50 to-gray-100",
+    };
   } else {
-    return { label: "In Progress", color: "bg-green-100 text-green-700" };
+    return {
+      key: "active",
+      label: "In Progress",
+      badgeColor: "bg-green-100 text-green-700",
+      headerGradient: "bg-linear-to-br from-emerald-50 to-teal-50",
+    };
   }
 };
 
@@ -96,72 +119,66 @@ function TripCard({
   const status = getTripStatus(parsedStartDate, parsedEndDate);
 
   return (
-    <div className="group relative overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:border-orange-300 hover:shadow-md">
+    <div className="group relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-gray-300">
+      {/* Header */}
+      <div className={`px-5 py-4 ${status.headerGradient}`}>
+        {/* Trip name */}
+        <h3 className="line-clamp-2 text-lg font-semibold text-gray-900 transition-colors group-hover:text-gray-700">
+          {name}
+        </h3>
+      </div>
+
       <Link href={`/trips/${id}`} className="block">
-        <div className="p-6">
-          {/* Header */}
-          <div className="mb-4 flex items-start justify-between">
-            <div className="flex-1">
-              <h3 className="text-xl font-semibold text-gray-900 group-hover:text-orange-600">
-                {name}
-              </h3>
-              <div className="mt-2 flex items-center gap-2 text-sm text-gray-600">
-                <Calendar className="h-4 w-4" />
-                <span>{formatDateRange(parsedStartDate, parsedEndDate)}</span>
-              </div>
-            </div>
-            <span
-              className={`rounded-full px-3 py-1 text-xs font-medium ${status.color}`}
-            >
-              {status.label}
-            </span>
+        <div className="px-5 py-4">
+          {/* Date with icon */}
+          <div className="mb-3 flex items-center gap-2 text-sm text-gray-600">
+            <Calendar className="h-4 w-4 text-gray-400" />
+            <span>{formatDateRange(parsedStartDate, parsedEndDate)}</span>
           </div>
 
-          {/* Destinations */}
+          {/* Countries list */}
           {destinations.length > 0 ? (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <MapPin className="h-4 w-4" />
-                <span>Destinations ({destinations.length})</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {destinations.slice(0, 5).map((dest) => (
-                  <div
-                    key={dest.id}
-                    className="rounded-md bg-gray-100 px-3 py-1 text-sm text-gray-700"
-                  >
-                    {dest.country.name}
-                  </div>
-                ))}
-                {destinations.length > 5 && (
-                  <div
-                    className="rounded-md bg-gray-100 px-3 py-1 text-sm text-gray-500"
-                    title={destinations
-                      .slice(5)
-                      .map((d) => d.country.name)
-                      .join(", ")}
-                  >
-                    +{destinations.length - 5} more
-                  </div>
-                )}
-              </div>
+            <div className="flex flex-wrap gap-2">
+              {destinations.slice(0, 3).map((dest) => (
+                <div
+                  key={dest.id}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700"
+                >
+                  <span className="text-sm">
+                    {getFlagEmoji(dest.country.cca2)}
+                  </span>
+                  {dest.country.name}
+                </div>
+              ))}
+              {destinations.length > 3 && (
+                <div
+                  className="inline-flex items-center rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500"
+                  title={destinations
+                    .slice(3)
+                    .map((d) => d.country.name)
+                    .join(", ")}
+                >
+                  +{destinations.length - 3} more
+                </div>
+              )}
             </div>
           ) : (
-            <div className="py-2 text-sm text-gray-500">
-              No destinations added
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <Plane className="h-4 w-4" />
+              <span>Plan your destinations</span>
             </div>
           )}
         </div>
       </Link>
 
       {/* Actions Menu */}
-      <div className="absolute top-4 right-4">
-        <DropdownMenu>
+      <div className="absolute top-3 right-3">
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+              className="h-8 w-8 rounded-lg bg-white/80 shadow-sm backdrop-blur-sm transition-all md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100"
               onPointerDown={(e) => e.stopPropagation()}
             >
               <MoreVertical className="h-4 w-4" />
@@ -209,21 +226,23 @@ function TripCard({
 
 function EmptyState() {
   return (
-    <div className="flex min-h-100 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50">
-      <div className="text-center">
-        <MapPin className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-4 text-lg font-semibold text-gray-900">
-          No trips yet
-        </h3>
-        <p className="mt-2 text-sm text-gray-500">
-          Start your adventure by creating your first trip.
-        </p>
-        <Button asChild className="mt-6 bg-orange-500 hover:bg-orange-600">
-          <Link href="/trips/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Create Trip
-          </Link>
-        </Button>
+    <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-8 shadow-sm">
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <MapPin className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-4 text-lg font-semibold text-gray-900">
+            No trips yet
+          </h3>
+          <p className="mt-2 text-sm text-gray-500">
+            Start your adventure by creating your first trip.
+          </p>
+          <Button asChild className="mt-6 bg-sky-500 hover:bg-sky-600">
+            <Link href="/trips/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Trip
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -231,12 +250,12 @@ function EmptyState() {
 
 function LoadingState() {
   return (
-    <div className="flex min-h-100 items-center justify-center">
-      <div className="text-center">
-        <Loader2 className="mx-auto h-12 w-12 animate-spin text-gray-400" />
-        <p className="mt-4 text-sm text-gray-600">
-          Loading your travel plans...
-        </p>
+    <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-12 w-12 animate-spin text-gray-400" />
+          <p className="mt-4 text-gray-600">Loading trips...</p>
+        </div>
       </div>
     </div>
   );
@@ -250,19 +269,21 @@ function ErrorState({
   onRetry: () => void;
 }) {
   return (
-    <div className="flex min-h-100 items-center justify-center rounded-lg border-2 border-red-200 bg-red-50">
-      <div className="text-center">
-        <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
-        <h3 className="mt-4 text-lg font-semibold text-gray-900">
-          Failed to load trips
-        </h3>
-        <p className="mt-2 text-sm text-gray-600">{getErrorMessage(error)}</p>
-        <Button
-          onClick={onRetry}
-          className="mt-6 bg-orange-500 hover:bg-orange-600"
-        >
-          Try Again
-        </Button>
+    <div className="rounded-lg border border-red-200 bg-red-50 p-8 shadow-sm">
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
+          <h3 className="mt-4 text-lg font-semibold text-gray-900">
+            Failed to load trips
+          </h3>
+          <p className="mt-2 text-sm text-gray-600">{getErrorMessage(error)}</p>
+          <Button
+            onClick={onRetry}
+            className="mt-6 bg-sky-500 hover:bg-sky-600"
+          >
+            Try Again
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -340,14 +361,7 @@ export function TripsList() {
   }, [tripsWithParsedDates]);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h2 className="text-foreground text-3xl font-bold">All Trips</h2>
-        </div>
-      </div>
-
+    <div>
       {/* Content */}
       {isLoading ? (
         <LoadingState />
@@ -356,14 +370,22 @@ export function TripsList() {
       ) : !tripsWithParsedDates || tripsWithParsedDates.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-10">
           {/* Active Trips */}
           {activeTrips.length > 0 && (
-            <div>
-              <h2 className="mb-4 border-b border-gray-200 pb-2 text-xl font-semibold text-gray-900">
-                Active Trips
-              </h2>
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <section>
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100">
+                  <Plane className="h-4 w-4 text-green-600" />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Active Trips
+                </h2>
+                <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
+                  {activeTrips.length}
+                </span>
+              </div>
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {activeTrips.map((trip) => (
                   <TripCard
                     key={trip.id}
@@ -372,16 +394,24 @@ export function TripsList() {
                   />
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
           {/* Upcoming Trips */}
           {upcomingTrips.length > 0 && (
-            <div>
-              <h2 className="mb-4 border-b border-gray-200 pb-2 text-xl font-semibold text-gray-900">
-                Upcoming Trips
-              </h2>
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <section>
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100">
+                  <Clock className="h-4 w-4 text-blue-600" />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Upcoming Trips
+                </h2>
+                <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
+                  {upcomingTrips.length}
+                </span>
+              </div>
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {upcomingTrips.map((trip) => (
                   <TripCard
                     key={trip.id}
@@ -390,16 +420,24 @@ export function TripsList() {
                   />
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
           {/* Past Trips */}
           {pastTrips.length > 0 && (
-            <div>
-              <h2 className="mb-4 border-b border-gray-200 pb-2 text-xl font-semibold text-gray-900">
-                Past Trips
-              </h2>
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <section>
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100">
+                  <History className="h-4 w-4 text-gray-600" />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Past Trips
+                </h2>
+                <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
+                  {pastTrips.length}
+                </span>
+              </div>
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {pastTrips.map((trip) => (
                   <TripCard
                     key={trip.id}
@@ -408,7 +446,7 @@ export function TripsList() {
                   />
                 ))}
               </div>
-            </div>
+            </section>
           )}
         </div>
       )}
