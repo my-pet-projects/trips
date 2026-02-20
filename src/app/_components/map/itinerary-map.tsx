@@ -26,6 +26,7 @@ type ItineraryMapProps = {
   onAddAttractionToDay: (attraction: BasicAttraction) => void;
   viewMode: "admin" | "viewer";
   enableLocationTracking?: boolean;
+  enableClustering?: boolean;
   isLoadingRoutes: boolean;
 };
 
@@ -54,20 +55,25 @@ export function ItineraryMap({
   onAddAttractionToDay,
   viewMode = "admin",
   enableLocationTracking = false,
+  enableClustering = false,
   isLoadingRoutes,
 }: ItineraryMapProps) {
   const [selectedAttraction, setSelectedAttraction] =
     useState<Attraction | null>(null);
   const [panelHeight, setPanelHeight] = useState(0);
 
+  const attractionsMap = useMemo(() => {
+    return new Map(attractions.map((a) => [a.id, a]));
+  }, [attractions]);
+
   useEffect(() => {
     if (selectedAttractionId) {
-      const attraction = attractions.find((a) => a.id === selectedAttractionId);
+      const attraction = attractionsMap.get(selectedAttractionId);
       setSelectedAttraction(attraction ?? null);
     } else {
       setSelectedAttraction(null);
     }
-  }, [selectedAttractionId, attractions]);
+  }, [selectedAttractionId, attractionsMap]);
 
   const attractionToDayMap = useMemo(() => {
     const map = new Map<number, number>();
@@ -113,6 +119,7 @@ export function ItineraryMap({
       <LeafletMap
         key="map"
         attractions={attractions}
+        attractionsMap={attractionsMap}
         selectedDayAttractions={selectedDayAttractions}
         selectedDayId={selectedDayId}
         attractionToDayMap={attractionToDayMap}
@@ -123,6 +130,7 @@ export function ItineraryMap({
         dayRoutes={dayRoutes}
         onMarkerClick={handleMarkerClick}
         enableLocationTracking={enableLocationTracking}
+        enableClustering={enableClustering}
         isLoadingRoutes={isLoadingRoutes}
       />
 

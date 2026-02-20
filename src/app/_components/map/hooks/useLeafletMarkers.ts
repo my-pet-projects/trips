@@ -1,5 +1,8 @@
 import L from "leaflet";
-import { useEffect, useMemo, useRef } from "react";
+import "leaflet.markercluster";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import { useEffect, useRef } from "react";
 
 import type { RouterOutputs } from "~/trpc/react";
 
@@ -51,9 +54,44 @@ const createMarkerIcon = (
   `;
 };
 
+const createClusterIcon = (cluster: L.MarkerCluster) => {
+  const count = cluster.getChildCount();
+  let size = 40;
+  let className = "marker-cluster-small";
+
+  if (count >= 100) {
+    size = 50;
+    className = "marker-cluster-large";
+  } else if (count >= 10) {
+    size = 45;
+    className = "marker-cluster-medium";
+  }
+
+  return L.divIcon({
+    html: `<div style="
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      width: ${size}px;
+      height: ${size}px;
+      border-radius: 50%;
+      border: 3px solid white;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: ${count >= 100 ? "14px" : "13px"};
+    ">${count}</div>`,
+    className: `marker-cluster ${className}`,
+    iconSize: L.point(size, size),
+    iconAnchor: L.point(size / 2, size / 2),
+  });
+};
+
 export const useLeafletMarkers = (
   mapRef: React.RefObject<L.Map | null>,
   attractions: Attraction[],
+  attractionsMap: Map<number, Attraction>,
   attractionToDayMap: Map<number, number>,
   dayColors: Map<number, string>,
   hoveredAttractionId: number | null,
@@ -61,26 +99,62 @@ export const useLeafletMarkers = (
   selectedDayId: number | null,
   selectedDayAttractionOrders: Map<number, number>,
   onMarkerClick: (attraction: Attraction) => void,
+  enableClustering = false,
 ) => {
   const markersRef = useRef<Map<number, L.Marker>>(new Map());
+  const clusterGroupRef = useRef<L.MarkerClusterGroup | null>(null);
   const previousHoveredIdRef = useRef<number | null>(null);
   const previousSelectedIdRef = useRef<number | null>(null);
-  const attractionsMap = useMemo<Map<number, Attraction>>(() => {
-    return new Map(attractions.map((a) => [a.id, a]));
-  }, [attractions]);
+  const previousAttractionIdsRef = useRef<Set<number>>(new Set());
+  
+  // Store callback in ref to avoid re-creating markers when callback changes
+  const onMarkerClickRef = useRef(onMarkerClick);
+  onMarkerClickRef.current = onMarkerClick;
 
-  // Create all markers initially (runs when attractions/day structure changes)
+  // Create all markers initially - only runs when attractions actually change (by IDs)
   useEffect(() => {
     if (!mapRef.current) return;
+
+    // Check if attractions actually changed by comparing IDs
+    const currentIds = new Set(attractions.map(a => a.id));
+    const prevIds = previousAttractionIdsRef.current;
+    
+    if (currentIds.size === prevIds.size && 
+        attractions.every(a => prevIds.has(a.id)) &&
+        markersRef.current.size > 0) {
+      // Same attractions - skip recreation
+      return;
+    }
+    
+    previousAttractionIdsRef.current = currentIds;
 
     const map = mapRef.current;
     const markers = markersRef.current;
 
-    // Clear existing markers
+    // Clear existing markers and cluster group
     markers.forEach((marker) => marker.remove());
     markers.clear();
+    if (clusterGroupRef.current) {
+      map.removeLayer(clusterGroupRef.current);
+      clusterGroupRef.current = null;
+    }
 
     if (attractions.length === 0) return;
+
+    // Create cluster group if clustering is enabled
+    let clusterGroup: L.MarkerClusterGroup | null = null;
+    if (enableClustering) {
+      clusterGroup = L.markerClusterGroup({
+        iconCreateFunction: createClusterIcon,
+        maxClusterRadius: 60,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: true,
+        disableClusteringAtZoom: 16,
+        animate: true,
+      });
+      clusterGroupRef.current = clusterGroup;
+    }
 
     attractions.forEach((attraction) => {
       if (attraction.latitude == null || attraction.longitude == null) return;
@@ -108,26 +182,46 @@ export const useLeafletMarkers = (
         title: attraction.name,
         zIndexOffset: 0,
         pane: "markerPane",
-      })
-        .addTo(map)
-        .on("click", (e) => {
-          L.DomEvent.stopPropagation(e);
-          onMarkerClick(attraction);
-        });
+      }).on("click", (e) => {
+        L.DomEvent.stopPropagation(e);
+        onMarkerClickRef.current(attraction);
+      });
+
+      // Add to cluster group or directly to map
+      if (clusterGroup) {
+        clusterGroup.addLayer(marker);
+      } else {
+        marker.addTo(map);
+      }
 
       markers.set(attraction.id, marker);
     });
+
+    // Add cluster group to map
+    if (clusterGroup) {
+      map.addLayer(clusterGroup);
+    }
 
     // Cleanup function for markers
     return () => {
       markers.forEach((marker) => marker.remove());
       markers.clear();
+      if (clusterGroupRef.current) {
+        map.removeLayer(clusterGroupRef.current);
+        clusterGroupRef.current = null;
+      }
     };
-  }, [mapRef, attractions, onMarkerClick]);
+  }, [mapRef, attractions, enableClustering]);
 
   // Update all markers when day selection or day assignments change
+  // Skip this when clustering is enabled and no day data exists (pure attraction view)
   useEffect(() => {
     if (!mapRef.current) return;
+    
+    // Skip expensive update when there's no day-related styling to apply
+    if (enableClustering && attractionToDayMap.size === 0 && dayColors.size === 0) {
+      return;
+    }
 
     const markers = markersRef.current;
 
@@ -172,6 +266,7 @@ export const useLeafletMarkers = (
     dayColors,
     selectedDayAttractionOrders,
     mapRef,
+    enableClustering,
   ]);
 
   // Update only affected markers when hover/selection changes

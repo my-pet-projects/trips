@@ -20,6 +20,7 @@ type RouteData = RouterOutputs["route"]["buildRoute"];
 
 type LeafletMapProps = {
   attractions: Attraction[];
+  attractionsMap: Map<number, Attraction>;
   selectedDayAttractions: BasicAttraction[];
   selectedDayId: number | null;
   attractionToDayMap: Map<number, number>;
@@ -30,11 +31,13 @@ type LeafletMapProps = {
   onMarkerClick: (attraction: Attraction) => void;
   dayRoutes: Map<number, RouteData>;
   enableLocationTracking?: boolean;
+  enableClustering?: boolean;
   isLoadingRoutes: boolean;
 };
 
 export default function LeafletMap({
   attractions,
+  attractionsMap,
   selectedDayAttractions,
   selectedDayId,
   attractionToDayMap,
@@ -45,6 +48,7 @@ export default function LeafletMap({
   onMarkerClick,
   dayRoutes,
   enableLocationTracking = false,
+  enableClustering = false,
   isLoadingRoutes,
 }: LeafletMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -65,6 +69,7 @@ export default function LeafletMap({
   useLeafletMarkers(
     mapRef,
     attractions,
+    attractionsMap,
     attractionToDayMap,
     dayColors,
     hoveredAttractionId,
@@ -72,6 +77,7 @@ export default function LeafletMap({
     selectedDayId,
     selectedDayAttractionOrders,
     onMarkerClick,
+    enableClustering,
   );
 
   useLeafletRoutes(
@@ -95,6 +101,7 @@ export default function LeafletMap({
     mapRef,
     hasInitializedBounds,
     attractions,
+    attractionsMap,
     selectedDayAttractions,
     selectedDayId,
     selectedAttractionId,

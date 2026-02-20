@@ -58,6 +58,33 @@ export const attractionRouter = createTRPCRouter({
       }
     }),
 
+  getAllAttractions: publicProcedure.query(async ({ ctx, input }) => {
+    try {
+      const attractions = await ctx.db
+        .select()
+        .from(schema.attractions)
+        .orderBy(schema.attractions.id);
+
+      const cityIds = [
+        ...new Set(attractions.map((attraction) => attraction.cityId)),
+      ];
+      const cities = await fetchCitiesWithCountries(ctx.geoDb, cityIds);
+      const enrichedAttractions = enrichAttractionsWithCities(
+        attractions,
+        cities,
+      );
+
+      return enrichedAttractions;
+    } catch (error) {
+      console.error("Error fetching attractions:", error);
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to fetch attractions",
+        cause: error,
+      });
+    }
+  }),
+
   getAttractionsByCountries: publicProcedure
     .input(z.object({ countryCodes: z.array(z.string().length(2)).min(1) }))
     .query(async ({ ctx, input }) => {
