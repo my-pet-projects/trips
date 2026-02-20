@@ -139,6 +139,13 @@ export function Navbar({
                   <CopyPlus className="mr-2 h-4 w-4" />
                   Parse Attractions
                 </Link>
+                <Link
+                  href="/attractions/map"
+                  className="inline-flex items-center justify-center rounded-lg border border-orange-500 bg-orange-50 px-4 py-2 text-sm font-medium text-orange-700 transition-colors hover:bg-orange-100 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-none"
+                >
+                  <MapPin className="mr-2 h-4 w-4" />
+                  View Map
+                </Link>
               </>
             )}
 
@@ -224,6 +231,14 @@ export function Navbar({
                   >
                     <CopyPlus className="mr-2 h-4 w-4" />
                     Parse Attractions
+                  </Link>
+                  <Link
+                    href="/attractions/map"
+                    onClick={closeMobileMenu}
+                    className="inline-flex items-center justify-center rounded-lg border border-orange-500 bg-orange-50 px-4 py-3 text-sm font-medium text-orange-700 transition-colors hover:bg-orange-100"
+                  >
+                    <MapPin className="mr-2 h-4 w-4" />
+                    View Map
                   </Link>
                 </>
               )}
