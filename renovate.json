@@ -1,24 +1,31 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
+  "timezone": "Europe/Berlin",
+  "schedule": ["before 6am"],
+  "prConcurrentLimit": 5,
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on monday"]
+  },
   "packageRules": [
+    {
+      "description": "Security updates immediately",
+      "matchUpdateTypes": ["patch", "minor"],
+      "matchDepTypes": ["dependencies", "devDependencies"],
+      "isVulnerabilityAlert": true,
+      "schedule": ["at any time"],
+      "automerge": true
+    },
     {
       "description": "Group all minor and patch updates into a single PR",
       "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "minor-patch-updates",
-      "commitMessagePrefix": "chore",
-      "commitMessageAction": "update",
-      "commitMessageTopic": "minor and patch updates",
-      "prBody": "This PR combines all minor and patch dependency updates for a streamlined maintenance workflow.\n\nAutomated merge enabled.",
+      "groupName": "minor and patch dependencies",
       "automerge": true
     },
     {
       "description": "Separate PRs for major updates",
       "matchUpdateTypes": ["major"],
-      "commitMessagePrefix": "chore",
-      "commitMessageAction": "update",
-      "commitMessageTopic": "major update {{depName}} to v{{newMajor}}",
-      "prBody": "This PR updates `{{depName}}` to its next major version (`v{{newMajor}}`).\n\nPlease review carefully as major versions may contain breaking changes.",
       "automerge": false
     }
   ]
