@@ -29,10 +29,17 @@ export function validateReturnTo(returnTo: string | undefined): string | null {
     return null;
   }
 
-  // Reject URLs with protocol schemes (e.g., javascript:, data:, http:)
-  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(returnTo)) {
+export function validateReturnTo(returnTo: string | undefined): string | null {
+  if (!returnTo) return null;
+
+  // Must start with a single forward slash (relative path)
+  // Reject protocol-relative URLs (//), absolute URLs, or other schemes
+  if (!returnTo.startsWith("/") || returnTo.startsWith("//")) {
     return null;
   }
+
+  return returnTo;
+}
 
   return returnTo;
 }
