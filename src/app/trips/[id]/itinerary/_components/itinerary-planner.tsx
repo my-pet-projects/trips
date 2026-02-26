@@ -1,11 +1,12 @@
 "use client";
 
-import { Plus, Save } from "lucide-react";
+import { FileDown, Loader2, Plus, Save } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { ItineraryMap } from "~/app/_components/map/itinerary-map";
 import { DayRoutesFetcher } from "~/app/_components/map/route-fetcher";
+import { generateAllDaysPdf } from "~/lib/pdf";
 import type { RouterOutputs } from "~/trpc/react";
 import { api } from "~/trpc/react";
 import { ItineraryDay } from "./itinerary-day";
@@ -90,6 +91,7 @@ export function ItineraryPlanner({
   const [loadingRoutes, setLoadingRoutes] = useState<Map<number, boolean>>(
     () => new Map(),
   );
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const isLoadingRoutes = useMemo(
     () => [...loadingRoutes.values()].some(Boolean),
@@ -361,6 +363,34 @@ export function ItineraryPlanner({
     [],
   );
 
+  const handleExportPdf = useCallback(async () => {
+    setIsGeneratingPdf(true);
+    const toastId = toast.loading("Starting PDF generation...");
+    try {
+      await generateAllDaysPdf(
+        itineraryDays,
+        trip.name,
+        dayColors,
+        (status) => {
+          toast.loading(status, { id: toastId });
+        },
+      );
+      toast.success("PDF downloaded", {
+        id: toastId,
+        description: "Full itinerary has been saved.",
+      });
+    } catch (error) {
+      console.error("PDF generation failed:", error);
+      toast.error("Failed to generate PDF", {
+        id: toastId,
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+      });
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  }, [itineraryDays, trip.name, dayColors]);
+
   // Sync with server updates
   useEffect(() => {
     if (!hasUnsavedChanges) {
@@ -383,6 +413,23 @@ export function ItineraryPlanner({
               Daily Itinerary
             </h2>
             <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleExportPdf}
+                disabled={
+                  itineraryDays.every((d) => d.attractions.length === 0) ||
+                  isGeneratingPdf
+                }
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                title="Download all days as PDF"
+              >
+                {isGeneratingPdf ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FileDown className="h-4 w-4" />
+                )}
+                {isGeneratingPdf ? "Generating..." : "Generate PDF"}
+              </button>
               <button
                 type="button"
                 onClick={handleAddDay}

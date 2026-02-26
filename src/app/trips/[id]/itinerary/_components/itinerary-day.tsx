@@ -5,12 +5,17 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
+  FileDown,
   GripVertical,
+  Loader2,
   MapPin,
   Route,
   Trash2,
 } from "lucide-react";
+import { toast } from "sonner";
+
 import { useCallback, useRef, useState } from "react";
+import { generateDayPdf } from "~/lib/pdf";
 
 import type { RouterOutputs } from "~/trpc/react";
 
@@ -74,6 +79,26 @@ export function ItineraryDay({
     number | null
   >(null);
   const [isReordering, setIsReordering] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  const handleGeneratePdf = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsGeneratingPdf(true);
+    try {
+      await generateDayPdf(day, undefined, color);
+      toast.success("PDF downloaded", {
+        description: `${day.name} itinerary has been saved.`,
+      });
+    } catch (error) {
+      console.error("PDF generation failed:", error);
+      toast.error("Failed to generate PDF", {
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+      });
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
 
   const handleRemoveClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -226,6 +251,21 @@ export function ItineraryDay({
               <MapPin className="h-3 w-3" />
               {attractionCount}
             </span>
+          )}
+          {attractionCount > 0 && (
+            <button
+              type="button"
+              onClick={(e) => void handleGeneratePdf(e)}
+              className="rounded-lg p-1.5 text-gray-400 transition-all hover:bg-sky-50 hover:text-sky-600 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={isRemoving || isGeneratingPdf}
+              title="Download PDF"
+            >
+              {isGeneratingPdf ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <FileDown className="h-4 w-4" />
+              )}
+            </button>
           )}
           <button
             type="button"
