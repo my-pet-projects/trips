@@ -29,17 +29,5 @@ export function validateReturnTo(returnTo: string | undefined): string | null {
     return null;
   }
 
-export function validateReturnTo(returnTo: string | undefined): string | null {
-  if (!returnTo) return null;
-
-  // Must start with a single forward slash (relative path)
-  // Reject protocol-relative URLs (//), absolute URLs, or other schemes
-  if (!returnTo.startsWith("/") || returnTo.startsWith("//")) {
-    return null;
-  }
-
-  return returnTo;
-}
-
   return returnTo;
 }

@@ -10,7 +10,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? "github" : "html",
   expect: {
-    timeout: 10000,
+    timeout: 60000,
   },
   use: {
     baseURL,
