@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { Navbar } from "~/app/_components/navbar";
 import { AttractionForm } from "~/app/attractions/_components/forms/attraction-form";
+import { validateReturnTo } from "~/lib/utils";
 import { api } from "~/trpc/server";
 
 type EditAttractionPageProps = {
@@ -27,7 +28,7 @@ export default async function EditAttractionPage({
   const { id } = await params;
   const { returnTo } = await searchParams;
   const attractionId = parseInt(id, 10);
-  const backHref = returnTo ?? "/attractions";
+  const backHref = validateReturnTo(returnTo) ?? "/attractions";
 
   if (isNaN(attractionId)) {
     notFound();

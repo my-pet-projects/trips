@@ -27,6 +27,7 @@ import { Button } from "~/app/_components/ui/button";
 import { Input } from "~/app/_components/ui/input";
 import { Label } from "~/app/_components/ui/label";
 import { Textarea } from "~/app/_components/ui/textarea";
+import { validateReturnTo } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import type { AttractionById, City, Country } from "~/types";
 
@@ -96,7 +97,7 @@ export function AttractionForm({
   const isNew = params.get("isNew") === "true";
   const country = isNew ? (params.get("country") ?? undefined) : undefined;
   const city = isNew ? (params.get("city") ?? undefined) : undefined;
-  const cancelHref = returnTo ?? "/attractions";
+  const cancelHref = validateReturnTo(returnTo) ?? "/attractions";
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(
     mode === "edit" ? attraction?.countryCode : country,
