@@ -40,6 +40,9 @@ async function fetchTile(
   try {
     const tileUrl = `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
     const response = await fetch(tileUrl);
+    if (!response.ok) {
+      return null;
+    }
     const blob = await response.blob();
     const img = await createImageBitmap(blob);
     tileCache.set(cacheKey, img);
