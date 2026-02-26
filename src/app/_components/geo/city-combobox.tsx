@@ -3,9 +3,7 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import Select, { components, type InputProps } from "react-select";
 
-import type { RouterOutputs } from "~/trpc/react";
-
-type City = RouterOutputs["geo"]["getCitiesByCountry"][number];
+import type { City } from "~/types";
 
 export interface CitySelectOption {
   value: number;

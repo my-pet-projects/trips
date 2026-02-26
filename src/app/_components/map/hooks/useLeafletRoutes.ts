@@ -1,9 +1,7 @@
 import L from "leaflet";
 import { useEffect, useRef } from "react";
 
-import type { RouterOutputs } from "~/trpc/react";
-
-type RouteData = RouterOutputs["route"]["buildRoute"];
+import type { RouteData } from "~/types";
 
 const ROUTE_STYLES = `
   /* Keyframes for pulsing selected route segments */

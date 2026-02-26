@@ -4,19 +4,12 @@ import "leaflet/dist/leaflet.css";
 import { MapPin, Navigation } from "lucide-react";
 import { useMemo, useRef } from "react";
 
-import type { RouterOutputs } from "~/trpc/react";
+import type { Attraction, BasicAttraction, RouteData } from "~/types";
 import { useGeolocationTracking } from "./hooks/useGeolocationTracking";
 import { useLeafletMap } from "./hooks/useLeafletMap";
 import { useLeafletMarkers } from "./hooks/useLeafletMarkers";
 import { useLeafletRoutes } from "./hooks/useLeafletRoutes";
 import { useMapCenteringAndBounds } from "./hooks/useMapCenteringAndBounds";
-
-type Attraction =
-  RouterOutputs["attraction"]["getAttractionsByCountries"][number];
-type Trip = RouterOutputs["trip"]["getWithItinerary"];
-type BasicAttraction =
-  Trip["itineraryDays"][number]["itineraryDayPlaces"][number]["attraction"];
-type RouteData = RouterOutputs["route"]["buildRoute"];
 
 type LeafletMapProps = {
   attractions: Attraction[];
@@ -50,9 +43,9 @@ export default function LeafletMap({
   isLoadingRoutes,
 }: LeafletMapProps) {
   const attractionsMap = useMemo(
-  () => new Map(attractions.map((a) => [a.id, a])),
-  [attractions],
-);
+    () => new Map(attractions.map((a) => [a.id, a])),
+    [attractions],
+  );
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 

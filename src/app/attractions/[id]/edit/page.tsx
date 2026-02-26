@@ -2,8 +2,8 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AttractionForm } from "~/app/_components/forms/attraction-form";
 import { Navbar } from "~/app/_components/navbar";
+import { AttractionForm } from "~/app/attractions/_components/forms/attraction-form";
 import { api } from "~/trpc/server";
 
 type EditAttractionPageProps = {

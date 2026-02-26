@@ -12,10 +12,7 @@ import {
 
 import { CountryCitySelector } from "~/app/_components/geo/country-city-selector";
 import { Input } from "~/app/_components/ui/input";
-import type { RouterOutputs } from "~/trpc/react";
-
-type City = RouterOutputs["geo"]["getCitiesByCountry"][number];
-type Country = RouterOutputs["geo"]["getCountries"][number];
+import type { City, Country } from "~/types";
 
 type SearchBarProps = {
   initialSearch: string;

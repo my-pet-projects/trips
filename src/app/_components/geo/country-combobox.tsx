@@ -12,9 +12,7 @@ import Select, {
 } from "react-select";
 
 import { getFlagEmoji } from "~/lib/utils";
-import type { RouterOutputs } from "~/trpc/react";
-
-type Country = RouterOutputs["geo"]["getCountries"][number];
+import type { Country } from "~/types";
 
 export interface CountrySelectOption {
   value: string;

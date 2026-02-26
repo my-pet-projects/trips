@@ -3,10 +3,7 @@ import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import { useEffect, useRef } from "react";
 
-import type { RouterOutputs } from "~/trpc/react";
-
-type Attraction =
-  RouterOutputs["attraction"]["getAttractionsByCountries"][number];
+import type { Attraction } from "~/types";
 
 const BASE_MARKER_SIZE = 26;
 
@@ -105,7 +102,7 @@ export const useLeafletMarkers = (
   const previousHoveredIdRef = useRef<number | null>(null);
   const previousSelectedIdRef = useRef<number | null>(null);
   const previousAttractionIdsRef = useRef<Set<number>>(new Set());
-  
+
   // Store callback in ref to avoid re-creating markers when callback changes
   const onMarkerClickRef = useRef(onMarkerClick);
   onMarkerClickRef.current = onMarkerClick;
@@ -115,16 +112,18 @@ export const useLeafletMarkers = (
     if (!mapRef.current) return;
 
     // Check if attractions actually changed by comparing IDs
-    const currentIds = new Set(attractions.map(a => a.id));
+    const currentIds = new Set(attractions.map((a) => a.id));
     const prevIds = previousAttractionIdsRef.current;
-    
-    if (currentIds.size === prevIds.size && 
-        attractions.every(a => prevIds.has(a.id)) &&
-        markersRef.current.size > 0) {
+
+    if (
+      currentIds.size === prevIds.size &&
+      attractions.every((a) => prevIds.has(a.id)) &&
+      markersRef.current.size > 0
+    ) {
       // Same attractions - skip recreation
       return;
     }
-    
+
     previousAttractionIdsRef.current = currentIds;
 
     const map = mapRef.current;
@@ -216,9 +215,13 @@ export const useLeafletMarkers = (
   // Skip this when clustering is enabled and no day data exists (pure attraction view)
   useEffect(() => {
     if (!mapRef.current) return;
-    
+
     // Skip expensive update when there's no day-related styling to apply
-    if (enableClustering && attractionToDayMap.size === 0 && dayColors.size === 0) {
+    if (
+      enableClustering &&
+      attractionToDayMap.size === 0 &&
+      dayColors.size === 0
+    ) {
       return;
     }
 
