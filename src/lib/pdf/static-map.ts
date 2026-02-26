@@ -174,7 +174,7 @@ export async function fetchMapImage(
   orderNumber: number,
   color: string = "#3b82f6",
 ): Promise<string | null> {
-  const cacheKey = `${lat},${lng},${orderNumber}`;
+  const cacheKey = `${lat},${lng},${orderNumber},${color}`;
   if (mapImageCache.has(cacheKey)) {
     return mapImageCache.get(cacheKey)!;
   }
@@ -214,7 +214,7 @@ export async function fetchOverviewMap(
 ): Promise<string | null> {
   if (markers.length === 0) return null;
 
-  const cacheKey = `overview_${markers.map((m) => `${m.lat},${m.lng}`).join("_")}`;
+  const cacheKey = `overview_${color}_${markers.map((m) => `${m.lat},${m.lng}`).join("_")}`;
   if (mapImageCache.has(cacheKey)) {
     return mapImageCache.get(cacheKey)!;
   }

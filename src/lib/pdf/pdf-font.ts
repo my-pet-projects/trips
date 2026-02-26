@@ -33,10 +33,16 @@ export async function loadCyrillicFont(doc: jsPDF): Promise<boolean> {
         const response = await fetch(
           "https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Me5WZLCzYlKw.ttf",
         );
+        if (!response.ok) {
+          throw new Error(
+            `Font download failed with status ${response.status}`,
+          );
+        }
         const fontBuffer = await response.arrayBuffer();
         fontBase64Data = arrayBufferToBase64(fontBuffer);
         return fontBase64Data;
       } catch (error) {
+        fontLoadPromise = null;
         console.warn("Failed to load Cyrillic font:", error);
         return null;
       }
@@ -47,6 +53,8 @@ export async function loadCyrillicFont(doc: jsPDF): Promise<boolean> {
     const result = await fontLoadPromise;
     if (result) {
       fontBase64Data = result;
+    } else {
+      fontLoadPromise = null;
     }
   }
 

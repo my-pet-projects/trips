@@ -158,7 +158,7 @@ function renderDayCoverPage(
 
     // Attraction name
     doc.setTextColor(50, 50, 50);
-    const maxNameLength = column === 1 ? 28 : 28;
+    const maxNameLength = column === 1 ? 56 : 28;
     const nameText =
       attraction.name.length > maxNameLength
         ? attraction.name.substring(0, maxNameLength - 3) + "..."
