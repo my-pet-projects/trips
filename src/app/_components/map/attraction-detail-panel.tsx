@@ -3,11 +3,8 @@
 import { ExternalLink, MapPin, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import type { RouterOutputs } from "~/trpc/react";
+import type { Attraction } from "~/types";
 import { AttractionImageGallery } from "./attraction-image-gallery";
-
-type Attraction =
-  RouterOutputs["attraction"]["getAttractionsByCountries"][number];
 
 type AttractionDetailPanelProps = {
   attraction: Attraction;

@@ -27,15 +27,12 @@ import { Button } from "~/app/_components/ui/button";
 import { Input } from "~/app/_components/ui/input";
 import { Label } from "~/app/_components/ui/label";
 import { Textarea } from "~/app/_components/ui/textarea";
-import { api, type RouterOutputs } from "~/trpc/react";
-
-type City = RouterOutputs["geo"]["getCitiesByCountry"][number];
-type Country = RouterOutputs["geo"]["getCountries"][number];
-type Attraction = RouterOutputs["attraction"]["getAttractionById"];
+import { api } from "~/trpc/react";
+import type { AttractionById, City, Country } from "~/types";
 
 type AttractionFormProps = {
   mode: "create" | "edit";
-  attraction?: Attraction;
+  attraction?: AttractionById;
 };
 
 const attractionSchema = z.object({

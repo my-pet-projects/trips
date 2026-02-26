@@ -18,10 +18,8 @@ import { z } from "zod";
 import { CountryCitySelector } from "~/app/_components/geo/country-city-selector";
 import { Button } from "~/app/_components/ui/button";
 import { Label } from "~/app/_components/ui/label";
-import { api, type RouterOutputs } from "~/trpc/react";
-
-type City = RouterOutputs["geo"]["getCitiesByCountry"][number];
-type Country = RouterOutputs["geo"]["getCountries"][number];
+import { api } from "~/trpc/react";
+import type { City, Country } from "~/types";
 
 const urlListSchema = z
   .string()
