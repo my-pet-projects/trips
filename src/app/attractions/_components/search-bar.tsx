@@ -66,6 +66,14 @@ export function SearchBar({
 
   const handleCountryCityChange = useCallback(
     (country: Country | null, city: City | null) => {
+      const newCountryCode = country?.cca2 ?? "";
+      const newCityName = city?.name ?? "";
+
+      // Don't navigate if values haven't changed (e.g., during initialization)
+      if (newCountryCode === initialCountry && newCityName === initialCity) {
+        return;
+      }
+
       const params = new URLSearchParams(searchParams.toString());
 
       if (country) {
@@ -86,10 +94,7 @@ export function SearchBar({
         router.push(`/attractions?${params.toString()}`);
       });
     },
-    // Don't include searchParams/router in deps to avoid infinite loops
-    // The callback reads fresh searchParams.toString() on each invocation
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [initialCountry, initialCity, searchParams, router],
   );
 
   return (
