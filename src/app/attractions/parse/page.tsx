@@ -1,5 +1,5 @@
-import { AttractionParseForm } from "~/app/_components/forms/attraction-parse-form";
 import { Navbar } from "~/app/_components/navbar";
+import { AttractionParseForm } from "~/app/attractions/_components/forms/attraction-parse-form";
 
 export const metadata = {
   title: "Parse Attractions",

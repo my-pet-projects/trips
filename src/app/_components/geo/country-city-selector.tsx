@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
+import type { City, Country } from "~/types";
 import { CityCombobox } from "./city-combobox";
 import { CountryCombobox } from "./country-combobox";
-
-type Country = RouterOutputs["geo"]["getCountries"][number];
-type City = RouterOutputs["geo"]["getCitiesByCountry"][number];
 
 type CountryCitySelectorProps = {
   initialCountry?: string;

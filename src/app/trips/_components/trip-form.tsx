@@ -13,10 +13,8 @@ import { CountryCombobox } from "~/app/_components/geo/country-combobox";
 import { Button } from "~/app/_components/ui/button";
 import { Input } from "~/app/_components/ui/input";
 import { Label } from "~/app/_components/ui/label";
-import { api, type RouterOutputs } from "~/trpc/react";
-
-type Country = RouterOutputs["geo"]["getCountries"][number];
-type Trip = RouterOutputs["trip"]["getTripById"];
+import { api } from "~/trpc/react";
+import type { Country, TripById } from "~/types";
 
 type TripFormProps =
   | {
@@ -25,7 +23,7 @@ type TripFormProps =
     }
   | {
       mode: "edit";
-      trip: Trip;
+      trip: TripById;
     };
 
 const tripSchema = z

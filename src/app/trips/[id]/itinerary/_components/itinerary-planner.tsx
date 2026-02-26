@@ -7,16 +7,9 @@ import { toast } from "sonner";
 import { ItineraryMap } from "~/app/_components/map/itinerary-map";
 import { DayRoutesFetcher } from "~/app/_components/map/route-fetcher";
 import { generateAllDaysPdf } from "~/lib/pdf";
-import type { RouterOutputs } from "~/trpc/react";
 import { api } from "~/trpc/react";
+import type { Attraction, BasicAttraction, RouteData, Trip } from "~/types";
 import { ItineraryDay } from "./itinerary-day";
-
-type Trip = RouterOutputs["trip"]["getWithItinerary"];
-type Attraction =
-  RouterOutputs["attraction"]["getAttractionsByCountries"][number];
-type BasicAttraction =
-  Trip["itineraryDays"][number]["itineraryDayPlaces"][number]["attraction"];
-type RouteData = RouterOutputs["route"]["buildRoute"];
 
 type ItineraryDayData = {
   id: number;

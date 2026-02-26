@@ -3,12 +3,10 @@
 import { useCallback, useState } from "react";
 
 import { ItineraryMap } from "~/app/_components/map/itinerary-map";
-import type { RouterOutputs } from "~/trpc/react";
-
-type Attraction = RouterOutputs["attraction"]["getAllAttractions"][number];
+import type { AllAttraction } from "~/types";
 
 type AttractionsViewerProps = {
-  attractions: Attraction[];
+  attractions: AllAttraction[];
 };
 
 export const AttractionsViewer = ({ attractions }: AttractionsViewerProps) => {
