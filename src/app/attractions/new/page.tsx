@@ -1,5 +1,5 @@
-import { AttractionForm } from "~/app/_components/forms/attraction-form";
 import { Navbar } from "~/app/_components/navbar";
+import { AttractionForm } from "~/app/attractions/_components/forms/attraction-form";
 
 export const metadata = {
   title: "New Attraction",

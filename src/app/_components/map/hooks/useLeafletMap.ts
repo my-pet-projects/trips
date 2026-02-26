@@ -2,10 +2,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useEffect, useRef } from "react";
 
-import type { RouterOutputs } from "~/trpc/react";
-
-type Attraction =
-  RouterOutputs["attraction"]["getAttractionsByCountries"][number];
+import type { Attraction } from "~/types";
 
 const getInitialMapCenter = (attractions: Attraction[]): [number, number] => {
   const validAttractions = attractions.filter(

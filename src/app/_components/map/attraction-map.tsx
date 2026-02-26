@@ -13,9 +13,8 @@ import {
   useMapEvents,
 } from "react-leaflet";
 
-import { api, type RouterOutputs } from "~/trpc/react";
-
-type City = RouterOutputs["geo"]["getCitiesByCountry"][number];
+import { api } from "~/trpc/react";
+import type { City } from "~/types";
 
 interface AttractionMapProps {
   latitude: number;

@@ -37,11 +37,10 @@ import {
   DropdownMenuTrigger,
 } from "~/app/_components/ui/dropdown-menu";
 import { getFlagEmoji } from "~/lib/utils";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
+import type { TripListItem } from "~/types";
 
-type Trip = RouterOutputs["trip"]["listTrips"][number];
-
-interface TripWithParsedDates extends Trip {
+interface TripWithParsedDates extends TripListItem {
   parsedStartDate: Date;
   parsedEndDate: Date;
 }

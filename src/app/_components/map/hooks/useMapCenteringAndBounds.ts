@@ -1,13 +1,7 @@
 import L from "leaflet";
 import { useEffect, useRef } from "react";
 
-import type { RouterOutputs } from "~/trpc/react";
-
-type Attraction =
-  RouterOutputs["attraction"]["getAttractionsByCountries"][number];
-type Trip = RouterOutputs["trip"]["getWithItinerary"];
-type BasicAttraction =
-  Trip["itineraryDays"][number]["itineraryDayPlaces"][number]["attraction"];
+import type { Attraction, BasicAttraction } from "~/types";
 
 export const useMapCenteringAndBounds = (
   mapRef: React.RefObject<L.Map | null>,
@@ -45,7 +39,8 @@ export const useMapCenteringAndBounds = (
 
     // Timeout to ensure panel height is measured after render
     const timeoutId = setTimeout(() => {
-      const offset = panelHeightRef.current > 0 ? panelHeightRef.current / 2 : 0;
+      const offset =
+        panelHeightRef.current > 0 ? panelHeightRef.current / 2 : 0;
       const targetLatLng = L.latLng(
         attraction.latitude!,
         attraction.longitude!,

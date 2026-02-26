@@ -17,12 +17,7 @@ import { toast } from "sonner";
 import { useCallback, useRef, useState } from "react";
 import { generateDayPdf } from "~/lib/pdf";
 
-import type { RouterOutputs } from "~/trpc/react";
-
-type Trip = RouterOutputs["trip"]["getWithItinerary"];
-type BasicAttraction =
-  Trip["itineraryDays"][number]["itineraryDayPlaces"][number]["attraction"];
-type RouteData = RouterOutputs["route"]["buildRoute"];
+import type { BasicAttraction, RouteData } from "~/types";
 
 type ItineraryDay = {
   id: number;

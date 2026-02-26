@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 
-import { api, type RouterOutputs } from "~/trpc/react";
-
-type Attraction =
-  RouterOutputs["attraction"]["getAttractionsByCountries"][number];
+import { api } from "~/trpc/react";
+import type { Attraction } from "~/types";
 
 interface AttractionImageGalleryProps {
   attraction: Attraction;

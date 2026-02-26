@@ -3,15 +3,8 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { type RouterOutputs } from "~/trpc/react";
+import type { Attraction, BasicAttraction, RouteData } from "~/types";
 import { AttractionDetailPanel } from "./attraction-detail-panel";
-
-type Attraction =
-  RouterOutputs["attraction"]["getAttractionsByCountries"][number];
-type Trip = RouterOutputs["trip"]["getWithItinerary"];
-type BasicAttraction =
-  Trip["itineraryDays"][number]["itineraryDayPlaces"][number]["attraction"];
-type RouteData = RouterOutputs["route"]["buildRoute"];
 
 type ItineraryMapProps = {
   attractions: Attraction[];

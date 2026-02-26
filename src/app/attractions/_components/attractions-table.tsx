@@ -14,17 +14,14 @@ import {
   TableHeader,
   TableRow,
 } from "~/app/_components/ui/table";
-import type { RouterOutputs } from "~/trpc/react";
+import type { PaginatedAttraction } from "~/types";
 
 import { cn } from "~/lib/utils";
 import { AttractionTableActions } from "./attraction-table-actions";
 import { Pagination } from "./pagination";
 
-type Attraction =
-  RouterOutputs["attraction"]["paginateAttractions"]["attractions"][number];
-
 type AttractionsTableProps = {
-  attractions: Attraction[];
+  attractions: PaginatedAttraction[];
   totalCount: number;
   currentPage: number;
   itemsPerPage: number;
