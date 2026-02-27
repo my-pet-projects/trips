@@ -38,7 +38,8 @@ jobs:
         run: pnpm test:e2e
         env:
           PLAYWRIGHT_BASE_URL: ${{ github.event.deployment_status.target_url }}
-          DEBUG: pw:api
+          # Bypass Vercel deployment protection
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4

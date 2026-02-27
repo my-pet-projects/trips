@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
+const bypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -17,6 +18,12 @@ export default defineConfig({
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
+    // Bypass Vercel deployment protection if secret is provided
+    ...(bypassSecret && {
+      extraHTTPHeaders: {
+        "x-vercel-protection-bypass": bypassSecret,
+      },
+    }),
   },
   projects: [
     {
