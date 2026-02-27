@@ -24,9 +24,20 @@ export const db = drizzle(client, {
   schema,
   logger: !isProd
     ? {
+import { createLogger } from "~/lib/logger";
+
+const sqlLog = createLogger("sql:trips");
+
+export const db = drizzle(client, {
+  schema,
+  logger: !isProd
+    ? {
         logQuery(query) {
-          console.log(`\x1b[36m[sql:trips]\x1b[0m ${query}`);
+          sqlLog.debug({ query }, "SQL query");
         },
+      }
+    : undefined,
+});
       }
     : undefined,
 });
