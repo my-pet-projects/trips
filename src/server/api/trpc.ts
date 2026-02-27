@@ -10,11 +10,13 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
+import { createLogger, errMsg } from "~/lib/logger";
 import { db } from "~/server/db";
 import { geoDb } from "~/server/db/geo";
 
-import { auth } from "@clerk/nextjs/server";
+const log = createLogger("trpc");
 
+import { auth } from "@clerk/nextjs/server";
 
 /**
  * 1. CONTEXT
@@ -87,7 +89,7 @@ export const createTRPCRouter = t.router;
  * You can remove this if you don't like it, but it can help catch unwanted waterfalls by simulating
  * network latency that would occur in production but not in local development.
  */
-const timingMiddleware = t.middleware(async ({ next, path }) => {
+const loggingMiddleware = t.middleware(async ({ next, path, type, ctx }) => {
   const start = Date.now();
 
   if (t._config.isDev) {
@@ -96,12 +98,45 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
     await new Promise((resolve) => setTimeout(resolve, waitMs));
   }
 
-  const result = await next();
+  try {
+    const result = await next();
+    const durationMs = Date.now() - start;
 
-  const end = Date.now();
-  console.log(`[TRPC] ${path} took ${end - start}ms to execute`);
+    // Simple dev output, structured for prod
+    if (t._config.isDev) {
+      console.log(
+        `\x1b[32m[trpc]\x1b[0m ${path} \x1b[90m(${durationMs}ms)\x1b[0m`,
+      );
+    } else {
+      log.info(
+        { path, type, durationMs, userId: ctx.auth?.userId, ok: result.ok },
+        `${type} ${path}`,
+      );
+    }
 
-  return result;
+    return result;
+  } catch (error) {
+    const durationMs = Date.now() - start;
+    const errorMessage = errMsg(error);
+
+    if (t._config.isDev) {
+      console.error(
+        `\x1b[31m[trpc]\x1b[0m ${path} FAILED \x1b[90m(${durationMs}ms)\x1b[0m: ${errorMessage}`,
+      );
+    } else {
+      log.error(
+        {
+          path,
+          type,
+          durationMs,
+          userId: ctx.auth?.userId,
+          error: errorMessage,
+        },
+        `${type} ${path} failed`,
+      );
+    }
+    throw error;
+  }
 });
 
 /**
@@ -111,7 +146,7 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * guarantee that a user querying is authorized, but you can still access user session data if they
  * are logged in.
  */
-export const publicProcedure = t.procedure.use(timingMiddleware);
+export const publicProcedure = t.procedure.use(loggingMiddleware);
 
 /**
  * Protected (authenticated) procedure
@@ -122,12 +157,15 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
  * @see https://trpc.io/docs/procedures
  */
 export const protectedProcedure = t.procedure
-  .use(timingMiddleware)
+  .use(loggingMiddleware)
   .use(({ ctx, next }) => {
-   if (!ctx.auth.userId) {
-    throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated. Please log in." });
-  }
-  type SignedInAuthContext = typeof ctx.auth & { userId: string };
+    if (!ctx.auth.userId) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Not authenticated. Please log in.",
+      });
+    }
+    type SignedInAuthContext = typeof ctx.auth & { userId: string };
     return next({
       ctx: {
         ...ctx,

@@ -2,8 +2,11 @@ import { TRPCError } from "@trpc/server";
 import { eq, inArray } from "drizzle-orm";
 import z from "zod";
 
+import { createLogger, errMsg } from "~/lib/logger";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import * as schema from "~/server/db/schema";
+
+const log = createLogger("itinerary");
 
 export const itineraryRouter = createTRPCRouter({
   createItineraryDay: publicProcedure
@@ -32,6 +35,10 @@ export const itineraryRouter = createTRPCRouter({
         .returning();
 
       if (!result[0]) {
+        log.error(
+          { tripId: input.tripId },
+          "Failed to create itinerary day - no result returned",
+        );
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to create itinerary day",
@@ -157,7 +164,10 @@ export const itineraryRouter = createTRPCRouter({
           updatedCount: days.length,
         };
       } catch (error) {
-        console.error("Error updating itinerary days:", error);
+        log.error(
+          { tripId: input.tripId, error: errMsg(error) },
+          "Error updating itinerary days",
+        );
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to update itinerary days",
