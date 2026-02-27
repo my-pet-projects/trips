@@ -2,7 +2,10 @@ import { createClient, type Client } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 
 import { env, isProd } from "~/env";
+import { createLogger } from "~/lib/logger";
 import * as schema from "./geo-schema";
+
+const log = createLogger("sql:geo");
 
 /**
  * Cache the database connection in development. This avoids creating a new connection on every HMR

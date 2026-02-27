@@ -16,7 +16,6 @@ const isDev = process.env.NODE_ENV === "development";
  */
 function logAccess(
   req: NextRequest,
-  response: NextResponse,
   startTime: number,
   userId?: string | null,
 ) {
@@ -27,12 +26,12 @@ function logAccess(
     return;
   }
 
-  const duration = Date.now() - startTime;
+  const middlewareDurationMs = Date.now() - startTime;
 
   if (isDev) {
     // Simple dev output with color
     console.log(
-      `\x1b[34m[access]\x1b[0m ${req.method} ${path} ${response.status} \x1b[90m(${duration}ms)\x1b[0m`,
+      `\x1b[34m[access]\x1b[0m ${req.method} ${path} \x1b[90m(${middlewareDurationMs}ms)\x1b[0m`,
     );
   } else {
     // Structured JSON for Vercel
@@ -42,8 +41,7 @@ function logAccess(
         context: "access",
         method: req.method,
         path,
-        status: response.status,
-        durationMs: duration,
+        middlewareDurationMs,
         userAgent: req.headers.get("user-agent")?.slice(0, 100),
         ip: req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip"),
         userId: userId ?? undefined,
@@ -62,10 +60,7 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   const response = NextResponse.next();
-
-  // Log access after processing
-  logAccess(req, response, startTime, authData.userId);
-
+  logAccess(req, startTime, authData.userId);
   return response;
 });
 

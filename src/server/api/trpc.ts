@@ -10,12 +10,8 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import { createLogger, errMsg } from "~/lib/logger";
-import { db } from "~/server/db";
-import { geoDb } from "~/server/db/geo";
-
-import { createLogger, errMsg } from "~/lib/logger";
 import { auth } from "@clerk/nextjs/server";
+import { createLogger, errMsg } from "~/lib/logger";
 import { db } from "~/server/db";
 import { geoDb } from "~/server/db/geo";
 
@@ -105,11 +101,16 @@ const loggingMiddleware = t.middleware(async ({ next, path, type, ctx }) => {
     const result = await next();
     const durationMs = Date.now() - start;
 
-    // Simple dev output, structured for prod
-    log.info(
-      { path, type, durationMs, userId: ctx.auth?.userId, ok: result.ok },
-      `${type} ${path}`,
-    );
+    if (t._config.isDev) {
+      console.log(
+        `\x1b[32m[trpc]\x1b[0m ${path} \x1b[90m(${durationMs}ms)\x1b[0m`,
+      );
+    } else {
+      log.info(
+        { path, type, durationMs, userId: ctx.auth?.userId, ok: result.ok },
+        `${type} ${path}`,
+      );
+    }
 
     return result;
   } catch (error) {
