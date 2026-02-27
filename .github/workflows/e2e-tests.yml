@@ -32,7 +32,7 @@ jobs:
       - name: Debug - Check deployment URL
         run: |
           echo "Testing against: ${{ github.event.deployment_status.target_url }}"
-          curl -s -o /dev/null -w "%{http_code}" "${{ github.event.deployment_status.target_url }}" || echo "Curl failed"
+          curl -s -o /dev/null -w "%{http_code}" -H "x-vercel-protection-bypass: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}" "${{ github.event.deployment_status.target_url }}" || echo "Curl failed"
 
       - name: Run Playwright tests
         run: pnpm test:e2e
