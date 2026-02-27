@@ -5,6 +5,13 @@
 import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
-const config = {};
+const config = {
+  // Disable default request logging since we use pino for structured logs
+  logging: {
+    fetches: {
+      fullUrl: false,
+    },
+  },
+};
 
 export default config;
