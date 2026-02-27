@@ -2,7 +2,10 @@ import { createClient, type Client } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 
 import { env, isProd } from "~/env";
+import { createLogger } from "~/lib/logger";
 import * as schema from "./geo-schema";
+
+const log = createLogger("sql:geo");
 
 /**
  * Cache the database connection in development. This avoids creating a new connection on every HMR
@@ -22,4 +25,11 @@ if (!isProd) globalForGeoDb.geoClient = geoClient;
 
 export const geoDb = drizzle(geoClient, {
   schema,
+  logger: !isProd
+    ? {
+        logQuery(query) {
+          console.log(`\x1b[36m[sql:geo]\x1b[0m ${query}`);
+        },
+      }
+    : undefined,
 });

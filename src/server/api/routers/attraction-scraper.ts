@@ -2,11 +2,14 @@ import { TRPCError } from "@trpc/server";
 import * as cheerio from "cheerio";
 import z from "zod";
 
+import { createLogger, errMsg } from "~/lib/logger";
 import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
+
+const log = createLogger("scraper");
 
 const parsedAttractionSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -65,6 +68,10 @@ const parseRutravellerSiteContent = async (
   const { latitude, longitude } = extractCoordinates($, coordsPattern);
 
   if (!name || !description) {
+    log.error(
+      { name, description },
+      "Failed to extract fields from Rutraveller",
+    );
     throw new TRPCError({
       code: "PARSE_ERROR",
       message: "Failed to extract required fields from Rutraveller page",
@@ -106,6 +113,7 @@ const parseVotpuskSiteContent = async (
   const { latitude, longitude } = extractCoordinates($, coordsPattern);
 
   if (!name || !description) {
+    log.error({ name, description }, "Failed to extract fields from Votpusk");
     throw new TRPCError({
       code: "PARSE_ERROR",
       message: "Failed to extract required fields from Votpusk page",
@@ -157,6 +165,7 @@ const parseOpenariumSiteContent = async (
   });
 
   if (!name || !description) {
+    log.error({ name, description }, "Failed to extract fields from Openarium");
     throw new TRPCError({
       code: "PARSE_ERROR",
       message: "Failed to extract required fields from Openarium page",
@@ -185,11 +194,15 @@ export const attractionScraperRouter = createTRPCRouter({
     .input(z.object({ url: z.string().url() }))
     .mutation(async ({ input }) => {
       const { url } = input;
+      const startTime = Date.now();
+
+      log.info({ url }, "Starting URL parsing");
 
       let urlHost: string;
       try {
         urlHost = new URL(url).host;
       } catch {
+        log.warn({ url }, "Invalid URL format");
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `Invalid URL format: ${url}`,
@@ -201,6 +214,7 @@ export const attractionScraperRouter = createTRPCRouter({
       );
       if (!parserKey) {
         const supportedHosts = Object.keys(SITE_PARSERS).join(", ");
+        log.warn({ urlHost, supportedHosts }, "Unsupported URL host");
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `Unsupported URL host: ${urlHost}. Supported hosts: ${supportedHosts}`,
@@ -209,11 +223,14 @@ export const attractionScraperRouter = createTRPCRouter({
 
       const parser = SITE_PARSERS[parserKey];
       if (!parser) {
+        log.error({ parserKey }, "No parser found for host");
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: `No parser found for host: ${parserKey}`,
         });
       }
+
+      log.debug({ parserKey }, "Using parser for host");
 
       let html: string;
       try {
@@ -227,26 +244,41 @@ export const attractionScraperRouter = createTRPCRouter({
         clearTimeout(timeoutId);
 
         if (!res.ok) {
+          log.error({ url, status: res.status }, "Failed to fetch URL");
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: `Failed to fetch URL: ${url} (Status: ${res.status} ${res.statusText})`,
           });
         }
         html = await res.text();
+        log.debug({ url, htmlLength: html.length }, "Fetched HTML content");
       } catch (error) {
         if (error instanceof TRPCError) {
           throw error;
         }
+        log.error(
+          {
+            url,
+            error: errMsg(error),
+          },
+          "Network error",
+        );
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Network error while fetching URL: ${error instanceof Error ? error.message : "Unknown error"}`,
+          message: `Network error while fetching URL: ${errMsg(error)}`,
         });
       }
 
       try {
         const parsedData = await parser(html);
-
         const validated = parsedAttractionSchema.parse(parsedData);
+        const durationMs = Date.now() - startTime;
+
+        log.info(
+          { url, name: validated.name, durationMs },
+          "Successfully parsed attraction",
+        );
+
         return {
           ...validated,
           url,
@@ -259,14 +291,16 @@ export const attractionScraperRouter = createTRPCRouter({
           const errorMessages = error.issues
             .map((e) => `${e.path.join(".")}: ${e.message}`)
             .join(", ");
+          log.error({ url, errorMessages }, "Validation failed");
           throw new TRPCError({
             code: "PARSE_ERROR",
             message: `Validation failed: ${errorMessages}`,
           });
         }
+        log.error({ url, error: errMsg(error) }, "Unexpected parsing error");
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Unexpected error during parsing: ${error instanceof Error ? error.message : "Unknown error"}`,
+          message: `Unexpected error during parsing: ${errMsg(error)}`,
         });
       }
     }),
@@ -326,9 +360,13 @@ export const attractionScraperRouter = createTRPCRouter({
 
         return uniqueImageUrls;
       } catch (error) {
+        log.error(
+          { name: input.name, city: input.city, error: errMsg(error) },
+          "Image scraping failed",
+        );
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Error during image scraping: ${error instanceof Error ? error.message : "Unknown error"}`,
+          message: `Error during image scraping: ${errMsg(error)}`,
         });
       }
     }),

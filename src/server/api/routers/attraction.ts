@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { and, count, eq, inArray, like, or } from "drizzle-orm";
 import z from "zod";
 
+import { createLogger, errMsg } from "~/lib/logger";
 import {
   createTRPCRouter,
   protectedProcedure,
@@ -10,6 +11,8 @@ import {
 import * as geoSchema from "~/server/db/geo-schema";
 import * as schema from "~/server/db/schema";
 import { fetchCitiesWithCountries, type EnrichedCity } from "./geo";
+
+const log = createLogger("attraction");
 
 export const attractionRouter = createTRPCRouter({
   getAttractionById: publicProcedure
@@ -49,7 +52,10 @@ export const attractionRouter = createTRPCRouter({
           city: cityData,
         };
       } catch (error) {
-        console.error("Error fetching attraction by ID:", error);
+        log.error(
+          { id: input.id, error: errMsg(error) },
+          "Error fetching attraction by ID",
+        );
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to fetch attraction",
@@ -76,7 +82,7 @@ export const attractionRouter = createTRPCRouter({
 
       return enrichedAttractions;
     } catch (error) {
-      console.error("Error fetching attractions:", error);
+      log.error({ error: errMsg(error) }, "Error fetching attractions");
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to fetch attractions",
@@ -106,7 +112,10 @@ export const attractionRouter = createTRPCRouter({
 
         return enrichedAttractions;
       } catch (error) {
-        console.error("Error fetching attractions by countries:", error);
+        log.error(
+          { countryCodes: input.countryCodes, error: errMsg(error) },
+          "Error fetching attractions by countries",
+        );
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to fetch attractions",
@@ -207,7 +216,7 @@ export const attractionRouter = createTRPCRouter({
           },
         };
       } catch (error) {
-        console.error("Error fetching attractions:", error);
+        log.error({ error: errMsg(error) }, "Error paginating attractions");
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to fetch attractions",
@@ -239,6 +248,7 @@ export const attractionRouter = createTRPCRouter({
       });
 
       if (!existing) {
+        log.warn({ id }, "Attraction not found for update");
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Attraction not found",
@@ -254,6 +264,7 @@ export const attractionRouter = createTRPCRouter({
         .returning();
 
       if (!result[0]) {
+        log.error({ id }, "Failed to update attraction");
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to update attraction",
@@ -285,6 +296,10 @@ export const attractionRouter = createTRPCRouter({
           .returning();
 
         if (!result[0]) {
+          log.error(
+            { input },
+            "Failed to create attraction - no result returned",
+          );
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Failed to create attraction",
@@ -293,7 +308,7 @@ export const attractionRouter = createTRPCRouter({
 
         return result[0];
       } catch (error) {
-        console.error("Error creating attraction:", error);
+        log.error({ error: errMsg(error) }, "Error creating attraction");
         if (error instanceof TRPCError) {
           throw error;
         }
@@ -313,6 +328,7 @@ export const attractionRouter = createTRPCRouter({
       });
 
       if (!existing) {
+        log.warn({ id: input.id }, "Attraction not found for deletion");
         throw new TRPCError({
           code: "NOT_FOUND",
           message: `Attraction with ID ${input.id} not found`,
@@ -327,7 +343,10 @@ export const attractionRouter = createTRPCRouter({
 
         return { success: true };
       } catch (error) {
-        console.error("Error deleting attraction:", error);
+        log.error(
+          { id: input.id, error: errMsg(error) },
+          "Error deleting attraction",
+        );
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to delete attraction",
@@ -347,8 +366,9 @@ function enrichAttractionsWithCities<T extends { cityId: number }>(
     .map((attraction) => {
       const cityData = cityMap.get(attraction.cityId);
       if (!cityData) {
-        console.warn(
-          `Attraction references non-existent city ${attraction.cityId}`,
+        log.warn(
+          { cityId: attraction.cityId },
+          "Attraction references non-existent city",
         );
         return null;
       }
