@@ -1,6 +1,40 @@
 import { expect, test, type Page } from "@playwright/test";
 
 /**
+ * Helper to wait for page load and log debug info
+ */
+async function waitForPageLoad(page: Page, description: string) {
+  // Log current URL
+  console.log(`[${description}] URL: ${page.url()}`);
+
+  // Wait a moment for any redirects
+  await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {
+    console.log(`[${description}] Network idle timeout - continuing`);
+  });
+
+  // Log the page title
+  const title = await page.title();
+  console.log(`[${description}] Page title: ${title}`);
+
+  // Check if there's an error on the page
+  const errorText = await page
+    .locator("text=/error|Error|failed|Failed/i")
+    .first()
+    .textContent()
+    .catch(() => null);
+  if (errorText) {
+    console.log(`[${description}] Error found on page: ${errorText}`);
+  }
+
+  // Log body text preview (first 500 chars)
+  const bodyText = await page
+    .locator("body")
+    .textContent()
+    .catch(() => "");
+  console.log(`[${description}] Body preview: ${bodyText?.slice(0, 500)}`);
+}
+
+/**
  * Helper to wait for the country select to be enabled (data loaded from server)
  */
 async function waitForCountrySelectReady(page: Page) {
@@ -29,6 +63,7 @@ test.describe("Attractions URL State Persistence", () => {
   }) => {
     // Navigate to a specific page with filters (use FR/Paris as they likely exist)
     await page.goto("/attractions?country=FR&city=Paris&page=2");
+    await waitForPageLoad(page, "Initial load");
 
     // Wait for page to load
     await expect(page.locator("table")).toBeVisible();
@@ -40,6 +75,7 @@ test.describe("Attractions URL State Persistence", () => {
 
     // Refresh the page
     await page.reload();
+    await waitForPageLoad(page, "After refresh");
 
     // Wait for page to load again
     await expect(page.locator("table")).toBeVisible();

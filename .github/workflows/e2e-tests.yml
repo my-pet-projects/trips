@@ -29,10 +29,16 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium --with-deps
 
+      - name: Debug - Check deployment URL
+        run: |
+          echo "Testing against: ${{ github.event.deployment_status.target_url }}"
+          curl -s -o /dev/null -w "%{http_code}" "${{ github.event.deployment_status.target_url }}" || echo "Curl failed"
+
       - name: Run Playwright tests
         run: pnpm test:e2e
         env:
           PLAYWRIGHT_BASE_URL: ${{ github.event.deployment_status.target_url }}
+          DEBUG: pw:api
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
