@@ -1,7 +1,7 @@
 "use client";
 
 import { Edit, Loader2, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -26,7 +26,18 @@ export function AttractionTableActions({
   attractionId,
 }: AttractionTableActionsProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+
+  const getEditUrl = () => {
+    const currentUrl = searchParams.toString()
+      ? `${pathname}?${searchParams.toString()}`
+      : pathname;
+    const editParams = new URLSearchParams();
+    editParams.set("returnTo", currentUrl);
+    return `/attractions/${attractionId}/edit?${editParams.toString()}`;
+  };
 
   const deleteAttractionMutation = api.attraction.delete.useMutation({
     onSuccess: () => {
@@ -49,12 +60,12 @@ export function AttractionTableActions({
     <>
       <div className="flex items-center justify-end gap-1">
         <a
-          href={`/attractions/${attractionId}/edit`}
+          href={getEditUrl()}
           className="group relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-sky-600 opacity-0 transition-all group-hover:opacity-100 hover:bg-sky-50 hover:text-sky-700"
           title="Edit attraction"
           onClick={(e) => {
             e.preventDefault();
-            router.push(`/attractions/${attractionId}/edit`);
+            router.push(getEditUrl());
           }}
         >
           <Edit className="h-4 w-4" />

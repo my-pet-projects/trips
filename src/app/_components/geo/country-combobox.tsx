@@ -183,7 +183,7 @@ const CountryComboboxSingle: React.FC<CountryComboboxSingleProps> = ({
   );
 
   return (
-    <div className="w-full">
+    <div className="w-full" data-testid="country-select-container">
       {showLabel && (
         <label
           htmlFor="country-select-single"

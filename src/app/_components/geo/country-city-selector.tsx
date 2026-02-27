@@ -22,6 +22,7 @@ export function CountryCitySelector({
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
   const [citySearchQuery, setCitySearchQuery] = useState("");
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const initStatus = useRef<"pending" | "loading-city" | "complete">("pending");
   const onChangeRef = useRef(onChange);
@@ -92,6 +93,7 @@ export function CountryCitySelector({
         }
       }
       initStatus.current = "complete";
+      setIsInitialized(true);
       return;
     }
 
@@ -103,6 +105,7 @@ export function CountryCitySelector({
         setSelectedCity(city);
       }
       initStatus.current = "complete";
+      setIsInitialized(true);
     }
   }, [countries, cities, initialCountry, initialCity]);
 
@@ -113,10 +116,10 @@ export function CountryCitySelector({
 
   // Notify parent of changes after initialization
   useEffect(() => {
-    if (initStatus.current !== "complete") return;
+    if (!isInitialized) return;
 
     onChangeRef.current?.(selectedCountry ?? null, selectedCity ?? null);
-  }, [selectedCountry, selectedCity]);
+  }, [selectedCountry, selectedCity, isInitialized]);
 
   return (
     <div className="flex w-full flex-col gap-6 sm:flex-row sm:gap-4 md:gap-6">
