@@ -14,9 +14,12 @@ import { createLogger, errMsg } from "~/lib/logger";
 import { db } from "~/server/db";
 import { geoDb } from "~/server/db/geo";
 
-const log = createLogger("trpc");
-
+import { createLogger, errMsg } from "~/lib/logger";
 import { auth } from "@clerk/nextjs/server";
+import { db } from "~/server/db";
+import { geoDb } from "~/server/db/geo";
+
+const log = createLogger("trpc");
 
 /**
  * 1. CONTEXT
