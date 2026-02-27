@@ -66,6 +66,7 @@ export function Navbar({
             {backHref && (
               <Link
                 href={backHref}
+                data-testid="navbar-back-button"
                 className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-50"
               >
                 <ArrowLeft className="h-5 w-5" />

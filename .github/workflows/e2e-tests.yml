@@ -1,0 +1,52 @@
+name: E2E Tests
+
+on:
+  deployment_status:
+
+jobs:
+  e2e-tests:
+    # Only run when Vercel deployment succeeds
+    if: github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Debug - Check deployment URL
+        run: |
+          echo "Testing against: ${{ github.event.deployment_status.target_url }}"
+          curl -s -o /dev/null -w "%{http_code}" -H "x-vercel-protection-bypass: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}" "${{ github.event.deployment_status.target_url }}" || echo "Curl failed"
+
+      - name: Run Playwright tests
+        run: pnpm test:e2e
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ github.event.deployment_status.target_url }}
+          # Bypass Vercel deployment protection
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

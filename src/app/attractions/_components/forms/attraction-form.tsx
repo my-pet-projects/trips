@@ -27,12 +27,14 @@ import { Button } from "~/app/_components/ui/button";
 import { Input } from "~/app/_components/ui/input";
 import { Label } from "~/app/_components/ui/label";
 import { Textarea } from "~/app/_components/ui/textarea";
+import { validateReturnTo } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import type { AttractionById, City, Country } from "~/types";
 
 type AttractionFormProps = {
   mode: "create" | "edit";
   attraction?: AttractionById;
+  returnTo?: string;
 };
 
 const attractionSchema = z.object({
@@ -84,13 +86,18 @@ const DynamicAttractionMap = dynamic(
   },
 );
 
-export function AttractionForm({ mode, attraction }: AttractionFormProps) {
+export function AttractionForm({
+  mode,
+  attraction,
+  returnTo,
+}: AttractionFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const params = new URLSearchParams(searchParams.toString());
   const isNew = params.get("isNew") === "true";
   const country = isNew ? (params.get("country") ?? undefined) : undefined;
   const city = isNew ? (params.get("city") ?? undefined) : undefined;
+  const cancelHref = validateReturnTo(returnTo) ?? "/attractions";
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(
     mode === "edit" ? attraction?.countryCode : country,
@@ -661,7 +668,7 @@ export function AttractionForm({ mode, attraction }: AttractionFormProps) {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.back()}
+            onClick={() => router.push(cancelHref)}
             disabled={isSubmitting}
             className="h-12 px-6"
           >
