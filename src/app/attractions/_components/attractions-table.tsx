@@ -74,7 +74,10 @@ export function AttractionsTable({
               </p>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div
+              className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+              data-testid="attractions-table"
+            >
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>

@@ -4,11 +4,15 @@ import { notFound } from "next/navigation";
 
 import { Navbar } from "~/app/_components/navbar";
 import { AttractionForm } from "~/app/attractions/_components/forms/attraction-form";
+import { validateReturnTo } from "~/lib/utils";
 import { api } from "~/trpc/server";
 
 type EditAttractionPageProps = {
   params: Promise<{
     id: string;
+  }>;
+  searchParams: Promise<{
+    returnTo?: string;
   }>;
 };
 
@@ -19,9 +23,12 @@ export const metadata = {
 
 export default async function EditAttractionPage({
   params,
+  searchParams,
 }: EditAttractionPageProps) {
   const { id } = await params;
+  const { returnTo } = await searchParams;
   const attractionId = parseInt(id, 10);
+  const backHref = validateReturnTo(returnTo) ?? "/attractions";
 
   if (isNaN(attractionId)) {
     notFound();
@@ -39,7 +46,7 @@ export default async function EditAttractionPage({
       <Navbar
         title="Edit Attraction"
         subtitle="Update attraction details"
-        backHref="/attractions"
+        backHref={backHref}
         actions={
           <Link
             href={`/attractions/new?isNew=true&country=${attraction.countryCode}&city=${attraction.city.name}`}
@@ -53,7 +60,11 @@ export default async function EditAttractionPage({
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <AttractionForm attraction={attraction} mode="edit" />
+        <AttractionForm
+          attraction={attraction}
+          mode="edit"
+          returnTo={backHref}
+        />
       </main>
     </div>
   );
