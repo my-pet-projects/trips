@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { eq, inArray } from "drizzle-orm";
 import z from "zod";
 
+import { createLogger } from "~/lib/logger";
 import {
   createTRPCRouter,
   protectedProcedure,
@@ -9,6 +10,8 @@ import {
 } from "~/server/api/trpc";
 import * as geoSchema from "~/server/db/geo-schema";
 import * as schema from "~/server/db/schema";
+
+const log = createLogger("trip");
 
 const tripCoreSchema = z.object({
   name: z.string().min(1, "Name is required").max(256),
@@ -74,8 +77,9 @@ export const tripRouter = createTRPCRouter({
         .map((dest) => {
           const country = countryMap.get(dest.countryCode);
           if (!country) {
-            console.warn(
-              `Destination ${dest.id} references non-existent country ${dest.countryCode}`,
+            log.warn(
+              { destId: dest.id, countryCode: dest.countryCode },
+              "Destination references non-existent country",
             );
             return null;
           }
@@ -201,6 +205,7 @@ export const tripRouter = createTRPCRouter({
 
       const trip = tripResult[0];
       if (!trip) {
+        log.error({ id }, "Failed to update trip - no result returned");
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to update trip",

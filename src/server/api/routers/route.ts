@@ -3,8 +3,11 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { env } from "~/env";
+import { createLogger, errMsg } from "~/lib/logger";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import * as schema from "~/server/db/schema";
+
+const log = createLogger("route:ors");
 
 interface OrsResponse {
   routes: Array<{
@@ -81,6 +84,12 @@ async function fetchRouteFromORS(
 ): Promise<OrsResponse> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), ORS_TIMEOUT_MS);
+  const startTime = Date.now();
+
+  log.debug(
+    { fromLng, fromLat, toLng, toLat, retryCount },
+    "Fetching route from OpenRouteService",
+  );
 
   try {
     const response = await fetch(ORS_API_URL, {
@@ -99,13 +108,20 @@ async function fetchRouteFromORS(
     });
 
     clearTimeout(timeoutId);
+    const durationMs = Date.now() - startTime;
 
     if (!response.ok) {
       const errorData = (await response
         .json()
         .catch(() => ({}))) as OrsErrorResponse;
 
+      log.warn(
+        { status: response.status, errorData, durationMs, retryCount },
+        "OpenRouteService API error response",
+      );
+
       if (response.status === 429 && retryCount < MAX_RETRIES) {
+        log.info({ retryCount: retryCount + 1 }, "Rate limited, retrying...");
         await new Promise((resolve) =>
           setTimeout(resolve, RETRY_DELAY_MS * (retryCount + 1)),
         );
@@ -128,19 +144,34 @@ async function fetchRouteFromORS(
     const data = (await response.json()) as OrsResponse;
 
     if (!data.routes?.[0]?.segments?.[0]) {
+      log.error(
+        { data, durationMs },
+        "Invalid ORS response - missing route data",
+      );
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Invalid response from OpenRouteService: missing route data",
       });
     }
 
+    log.info(
+      {
+        durationMs,
+        distance: data.routes[0]?.segments[0]?.distance,
+        routeDuration: data.routes[0]?.segments[0]?.duration,
+      },
+      "Route fetched successfully",
+    );
+
     return data;
   } catch (error) {
     clearTimeout(timeoutId);
+    const durationMs = Date.now() - startTime;
 
     if (error instanceof TRPCError) throw error;
 
     if (error instanceof Error && error.name === "AbortError") {
+      log.warn({ durationMs, retryCount }, "ORS request timed out");
       if (retryCount < MAX_RETRIES) {
         await new Promise((resolve) =>
           setTimeout(resolve, RETRY_DELAY_MS * (retryCount + 1)),
@@ -159,10 +190,14 @@ async function fetchRouteFromORS(
       });
     }
 
+    log.error(
+      { error: errMsg(error), durationMs },
+      "Failed to fetch route from ORS",
+    );
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message: "Failed to fetch route from OpenRouteService",
-      cause: error instanceof Error ? error.message : "Unknown error",
+      cause: errMsg(error),
     });
   }
 }
@@ -260,6 +295,10 @@ export const routeRouter = createTRPCRouter({
                 .then((rows) => rows[0]));
 
             if (!leg) {
+              log.error(
+                { fromId: fromPoint.id, toId: toPoint.id },
+                "Failed to retrieve route leg",
+              );
               throw new TRPCError({
                 code: "INTERNAL_SERVER_ERROR",
                 message: `Failed to retrieve route leg from ${fromPoint.id} to ${toPoint.id}`,
@@ -270,10 +309,14 @@ export const routeRouter = createTRPCRouter({
           } catch (error) {
             if (error instanceof TRPCError) throw error;
 
+            log.error(
+              { fromId: fromPoint.id, toId: toPoint.id, error: errMsg(error) },
+              "Failed to compute route",
+            );
             throw new TRPCError({
               code: "INTERNAL_SERVER_ERROR",
               message: `Failed to compute route from attraction ${fromPoint.id} to ${toPoint.id}`,
-              cause: error instanceof Error ? error.message : "Unknown error",
+              cause: errMsg(error),
             });
           }
         });
