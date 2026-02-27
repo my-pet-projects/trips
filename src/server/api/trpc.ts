@@ -106,16 +106,10 @@ const loggingMiddleware = t.middleware(async ({ next, path, type, ctx }) => {
     const durationMs = Date.now() - start;
 
     // Simple dev output, structured for prod
-    if (t._config.isDev) {
-      console.log(
-        `\x1b[32m[trpc]\x1b[0m ${path} \x1b[90m(${durationMs}ms)\x1b[0m`,
-      );
-    } else {
-      log.info(
-        { path, type, durationMs, userId: ctx.auth?.userId, ok: result.ok },
-        `${type} ${path}`,
-      );
-    }
+    log.info(
+      { path, type, durationMs, userId: ctx.auth?.userId, ok: result.ok },
+      `${type} ${path}`,
+    );
 
     return result;
   } catch (error) {
