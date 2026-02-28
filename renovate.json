@@ -1,14 +1,21 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
-  "timezone": "Europe/Berlin",
-  "schedule": ["before 6am"],
+  "schedule": ["before 3am on sunday"],
+  "timezone": "UTC",
   "prConcurrentLimit": 5,
+  "labels": ["dependencies"],
   "lockFileMaintenance": {
     "enabled": true,
     "schedule": ["before 6am on monday"]
   },
   "packageRules": [
+    {
+      "description": "GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions",
+      "automerge": true
+    },
     {
       "description": "Security updates immediately",
       "matchUpdateTypes": ["patch", "minor"],
