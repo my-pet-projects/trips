@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 
 import { ItineraryMap } from "~/app/_components/map/itinerary-map";
@@ -162,29 +163,38 @@ export function ItineraryViewer({
       {/* Fetch routes for all days */}
       <DayRoutesFetcher itineraryDays={itineraryDays} onUpdate={updateRoute} />
 
-      <div className="flex h-screen flex-col bg-gray-50">
+      <div className="flex h-dvh flex-col bg-gray-50 md:h-screen">
         {/* Header */}
-        <div className="border-b border-gray-200 bg-white px-4 py-3 shadow-sm">
+        <div className="border-b border-gray-200 bg-white px-2 py-2 shadow-sm md:px-4 md:py-3">
           <div className="flex items-center justify-between">
+            {/* Mobile: back button */}
+            <Link
+              href="/trips"
+              className="mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-600 md:hidden"
+              aria-label="Back to trips"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+
             <button
               type="button"
               onClick={handlePrevDay}
               disabled={!canGoPrevDay}
-              className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
+              className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 md:p-2"
               aria-label="Previous day"
             >
-              <ChevronLeft className="h-6 w-6" />
+              <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
             </button>
 
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 items-center gap-1.5 md:gap-2">
               <div
-                className="h-4 w-4 rounded-full shadow-md"
+                className="h-3 w-3 shrink-0 rounded-full shadow-md md:h-4 md:w-4"
                 style={{ backgroundColor: dayColor }}
               />
-              <h1 className="text-lg font-bold text-gray-900">
+              <h1 className="truncate text-sm font-bold text-gray-900 md:text-lg">
                 {selectedDay?.name}
               </h1>
-              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">
+              <span className="shrink-0 rounded-full bg-gray-100 px-1.5 py-0.5 text-xs font-semibold text-gray-600 md:px-2">
                 {selectedDay?.attractions.length ?? 0} stops
               </span>
             </div>
@@ -193,11 +203,20 @@ export function ItineraryViewer({
               type="button"
               onClick={handleNextDay}
               disabled={!canGoNextDay}
-              className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
+              className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 md:p-2"
               aria-label="Next day"
             >
-              <ChevronRight className="h-6 w-6" />
+              <ChevronRight className="h-5 w-5 md:h-6 md:w-6" />
             </button>
+
+            {/* Mobile: edit button */}
+            <Link
+              href={`/trips/${trip.id}/edit`}
+              className="ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-600 md:hidden"
+              aria-label="Edit trip"
+            >
+              <Pencil className="h-4 w-4" />
+            </Link>
           </div>
         </div>
 

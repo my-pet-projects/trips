@@ -29,7 +29,7 @@ export const useLeafletMap = (
 ) => {
   const mapRef = useRef<L.Map | null>(null);
   const initialAttractionsRef = useRef(attractions);
-  const hasInitializedBounds = useRef(false);
+  const hasInitializedBounds = useRef<boolean>(false);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
