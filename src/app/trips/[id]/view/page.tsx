@@ -52,7 +52,7 @@ export default async function ItineraryPage({ params }: TripViewPageProps) {
       />
 
       {/* Main Content */}
-      <main className="min-h-0 flex-1">
+      <main className="container mx-auto min-h-0 flex-1">
         <ItineraryViewer trip={trip} tripAttractions={attractions} />
       </main>
     </div>
