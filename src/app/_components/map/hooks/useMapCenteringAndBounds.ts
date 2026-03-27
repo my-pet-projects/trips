@@ -37,8 +37,11 @@ export const useMapCenteringAndBounds = (
     const map = mapRef.current;
     lastCenteredIdRef.current = selectedAttractionId;
 
-    // Timeout to ensure panel height is measured after render
+    // Timeout to ensure panel height is measured and layout settled after render
     const timeoutId = setTimeout(() => {
+      // Recalculate map size after layout changes (e.g. attractions list hiding)
+      map.invalidateSize({ animate: false });
+
       const offset =
         panelHeightRef.current > 0 ? panelHeightRef.current / 2 : 0;
       const targetLatLng = L.latLng(
@@ -54,7 +57,7 @@ export const useMapCenteringAndBounds = (
         animate: true,
         duration: 0.5,
       });
-    }, 100);
+    }, 350);
 
     return () => clearTimeout(timeoutId);
   }, [selectedAttractionId, attractionsMap, mapRef]);
