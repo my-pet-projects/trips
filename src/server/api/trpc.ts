@@ -10,7 +10,6 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import { auth } from "@clerk/nextjs/server";
 import { createLogger, errMsg } from "~/lib/logger";
 import { db } from "~/server/db";
 import { geoDb } from "~/server/db/geo";
@@ -30,6 +29,7 @@ const log = createLogger("trpc");
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
+  const { auth } = await import("@clerk/nextjs/server");
   const authData = await auth();
 
   return {
