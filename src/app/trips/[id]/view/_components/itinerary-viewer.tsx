@@ -163,7 +163,7 @@ export function ItineraryViewer({
       {/* Fetch routes for all days */}
       <DayRoutesFetcher itineraryDays={itineraryDays} onUpdate={updateRoute} />
 
-      <div className="flex h-dvh flex-col bg-gray-50 md:h-screen">
+      <div className="flex h-full flex-col bg-gray-50">
         {/* Header */}
         <div className="border-b border-gray-200 bg-white px-2 py-2 shadow-sm md:px-4 md:py-3">
           <div className="flex items-center justify-between">
