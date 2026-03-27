@@ -2,6 +2,7 @@ import { Pencil } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AuthButton } from "~/app/_components/auth-button";
 import { Navbar } from "~/app/_components/navbar";
 import { api } from "~/trpc/server";
 import { ItineraryViewer } from "./_components/itinerary-viewer";
@@ -36,6 +37,25 @@ export default async function ItineraryPage({ params }: TripViewPageProps) {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-sky-50 via-white to-orange-50">
+      <div className="border-b border-gray-200 bg-white md:hidden">
+        <div className="flex items-center justify-between px-3 py-2">
+          <div className="flex items-center gap-2">
+            <Link
+              href="/trips"
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100"
+            >
+              Trips
+            </Link>
+            <Link
+              href="/attractions"
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100"
+            >
+              Attractions
+            </Link>
+          </div>
+          <AuthButton />
+        </div>
+      </div>
       <div className="hidden md:block">
         <Navbar
           title={trip.name}
