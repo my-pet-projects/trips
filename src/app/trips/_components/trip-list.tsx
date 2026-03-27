@@ -55,7 +55,13 @@ const getErrorMessage = (error: unknown): string => {
   return "An unexpected error occurred";
 };
 
-const formatDateRange = (startDate: Date, endDate: Date): string => {
+const isEpochDate = (date: Date): boolean => date.getTime() === 0;
+
+const formatDateRange = (startDate: Date, endDate: Date): string | null => {
+  if (isEpochDate(startDate) && isEpochDate(endDate)) {
+    return null;
+  }
+
   const options: Intl.DateTimeFormatOptions = {
     month: "short",
     day: "numeric",
@@ -66,6 +72,12 @@ const formatDateRange = (startDate: Date, endDate: Date): string => {
   const endStr = endDate.toLocaleDateString("en-US", options);
 
   return `${startStr} - ${endStr}`;
+};
+
+const getDurationDays = (startDate: Date, endDate: Date): number | null => {
+  if (isEpochDate(startDate) || isEpochDate(endDate)) return null;
+  const diff = endDate.getTime() - startDate.getTime();
+  return Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1;
 };
 
 type TripStatusKey = "upcoming" | "active" | "completed";
@@ -116,32 +128,42 @@ function TripCard({
 }) {
   const { id, name, parsedStartDate, parsedEndDate, destinations } = trip;
   const status = getTripStatus(parsedStartDate, parsedEndDate);
+  const dateRange = formatDateRange(parsedStartDate, parsedEndDate);
+  const duration = getDurationDays(parsedStartDate, parsedEndDate);
 
   return (
     <div className="group relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-gray-300">
-      {/* Header */}
-      <div className={`px-5 py-4 ${status.headerGradient}`}>
-        {/* Trip name */}
-        <h3 className="line-clamp-2 text-lg font-semibold text-gray-900 transition-colors group-hover:text-gray-700">
-          {name}
-        </h3>
-      </div>
+      <Link href={`/trips/${id}/edit`} className="block cursor-pointer">
+        {/* Header */}
+        <div className={`px-5 pt-4 pb-3 ${status.headerGradient}`}>
+          <h3 className="line-clamp-2 pr-8 text-lg font-semibold text-gray-900 transition-colors group-hover:text-gray-700">
+            {name}
+          </h3>
+        </div>
 
-      <Link href={`/trips/${id}`} className="block">
-        <div className="px-5 py-4">
-          {/* Date with icon */}
-          <div className="mb-3 flex items-center gap-2 text-sm text-gray-600">
-            <Calendar className="h-4 w-4 text-gray-400" />
-            <span>{formatDateRange(parsedStartDate, parsedEndDate)}</span>
+        <div className="space-y-3 px-5 pt-2 pb-4">
+          {/* Date & duration */}
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Calendar className="h-4 w-4 shrink-0 text-gray-400" />
+            {dateRange ? (
+              <span>{dateRange}</span>
+            ) : (
+              <span className="text-gray-400 italic">Dates not set</span>
+            )}
+            {duration !== null && (
+              <span className="ml-auto shrink-0 text-xs text-gray-400">
+                {duration} {duration === 1 ? "day" : "days"}
+              </span>
+            )}
           </div>
 
           {/* Countries list */}
           {destinations.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {destinations.slice(0, 3).map((dest) => (
                 <div
                   key={dest.id}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700"
                 >
                   <span className="text-sm">
                     {getFlagEmoji(dest.country.cca2)}
@@ -151,7 +173,7 @@ function TripCard({
               ))}
               {destinations.length > 3 && (
                 <div
-                  className="inline-flex items-center rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500"
+                  className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500"
                   title={destinations
                     .slice(3)
                     .map((d) => d.country.name)
@@ -171,26 +193,27 @@ function TripCard({
       </Link>
 
       {/* Actions Menu */}
-      <div className="absolute top-3 right-3">
+      <div className="absolute top-3 right-3 z-10">
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-lg bg-white/80 shadow-sm backdrop-blur-sm transition-all md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100"
+              className="h-8 w-8 cursor-pointer rounded-lg bg-white/80 shadow-sm backdrop-blur-sm transition-all md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100"
+              onClick={(e) => e.preventDefault()}
               onPointerDown={(e) => e.stopPropagation()}
             >
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem asChild className="cursor-pointer">
               <Link href={`/trips/${id}/edit`} className="flex items-center">
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem asChild className="cursor-pointer">
               <Link
                 href={`/trips/${id}/itinerary`}
                 className="flex items-center"
@@ -199,7 +222,7 @@ function TripCard({
                 Itinerary
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem asChild className="cursor-pointer">
               <Link href={`/trips/${id}/view`} className="flex items-center">
                 <Eye className="mr-2 h-4 w-4" />
                 View
@@ -211,7 +234,7 @@ function TripCard({
                 e.stopPropagation();
                 onDelete(id);
               }}
-              className="text-red-600 focus:text-red-700"
+              className="cursor-pointer text-red-600 focus:text-red-700"
             >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
