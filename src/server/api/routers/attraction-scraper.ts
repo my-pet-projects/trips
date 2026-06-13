@@ -181,6 +181,23 @@ const parseOpenariumSiteContent = async (
   };
 };
 
+const fetchWithTimeout = async (
+  url: string,
+  options: { timeout: number; headers: Record<string, string> },
+): Promise<string> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), options.timeout);
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: options.headers,
+    });
+    return res.text();
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
+
 type SiteParser = (html: string) => Promise<ParsedAttraction>;
 
 const SITE_PARSERS: Record<string, SiteParser> = {
@@ -305,68 +322,144 @@ export const attractionScraperRouter = createTRPCRouter({
       }
     }),
 
-  findAttractionImages: publicProcedure
+  fetchAttractionDetails: publicProcedure
     .input(
       z.object({
         name: z.string(),
-        city: z.string().optional(),
+        nameLocal: z.string().nullable().optional(),
+        city: z
+          .object({
+            id: z.number(),
+            name: z.string(),
+            countryCode: z.string().optional(),
+            country: z
+              .object({ name: z.string(), cca2: z.string() })
+              .optional(),
+          })
+          .optional(),
       }),
     )
     .query(async ({ input }) => {
-      const searchTerms = [input.name];
-      if (input.city) {
-        searchTerms.push(input.city);
-      }
-      const query = searchTerms
-        .map((term) => term.replaceAll(" ", "+"))
-        .join("+");
-
-      const url = `https://www.google.com/search?q=${query}&tbm=isch&tbs=isz:l`;
+      const FETCH_TIMEOUT = 10000; // 10 seconds
 
       try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000); // 10 seconds
-        let res;
-        try {
-          res = await fetch(url, { signal: controller.signal });
-        } finally {
-          clearTimeout(timeout);
-        }
+        const imageApiUrl = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(input.nameLocal ?? input.name)}&gsrlimit=20&prop=imageinfo&iiprop=url|thumburl&iiurlwidth=320&format=json&origin=*`;
+        const articlesEnApiUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(input.nameLocal ?? input.name)}&srlimit=5&srnamespace=0&format=json&origin=*`;
+        const articlesRuApiUrl = `https://ru.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(input.name)}&srlimit=5&srnamespace=0&format=json&origin=*`;
 
-        const imageUrls: string[] = [];
+        log.info(
+          { articlesEnApiUrl, articlesRuApiUrl, imageApiUrl },
+          "Fetching Wikimedia Commons images and Wikipedia articles",
+        );
 
-        const data = await res.text();
-        const $ = cheerio.load(data);
-        $("img").each((_, element) => {
-          const imgSrc = $(element).attr("src");
-          const dataSrc = $(element).attr("data-src");
-          const dataHdr = $(element).attr("data-hdr");
+        const browserHeaders = {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+          Accept: "application/json, text/javascript, */*; q=0.01",
+          "Accept-Language": "en-US,en;q=0.9",
+        };
 
-          if (dataSrc?.startsWith("http")) {
-            imageUrls.push(dataSrc);
-          } else if (imgSrc?.startsWith("http")) {
-            if (
-              !imgSrc.includes("data:image/gif") &&
-              !imgSrc.includes("gstatic.com/images/icons/g")
-            ) {
-              imageUrls.push(imgSrc);
-            }
-          } else if (dataHdr?.startsWith("http")) {
-            imageUrls.push(dataHdr);
-          }
-        });
+        const [imageData, articlesEnData, articlesRuData] = await Promise.all([
+          fetchWithTimeout(imageApiUrl, {
+            timeout: FETCH_TIMEOUT,
+            headers: browserHeaders,
+          }),
+          fetchWithTimeout(articlesEnApiUrl, {
+            timeout: FETCH_TIMEOUT,
+            headers: browserHeaders,
+          }),
+          fetchWithTimeout(articlesRuApiUrl, {
+            timeout: FETCH_TIMEOUT,
+            headers: browserHeaders,
+          }),
+        ]);
 
-        const uniqueImageUrls = Array.from(new Set(imageUrls)).slice(0, 20);
+        const parsedImages = JSON.parse(imageData) as {
+          query?: {
+            pages?: Record<
+              string,
+              { imageinfo?: { url?: string; thumburl?: string }[] }
+            >;
+          };
+        };
+        const pages = Object.values(parsedImages.query?.pages ?? {});
+        const imageUrls = pages
+          .flatMap((page) => page.imageinfo ?? [])
+          .map((info) => info.thumburl ?? info.url ?? "")
+          .filter((url) => url.startsWith("http"));
 
-        return uniqueImageUrls;
+        log.info(
+          {
+            articlesEnDataPreview: articlesEnData.slice(0, 500),
+            articlesRuDataPreview: articlesRuData.slice(0, 500),
+          },
+          "Wikipedia articles raw response",
+        );
+
+        type WikiSearchResponse = {
+          query?: {
+            search?: { title?: string; snippet?: string; pageid?: number }[];
+          };
+        };
+
+        const parsedEnArticles = JSON.parse(
+          articlesEnData,
+        ) as WikiSearchResponse;
+        const enArticles = (parsedEnArticles.query?.search ?? []).map(
+          (item) => ({
+            title: item.title ?? "",
+            snippet: item.snippet?.replace(/<[^>]+>/g, "") ?? "",
+            url: `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title ?? "")}`,
+            lang: "en" as const,
+          }),
+        );
+
+        const parsedRuArticles = JSON.parse(
+          articlesRuData,
+        ) as WikiSearchResponse;
+        const ruArticles = (parsedRuArticles.query?.search ?? []).map(
+          (item) => ({
+            title: item.title ?? "",
+            snippet: item.snippet?.replace(/<[^>]+>/g, "") ?? "",
+            url: `https://ru.wikipedia.org/wiki/${encodeURIComponent(item.title ?? "")}`,
+            lang: "ru" as const,
+          }),
+        );
+
+        const articles = [...enArticles, ...ruArticles];
+
+        log.info(
+          {
+            imageCount: imageUrls.length,
+            articleCount: articles.length,
+            enArticleCount: enArticles.length,
+            ruArticleCount: ruArticles.length,
+            imageApiUrl,
+            articlesEnApiUrl,
+            articlesRuApiUrl,
+            imageUrls,
+          },
+          "Wikimedia Commons images and Wikipedia articles found",
+        );
+
+        return { imageUrls, articles };
       } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
         log.error(
-          { name: input.name, city: input.city, error: errMsg(error) },
-          "Image scraping failed",
+          {
+            name: input.name,
+            nameLocal: input.nameLocal,
+            city: input.city?.name,
+            error: errMsg(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          },
+          "fetchAttractionDetails failed",
         );
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Error during image scraping: ${errMsg(error)}`,
+          message: `Error fetching attraction details: ${errMsg(error)}`,
         });
       }
     }),
