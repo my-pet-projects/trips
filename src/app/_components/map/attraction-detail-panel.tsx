@@ -97,15 +97,17 @@ export function AttractionDetailPanel({
 
           {/* Edit + Close buttons */}
           <div className="flex shrink-0 items-center gap-1">
-            <Link
-              href={`/attractions/${attraction.id}/edit`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-              aria-label="Edit attraction"
-            >
-              <Pencil className="h-4 w-4" />
-            </Link>
+            {viewMode === "admin" && (
+              <Link
+                href={`/attractions/${attraction.id}/edit`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                aria-label="Edit attraction"
+              >
+                <Pencil className="h-4 w-4" />
+              </Link>
+            )}
             <button
               type="button"
               onClick={onClose}
