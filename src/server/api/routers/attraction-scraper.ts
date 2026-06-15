@@ -442,7 +442,9 @@ export const attractionScraperRouter = createTRPCRouter({
           "Wikimedia Commons images and Wikipedia articles found",
         );
 
-        return { imageUrls, articles };
+        const googleImagesUrl = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(`${input.nameLocal ?? input.name} ${input.city?.name ?? ""}`).trim()}`;
+
+        return { imageUrls, articles, googleImagesUrl };
       } catch (error) {
         if (error instanceof TRPCError) {
           throw error;
