@@ -1,0 +1,39 @@
+{
+  "count": 2,
+  "data": [
+    {
+      "type": "attractions",
+      "id": 46230,
+      "title": "Маяк Густавии",
+      "title_en": "Gustavia Lighthouse",
+      "lat": 17.9011,
+      "lon": -62.8514,
+      "url": "https://www.votpusk.ru/article/attractions/sen-bartelemi/gustaviya/mayak_gustavii-a",
+      "isScraped": true,
+      "scrape": {
+        "name": "Маяк Густавии",
+        "localName": "Маяк Густавии",
+        "description": "Маяк расположен на территории старинного форта, построенного в конце 18-го века. Девятиметровая башня маяка была построена в 1961 году. Отсюда открывается великолепный вид на гавань и причал с великолепными яхтами.",
+        "latitude": 17.9011,
+        "longitude": -62.8514
+      }
+    },
+    {
+      "type": "attractions",
+      "id": 46231,
+      "title": "Пляж Шелл Бич",
+      "title_en": "Shell Beach",
+      "lat": 17.9011,
+      "lon": -62.8514,
+      "url": "https://www.votpusk.ru/article/attractions/sen-bartelemi/gustaviya/plyazh_shell_bich-a",
+      "isScraped": true,
+      "scrape": {
+        "name": "Пляж Шелл Бич",
+        "localName": "Пляж Шелл Бич",
+        "description": "Небольшой уютный пляж Шелл Бич расположен недалеко от гавани. Как понятно из его названия, пляж усеян морскими раковинами. Здесь спокойная чистая вода, что особенно порадует любителей снорклинга.",
+        "latitude": 17.9011,
+        "longitude": -62.8514
+      }
+    }
+  ]
+}

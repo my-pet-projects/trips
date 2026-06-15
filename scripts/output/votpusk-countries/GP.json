@@ -1,0 +1,31 @@
+{
+  "count": 2,
+  "data": [
+    {
+      "type": "attractions",
+      "id": 27125,
+      "title": "Вулкан Суфриер Гваделупа",
+      "title_en": "La Grande Soufriere",
+      "lat": 16.0436,
+      "lon": -61.6638,
+      "url": "https://www.votpusk.ru/article/attractions/gvadelupa/vulkan_sufrier_gvadelupa-a",
+      "isScraped": true,
+      "scrape": {
+        "error": "HTTP 503"
+      }
+    },
+    {
+      "type": "attractions",
+      "id": 27126,
+      "title": "Водопад Карбе",
+      "title_en": "Carbet Falls",
+      "lat": 16.0456,
+      "lon": -61.6522,
+      "url": "https://www.votpusk.ru/article/attractions/gvadelupa/vodopad_karbe-a",
+      "isScraped": true,
+      "scrape": {
+        "error": "HTTP 503"
+      }
+    }
+  ]
+}

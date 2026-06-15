@@ -1,0 +1,39 @@
+{
+  "count": 2,
+  "data": [
+    {
+      "type": "attractions",
+      "id": 46286,
+      "title": "Гора Комманд-Ридж",
+      "title_en": "Command Ridge",
+      "lat": -0.530364,
+      "lon": 166.917,
+      "url": "https://www.votpusk.ru/article/attractions/nauru/gora_kommand_ridzh-a",
+      "isScraped": true,
+      "scrape": {
+        "name": "Гора Комманд-Ридж",
+        "localName": "Гора Комманд-Ридж",
+        "description": "Комманд-Ридж — высочайшая точка Науру, ее высота составляет 71 метр над ур.м. Отсюда можно одним взглядом окинуть всё государство Науру, а также осмотреть японские оборонительные позиции - остатки двух орудий и бункеров.",
+        "latitude": -0.530364,
+        "longitude": 166.917
+      }
+    },
+    {
+      "type": "attractions",
+      "id": 46287,
+      "title": "Озеро Буада",
+      "title_en": "Buada Lagoon",
+      "lat": -0.535421,
+      "lon": 166.922,
+      "url": "https://www.votpusk.ru/article/attractions/nauru/ozero_buada-a",
+      "isScraped": true,
+      "scrape": {
+        "name": "Озеро Буада",
+        "localName": "Озеро Буада",
+        "description": "Озеро Буада является источником пресной воды на острове. Средняя глубина озера — небольшая, около 2 метров. Озеро бессточное, пополняется водой за счёт осадков, окружено остатками тропического леса.",
+        "latitude": -0.535421,
+        "longitude": 166.922
+      }
+    }
+  ]
+}

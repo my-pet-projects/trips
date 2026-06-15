@@ -1,0 +1,39 @@
+{
+  "count": 2,
+  "data": [
+    {
+      "type": "attractions",
+      "id": 46232,
+      "title": "Базилика Св. Анны",
+      "title_en": "Basilique Sainte-Anne",
+      "lat": -4.26831,
+      "lon": 15.2845,
+      "url": "https://www.votpusk.ru/article/attractions/kongo/brazzavil/bazilika_sv_anny-a",
+      "isScraped": true,
+      "scrape": {
+        "name": "Базилика Св. Анны",
+        "localName": "Базилика Св. Анны",
+        "description": "Базилика Святой Анны была построена в 1949 году по проекту Роджера Эрелла и является одним из самых красивых современных храмов в мире.",
+        "latitude": -4.26831,
+        "longitude": 15.2845
+      }
+    },
+    {
+      "type": "attractions",
+      "id": 46233,
+      "title": "Пуэнт-Нуар",
+      "title_en": "Pointe-Noire",
+      "lat": -4.80726,
+      "lon": 11.8415,
+      "url": "https://www.votpusk.ru/article/attractions/kongo/puent_nuar-a",
+      "isScraped": true,
+      "scrape": {
+        "name": "Пуэнт-Нуар",
+        "localName": "Пуэнт-Нуар",
+        "description": "Пуэнт-Нуар расположен на мысе между одноименной бухтой и Атлантическим океаном. Город известен своими пляжами и возможностями для серфинга.",
+        "latitude": -4.80726,
+        "longitude": 11.8415
+      }
+    }
+  ]
+}

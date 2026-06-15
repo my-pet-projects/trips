@@ -1,0 +1,39 @@
+{
+  "count": 2,
+  "data": [
+    {
+      "type": "attractions",
+      "id": 46252,
+      "title": "Остров Рождества",
+      "title_en": "Christmas Island",
+      "lat": 1.87127,
+      "lon": -157.43,
+      "url": "https://www.votpusk.ru/article/attractions/kiribati/ostrov_rozhdestva-a",
+      "isScraped": true,
+      "scrape": {
+        "name": "Остров Рождества",
+        "localName": "Остров Рождества",
+        "description": "Остров Рождества (Киритимати) - самый большой в мире атолл. Площадь суши атолла составляет 321 кв.км. Здесь одна из самых высоких концентраций морских птиц в мире.",
+        "latitude": 1.87127,
+        "longitude": -157.43
+      }
+    },
+    {
+      "type": "attractions",
+      "id": 46253,
+      "title": "Острова Феникс",
+      "title_en": "Phoenix Islands",
+      "lat": -3.64972,
+      "lon": -172.857,
+      "url": "https://www.votpusk.ru/article/attractions/kiribati/ostrova_feniks-a",
+      "isScraped": true,
+      "scrape": {
+        "name": "Острова Феникс",
+        "localName": "Острова Феникс",
+        "description": "Острова Феникс — архипелаг в Тихом океане, состоит из 8 атоллов и 2 подводных рифов. На островах Феникса расположен крупнейший в мире морской заповедник. Фауна коралловых рифов островов включает 514 видов рыб, в том числе несколько недавно открытых.",
+        "latitude": -3.64972,
+        "longitude": -172.857
+      }
+    }
+  ]
+}
