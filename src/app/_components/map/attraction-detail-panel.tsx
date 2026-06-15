@@ -1,6 +1,7 @@
 "use client";
 
-import { ExternalLink, MapPin, X } from "lucide-react";
+import { MapPin, Pencil, X } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import type { Attraction } from "~/types";
@@ -63,14 +64,15 @@ export function AttractionDetailPanel({
         isVisible ? "translate-y-0" : "translate-y-full"
       }`}
     >
-      {/* Drag handle indicator */}
-      <div className="sticky top-0 z-10 flex justify-center bg-white pt-3 pb-2">
-        <div className="h-1 w-10 rounded-full bg-gray-300" />
-      </div>
+      {/* Sticky header with drag handle + attraction info + actions */}
+      <div className="sticky top-0 z-10 rounded-t-2xl border-b border-gray-100 bg-white px-4 pt-3 pb-3 shadow-sm">
+        {/* Drag handle */}
+        <div className="mb-3 flex justify-center">
+          <div className="h-1 w-10 rounded-full bg-gray-300" />
+        </div>
 
-      <div className="px-4 pb-4">
-        {/* Header */}
-        <div className="mb-3 flex items-start justify-between gap-3">
+        {/* Header row: icon + name/location + edit + close */}
+        <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <div className="shrink-0">
               <div className="rounded-full bg-sky-100 px-2 py-1">
@@ -93,42 +95,46 @@ export function AttractionDetailPanel({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          {/* Edit + Close buttons */}
+          <div className="flex shrink-0 items-center gap-1">
+            {viewMode === "admin" && (
+              <Link
+                href={`/attractions/${attraction.id}/edit`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                aria-label="Edit attraction"
+              >
+                <Pencil className="h-4 w-4" />
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
+      </div>
 
+      <div className="px-4 pb-4">
         {/* Description */}
         {attraction.description && (
-          <div className="mb-4 rounded-lg bg-gray-50 p-3">
+          <div className="mt-4 mb-4 rounded-lg bg-gray-50 p-3">
             <p className="text-sm leading-relaxed text-gray-700">
               {attraction.description}
             </p>
           </div>
         )}
 
-        {/* External Link */}
-        {attraction.sourceUrl && (
-          <div className="mb-4">
-            <a
-              href={attraction.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm text-sky-600 transition-colors hover:text-sky-700"
-            >
-              View more information
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-          </div>
-        )}
-
-        {/* Attraction Images */}
-        <AttractionImageGallery attraction={attraction} />
+        {/* Attraction Images (includes links row) */}
+        <AttractionImageGallery
+          attraction={attraction}
+          sourceUrl={attraction.sourceUrl ?? undefined}
+        />
 
         {/* Action buttons */}
         {viewMode === "admin" && onAddToDay && (
