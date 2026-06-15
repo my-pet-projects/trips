@@ -1,4 +1,4 @@
-import { ExternalLink } from "lucide-react";
+import { BookOpen, ExternalLink, Images } from "lucide-react";
 import React, { useState } from "react";
 
 import { api } from "~/trpc/react";
@@ -6,15 +6,17 @@ import type { Attraction } from "~/types";
 
 interface AttractionImageGalleryProps {
   attraction: Attraction;
+  sourceUrl?: string;
 }
 
 export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
   attraction,
+  sourceUrl,
 }) => {
   const [loadedImages, setLoadedImages] = useState<string[]>([]);
   const [failedImages, setFailedImages] = useState<string[]>([]);
 
-  const { data, isLoading, isError, error, refetch } =
+  const { data, isLoading, isError, refetch } =
     api.attractionScraper.fetchAttractionDetails.useQuery(
       {
         name: attraction.name,
@@ -59,11 +61,40 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
 
   const imageUrls = data?.imageUrls ?? [];
   const articles = data?.articles ?? [];
+  const googleImagesUrl = data?.googleImagesUrl;
 
   const validImages = imageUrls.filter((url) => !failedImages.includes(url));
 
   return (
     <div className="mb-4 space-y-4">
+      {/* Links row: Original article + Google Images */}
+      {(sourceUrl ?? googleImagesUrl) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {sourceUrl && (
+            <a
+              href={sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-800"
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              Original article
+            </a>
+          )}
+          {googleImagesUrl && (
+            <a
+              href={googleImagesUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-800"
+            >
+              <Images className="h-3.5 w-3.5" />
+              Google Images
+            </a>
+          )}
+        </div>
+      )}
+
       {/* Images */}
       {validImages.length === 0 ? (
         <div className="rounded-lg bg-gray-50 py-4 text-center">
@@ -100,6 +131,17 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
               +{imageUrls.length - 12} more images
             </p>
           )}
+          <p className="mt-2 text-center text-xs text-gray-400">
+            Images sourced from{" "}
+            <a
+              href="https://commons.wikimedia.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-gray-600"
+            >
+              Wikimedia Commons
+            </a>
+          </p>
         </div>
       )}
 
