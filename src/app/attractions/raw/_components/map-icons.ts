@@ -27,10 +27,10 @@ function createPinIcon(color: string, size = 32) {
 type IconKey = "pending" | "rejected" | "duplicated" | "existing";
 
 const ICON_CONFIGS: Record<IconKey, { color: string; size?: number }> = {
-  pending:    { color: "#f59e0b" },
-  rejected:   { color: "#ef4444", size: 24 },
+  pending: { color: "#f59e0b" },
+  rejected: { color: "#ef4444", size: 24 },
   duplicated: { color: "#a855f7", size: 24 },
-  existing:   { color: "#3b82f6", size: 28 },
+  existing: { color: "#3b82f6", size: 28 },
 };
 
 // Must match ICON_CONFIGS colors above
@@ -49,7 +49,9 @@ export type TaggedMarker = L.Marker & { markerStatus: string };
 
 function buildPiePaths(
   slices: { color: string; count: number }[],
-  cx: number, cy: number, r: number,
+  cx: number,
+  cy: number,
+  r: number,
 ): string {
   const total = slices.reduce((s, sl) => s + sl.count, 0);
   if (total === 0) return "";
@@ -73,9 +75,9 @@ function buildPiePaths(
 
 export function createClusterIcon(cluster: L.MarkerCluster) {
   const count = cluster.getChildCount();
-  const size  = count >= 100 ? 50 : count >= 10 ? 45 : 38;
-  const r     = size / 2;
-  const pieR  = r - 3;
+  const size = count >= 100 ? 50 : count >= 10 ? 45 : 38;
+  const r = size / 2;
+  const pieR = r - 3;
   const innerR = Math.round(pieR * 0.5);
   const fontSize = count >= 100 ? 13 : 12;
 
@@ -85,10 +87,12 @@ export function createClusterIcon(cluster: L.MarkerCluster) {
     tally[status] = (tally[status] ?? 0) + 1;
   }
 
-  const slices = ["pending", "rejected", "duplicated", "existing"].map((key) => ({
-    color: STATUS_COLOR[key]!,
-    count: tally[key] ?? 0,
-  }));
+  const slices = ["pending", "rejected", "duplicated", "existing"].map(
+    (key) => ({
+      color: STATUS_COLOR[key]!,
+      count: tally[key] ?? 0,
+    }),
+  );
 
   const pie = buildPiePaths(slices, r, r, pieR);
 

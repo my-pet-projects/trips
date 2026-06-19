@@ -55,6 +55,10 @@ export function Navbar({
     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500 text-white">
       <MapPin className="h-6 w-6" />
     </div>
+  ) : isRawAttractionsSection ? (
+    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100">
+      <Database className="h-6 w-6 text-violet-600" />
+    </div>
   ) : (
     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-linear-to-br from-sky-500 to-orange-500 text-white">
       <Compass className="h-6 w-6" />

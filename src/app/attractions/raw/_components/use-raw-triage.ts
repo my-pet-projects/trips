@@ -1,4 +1,4 @@
-import { useCallback, useState, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { api } from "~/trpc/react";
@@ -7,8 +7,8 @@ export type StatusFilter = "pending" | "rejected" | "duplicated";
 type RawStatus = StatusFilter | "approved";
 
 export const FILTERS: { key: StatusFilter; label: string; color: string }[] = [
-  { key: "pending",    label: "Pending",    color: "bg-amber-400"  },
-  { key: "rejected",   label: "Rejected",   color: "bg-red-500"    },
+  { key: "pending", label: "Pending", color: "bg-amber-400" },
+  { key: "rejected", label: "Rejected", color: "bg-red-500" },
   { key: "duplicated", label: "Duplicated", color: "bg-purple-500" },
 ];
 
@@ -16,15 +16,20 @@ export function useRawTriage(countryCode: string | undefined) {
   const [visibleStatuses, setVisibleStatuses] = useState<Set<StatusFilter>>(
     new Set(["pending"]),
   );
-  const [locallyRemovedIds, setLocallyRemovedIds] = useState<Set<number>>(new Set());
+  const [locallyRemovedIds, setLocallyRemovedIds] = useState<Set<number>>(
+    new Set(),
+  );
 
   const utils = api.useUtils();
 
-  const { data: rawAttractions = [], refetch: refetchRaw, isLoading: isLoadingRaw } =
-    api.rawAttraction.getByCountry.useQuery(
-      { countryCode: countryCode! },
-      { enabled: !!countryCode },
-    );
+  const {
+    data: rawAttractions = [],
+    refetch: refetchRaw,
+    isLoading: isLoadingRaw,
+  } = api.rawAttraction.getByCountry.useQuery(
+    { countryCode: countryCode! },
+    { enabled: !!countryCode },
+  );
   const { data: existing = [], isLoading: isLoadingExisting } =
     api.rawAttraction.getExistingByCountry.useQuery(
       { countryCode: countryCode! },
@@ -38,7 +43,8 @@ export function useRawTriage(countryCode: string | undefined) {
   function patchRawCache(id: number, status: RawStatus) {
     utils.rawAttraction.getByCountry.setData(
       { countryCode: countryCode! },
-      (prev) => prev ? prev.map((r) => r.id === id ? { ...r, status } : r) : prev,
+      (prev) =>
+        prev ? prev.map((r) => (r.id === id ? { ...r, status } : r)) : prev,
     );
   }
 
@@ -46,7 +52,9 @@ export function useRawTriage(countryCode: string | undefined) {
     onMutate: ({ id }) => removeLocally(id),
     onSuccess: () => {
       void refetchRaw();
-      void utils.rawAttraction.getExistingByCountry.invalidate({ countryCode: countryCode! });
+      void utils.rawAttraction.getExistingByCountry.invalidate({
+        countryCode: countryCode!,
+      });
       toast.success("Attraction promoted");
     },
     onError: (err) => toast.error(err.message),
@@ -54,13 +62,19 @@ export function useRawTriage(countryCode: string | undefined) {
 
   const rejectMutation = api.rawAttraction.reject.useMutation({
     onMutate: ({ id }) => patchRawCache(id, "rejected"),
-    onSuccess: () => { void refetchRaw(); toast.success("Rejected"); },
+    onSuccess: () => {
+      void refetchRaw();
+      toast.success("Rejected");
+    },
     onError: (err) => toast.error(err.message),
   });
 
   const duplicatedMutation = api.rawAttraction.markDuplicated.useMutation({
     onMutate: ({ id }) => patchRawCache(id, "duplicated"),
-    onSuccess: () => { void refetchRaw(); toast.success("Marked as duplicated"); },
+    onSuccess: () => {
+      void refetchRaw();
+      toast.success("Marked as duplicated");
+    },
     onError: (err) => toast.error(err.message),
   });
 
@@ -72,10 +86,14 @@ export function useRawTriage(countryCode: string | undefined) {
   const allPoints = useMemo<[number, number][]>(
     () => [
       ...rawAttractions.flatMap((r) =>
-        r.latitude != null && r.longitude != null ? [[r.latitude, r.longitude] as [number, number]] : []
+        r.latitude != null && r.longitude != null
+          ? [[r.latitude, r.longitude] as [number, number]]
+          : [],
       ),
       ...existing.flatMap((e) =>
-        e.latitude != null && e.longitude != null ? [[e.latitude, e.longitude] as [number, number]] : []
+        e.latitude != null && e.longitude != null
+          ? [[e.latitude, e.longitude] as [number, number]]
+          : [],
       ),
     ],
     [rawAttractions, existing],
@@ -84,8 +102,8 @@ export function useRawTriage(countryCode: string | undefined) {
   const counts = useMemo(() => {
     const c = { pending: 0, rejected: 0, duplicated: 0 };
     for (const r of rawAttractions) {
-      if (r.status === "pending")    c.pending++;
-      else if (r.status === "rejected")   c.rejected++;
+      if (r.status === "pending") c.pending++;
+      else if (r.status === "rejected") c.rejected++;
       else if (r.status === "duplicated") c.duplicated++;
     }
     return c;
@@ -100,9 +118,18 @@ export function useRawTriage(countryCode: string | undefined) {
     });
   }
 
-  const onApprove    = useCallback((id: number) => approveMutation.mutate({ id }), [approveMutation]);
-  const onReject     = useCallback((id: number) => rejectMutation.mutate({ id }), [rejectMutation]);
-  const onDuplicated = useCallback((id: number) => duplicatedMutation.mutate({ id }), [duplicatedMutation]);
+  const onApprove = useCallback(
+    (id: number) => approveMutation.mutate({ id }),
+    [approveMutation],
+  );
+  const onReject = useCallback(
+    (id: number) => rejectMutation.mutate({ id }),
+    [rejectMutation],
+  );
+  const onDuplicated = useCallback(
+    (id: number) => duplicatedMutation.mutate({ id }),
+    [duplicatedMutation],
+  );
 
   return {
     rawAttractions: visibleRaw,
@@ -112,7 +139,10 @@ export function useRawTriage(countryCode: string | undefined) {
     toggleStatus,
     counts,
     allPoints,
-    isMutating: approveMutation.isPending || rejectMutation.isPending || duplicatedMutation.isPending,
+    isMutating:
+      approveMutation.isPending ||
+      rejectMutation.isPending ||
+      duplicatedMutation.isPending,
     onApprove,
     onReject,
     onDuplicated,
