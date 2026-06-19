@@ -11,7 +11,9 @@ interface RawAttractionsMapInnerProps {
   countryCode?: string;
 }
 
-export function RawAttractionsMapInner({ countryCode }: RawAttractionsMapInnerProps) {
+export function RawAttractionsMapInner({
+  countryCode,
+}: RawAttractionsMapInnerProps) {
   const {
     rawAttractions,
     existing,
@@ -48,6 +50,7 @@ export function RawAttractionsMapInner({ countryCode }: RawAttractionsMapInnerPr
         <div className="mx-1 h-4 w-px bg-gray-200" />
         {FILTERS.map(({ key, label, color }) => (
           <button
+            type="button"
             key={key}
             onClick={() => toggleStatus(key)}
             className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-opacity ${
@@ -56,7 +59,9 @@ export function RawAttractionsMapInner({ countryCode }: RawAttractionsMapInnerPr
           >
             <span className={`h-2.5 w-2.5 rounded-full ${color}`} />
             {label}
-            <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-gray-600">{counts[key]}</span>
+            <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-gray-600">
+              {counts[key]}
+            </span>
           </button>
         ))}
         <div className="mx-1 h-4 w-px bg-gray-200" />
@@ -74,7 +79,9 @@ export function RawAttractionsMapInner({ countryCode }: RawAttractionsMapInnerPr
         attributionControl={false}
       >
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        {allPoints.length > 0 && <FitBounds points={allPoints} countryCode={countryCode} />}
+        {allPoints.length > 0 && (
+          <FitBounds points={allPoints} countryCode={countryCode} />
+        )}
         <MarkersLayer
           rawAttractions={rawAttractions}
           existing={existing}

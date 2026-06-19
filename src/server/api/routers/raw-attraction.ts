@@ -3,11 +3,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { createLogger, errMsg } from "~/lib/logger";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-} from "~/server/api/trpc";
-import * as geoSchema from "~/server/db/geo-schema";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import * as schema from "~/server/db/schema";
 
 const log = createLogger("raw-attraction");
@@ -40,25 +36,34 @@ export const rawAttractionRouter = createTRPCRouter({
   approve: protectedProcedure
     .input(z.object({ id: z.number().min(1) }))
     .mutation(async ({ ctx, input }) => {
-      const raw = await ctx.db.query.rawAttractions.findFirst({
-        where: eq(schema.rawAttractions.id, input.id),
-      });
-
-      if (!raw) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Raw attraction not found" });
-      }
-
-      if (!raw.cityId) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Cannot promote attraction without a city — coordinates may be missing",
-        });
-      }
-
-      const cityId = raw.cityId;
-
       try {
         const attraction = await ctx.db.transaction(async (tx) => {
+          const raw = await tx.query.rawAttractions.findFirst({
+            where: eq(schema.rawAttractions.id, input.id),
+          });
+
+          if (!raw) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Raw attraction not found",
+            });
+          }
+
+          if (raw.status === "approved") {
+            throw new TRPCError({
+              code: "CONFLICT",
+              message: "Already approved",
+            });
+          }
+
+          if (!raw.cityId) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message:
+                "Cannot promote attraction without a city — coordinates may be missing",
+            });
+          }
+
           const [created] = await tx
             .insert(schema.attractions)
             .values({
@@ -68,27 +73,41 @@ export const rawAttractionRouter = createTRPCRouter({
               latitude: raw.latitude ?? undefined,
               longitude: raw.longitude ?? undefined,
               sourceUrl: raw.sourceUrl ?? undefined,
-              cityId,
+              cityId: raw.cityId,
               countryCode: raw.countryCode,
               isVerified: false,
             })
             .returning();
 
           if (!created) {
-            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create attraction" });
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to create attraction",
+            });
           }
 
-          await tx
+          const [updated] = await tx
             .update(schema.rawAttractions)
             .set({ status: "approved", attractionId: created.id })
-            .where(eq(schema.rawAttractions.id, input.id));
+            .where(eq(schema.rawAttractions.id, input.id))
+            .returning({ id: schema.rawAttractions.id });
+
+          if (!updated) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to mark raw attraction as approved",
+            });
+          }
 
           return created;
         });
 
         return { attraction };
       } catch (error) {
-        log.error({ id: input.id, error: errMsg(error) }, "Error approving raw attraction");
+        log.error(
+          { id: input.id, error: errMsg(error) },
+          "Error approving raw attraction",
+        );
         if (error instanceof TRPCError) throw error;
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -108,7 +127,10 @@ export const rawAttractionRouter = createTRPCRouter({
         .returning({ id: schema.rawAttractions.id });
 
       if (!updated) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Raw attraction not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Raw attraction not found",
+        });
       }
 
       return { success: true };
@@ -124,7 +146,10 @@ export const rawAttractionRouter = createTRPCRouter({
         .returning({ id: schema.rawAttractions.id });
 
       if (!updated) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Raw attraction not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Raw attraction not found",
+        });
       }
 
       return { success: true };
