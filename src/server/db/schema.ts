@@ -23,8 +23,8 @@ export const trips = sqliteTable(
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     name: text("name", { length: 256 }).notNull(),
-    startDate: integer("start_date", { mode: "timestamp" }).notNull(),
-    endDate: integer("end_date", { mode: "timestamp" }).notNull(),
+    startDate: integer("start_date", { mode: "timestamp" }),
+    endDate: integer("end_date", { mode: "timestamp" }),
     createdAt: integer("created_at", { mode: "timestamp" })
       .default(sql`(unixepoch())`)
       .notNull(),
@@ -36,10 +36,6 @@ export const trips = sqliteTable(
     index("trips_start_date_idx").on(table.startDate),
     index("trips_end_date_idx").on(table.endDate),
     index("trips_name_idx").on(table.name),
-    check(
-      "trips_date_range_check",
-      sql`${table.endDate} >= ${table.startDate}`,
-    ),
   ],
 );
 
@@ -83,8 +79,11 @@ export const attractions = sqliteTable(
     name: text("name", { length: 256 }).notNull(),
     nameLocal: text("name_local", { length: 256 }),
     description: text("description"),
+    address: text("address"),
     latitude: real("latitude"),
     longitude: real("longitude"),
+    isMustSee: integer("is_must_see", { mode: "boolean" }),
+    isPredefined: integer("is_predefined", { mode: "boolean" }),
     sourceUrl: text("source_url", { length: 256 }),
     cityId: integer("city_id").notNull(), // References cities.id in the geo database (cross-database FK not supported)
     countryCode: text("country_code", { length: 2 }).notNull(),
@@ -219,6 +218,47 @@ export const routesRelations = relations(routes, ({ one }) => ({
   }),
   toAttraction: one(attractions, {
     fields: [routes.toAttractionId],
+    references: [attractions.id],
+  }),
+}));
+
+export const rawAttractions = sqliteTable(
+  "raw_attractions",
+  {
+    id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+    name: text("name", { length: 256 }).notNull(),
+    nameLocal: text("name_local", { length: 256 }),
+    description: text("description"),
+    latitude: real("latitude"),
+    longitude: real("longitude"),
+    sourceUrl: text("source_url", { length: 256 }),
+    cityName: text("city_name", { length: 256 }),
+    countryCode: text("country_code", { length: 2 }).notNull(),
+    source: text("source", { length: 64 }).notNull(),
+    status: text("status", { enum: ["pending", "approved", "rejected"] })
+      .default("pending")
+      .notNull(),
+    attractionId: integer("attraction_id").references(() => attractions.id, {
+      onDelete: "set null",
+    }),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .default(sql`(unixepoch())`)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).$onUpdate(
+      () => new Date(),
+    ),
+  },
+  (table) => [
+    index("raw_attractions_status_idx").on(table.status),
+    index("raw_attractions_country_idx").on(table.countryCode),
+    index("raw_attractions_source_url_idx").on(table.sourceUrl),
+    index("raw_attractions_attraction_idx").on(table.attractionId),
+  ],
+);
+
+export const rawAttractionsRelations = relations(rawAttractions, ({ one }) => ({
+  attraction: one(attractions, {
+    fields: [rawAttractions.attractionId],
     references: [attractions.id],
   }),
 }));
