@@ -47,6 +47,10 @@ export function Navbar({
     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100">
       <Calendar className="h-6 w-6 text-sky-600" />
     </div>
+  ) : isRawAttractionsSection ? (
+    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100">
+      <Database className="h-6 w-6 text-violet-600" />
+    </div>
   ) : isAttractionsSection ? (
     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500 text-white">
       <MapPin className="h-6 w-6" />
