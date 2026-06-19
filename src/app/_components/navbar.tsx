@@ -6,6 +6,7 @@ import {
   Calendar,
   Compass,
   CopyPlus,
+  Database,
   MapPin,
   Menu,
   Plane,
@@ -37,6 +38,7 @@ export function Navbar({
 
   const isTripsSection = pathname.startsWith("/trips");
   const isAttractionsSection = pathname.startsWith("/attractions");
+  const isRawAttractionsSection = pathname.startsWith("/attractions/raw");
   const isTripsRoot = pathname === "/trips";
   const isAttractionsRoot = pathname === "/attractions";
 
@@ -44,6 +46,10 @@ export function Navbar({
   const defaultIcon = isTripsSection ? (
     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100">
       <Calendar className="h-6 w-6 text-sky-600" />
+    </div>
+  ) : isRawAttractionsSection ? (
+    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100">
+      <Database className="h-6 w-6 text-violet-600" />
     </div>
   ) : isAttractionsSection ? (
     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500 text-white">
@@ -147,6 +153,13 @@ export function Navbar({
                   <MapPin className="mr-2 h-4 w-4" />
                   View Map
                 </Link>
+                <Link
+                  href="/attractions/raw"
+                  className="inline-flex items-center justify-center rounded-lg border border-violet-500 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-700 transition-colors hover:bg-violet-100 focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:outline-none"
+                >
+                  <Database className="mr-2 h-4 w-4" />
+                  Raw
+                </Link>
               </>
             )}
 
@@ -240,6 +253,14 @@ export function Navbar({
                   >
                     <MapPin className="mr-2 h-4 w-4" />
                     View Map
+                  </Link>
+                  <Link
+                    href="/attractions/raw"
+                    onClick={closeMobileMenu}
+                    className="inline-flex items-center justify-center rounded-lg border border-violet-500 bg-violet-50 px-4 py-3 text-sm font-medium text-violet-700 transition-colors hover:bg-violet-100"
+                  >
+                    <Database className="mr-2 h-4 w-4" />
+                    Raw
                   </Link>
                 </>
               )}
