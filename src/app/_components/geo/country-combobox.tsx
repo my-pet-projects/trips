@@ -27,6 +27,7 @@ interface CountryComboboxBaseProps {
   showLabel?: boolean;
   placeholder?: string;
   disabled?: boolean;
+  compact?: boolean;
 }
 
 interface CountryComboboxSingleProps extends CountryComboboxBaseProps {
@@ -50,12 +51,14 @@ interface SelectClassNamesArgs {
   isDisabled: boolean;
   hasError: boolean;
   isMulti: boolean;
+  compact?: boolean;
 }
 
 const getSelectClassNames = ({
   isDisabled,
   hasError,
   isMulti,
+  compact,
 }: SelectClassNamesArgs) => ({
   control: (state: { isFocused: boolean; isDisabled: boolean }) =>
     `!w-full !rounded-lg !border ${
@@ -65,17 +68,17 @@ const getSelectClassNames = ({
           ? "!border-red-500"
           : "!border-gray-300"
     } !bg-gray-50 ${
-      isMulti ? "!min-h-[3rem]" : "!h-12"
-    } !text-base ${state.isDisabled || isDisabled ? "!bg-gray-200" : ""}`,
-  placeholder: () => "!text-gray-400",
+      isMulti ? "!min-h-[3rem]" : compact ? "!h-8 !min-h-0" : "!h-12"
+    } ${compact ? "!text-xs" : "!text-base"} ${state.isDisabled || isDisabled ? "!bg-gray-200" : ""}`,
+  placeholder: () => compact ? "!text-gray-400 !text-xs !truncate" : "!text-gray-400",
   singleValue: () => "!truncate",
-  input: () => "",
+  input: () => compact ? "!text-xs" : "",
   indicatorSeparator: () => "!bg-gray-300",
-  dropdownIndicator: () => "!text-gray-400 hover:!text-gray-500",
-  clearIndicator: () => "!text-gray-400 hover:!text-red-500",
+  dropdownIndicator: () => compact ? "!text-gray-400 hover:!text-gray-500 !p-1" : "!text-gray-400 hover:!text-gray-500",
+  clearIndicator: () => compact ? "!text-gray-400 hover:!text-red-500 !p-1" : "!text-gray-400 hover:!text-red-500",
   menu: () => "!rounded-lg !shadow-md !mt-2",
   option: (state: { isSelected: boolean; isFocused: boolean }) =>
-    `!text-gray-800 ${
+    `${compact ? "!text-xs !py-1" : ""} !text-gray-800 ${
       state.isSelected
         ? "!bg-orange-200 !text-orange-700"
         : state.isFocused
@@ -89,37 +92,14 @@ const getSelectClassNames = ({
 });
 
 const CustomOption = (
-  props: OptionProps<
-    CountrySelectOption,
-    boolean,
-    GroupBase<CountrySelectOption>
-  >,
+  props: OptionProps<CountrySelectOption, boolean, GroupBase<CountrySelectOption>>,
 ) => (
   <components.Option {...props}>
     <div className="flex items-center gap-2">
-      <span className="text-xl leading-none">
-        {getFlagEmoji(props.data.fullCountry.cca2)}
-      </span>
+      <span className="text-xl leading-none">{getFlagEmoji(props.data.fullCountry.cca2)}</span>
       <span>{props.data.label}</span>
     </div>
   </components.Option>
-);
-
-const CustomSingleValue = (
-  props: SingleValueProps<
-    CountrySelectOption,
-    false,
-    GroupBase<CountrySelectOption>
-  >,
-) => (
-  <components.SingleValue {...props}>
-    <div className="flex items-center gap-2">
-      <span className="text-xl leading-none">
-        {getFlagEmoji(props.data.fullCountry.cca2)}
-      </span>
-      <span>{props.data.label}</span>
-    </div>
-  </components.SingleValue>
 );
 
 const CustomMultiValue = (
@@ -154,6 +134,7 @@ const CountryComboboxSingle: React.FC<CountryComboboxSingleProps> = ({
   error = false,
   showLabel = true,
   placeholder,
+  compact,
   value,
   onChange,
 }) => {
@@ -171,15 +152,35 @@ const CountryComboboxSingle: React.FC<CountryComboboxSingleProps> = ({
 
   const singleSelectComponents = useMemo(
     () => ({
-      Option: CustomOption as React.ComponentType<
-        OptionProps<CountrySelectOption, false, GroupBase<CountrySelectOption>>
-      >,
-      SingleValue: CustomSingleValue,
+      Option: ((props) => {
+        return (
+          <components.Option {...props}>
+            <div className="flex items-center gap-2">
+              <span className={compact ? "text-sm leading-none" : "text-xl leading-none"}>
+                {getFlagEmoji(props.data.fullCountry.cca2)}
+              </span>
+              <span className={compact ? "text-xs" : ""}>{props.data.label}</span>
+            </div>
+          </components.Option>
+        );
+      }) as React.ComponentType<OptionProps<CountrySelectOption, false, GroupBase<CountrySelectOption>>>,
+      SingleValue: ((props) => {
+        return (
+          <components.SingleValue {...props}>
+            <div className="flex items-center gap-2">
+              <span className={compact ? "text-sm leading-none" : "text-xl leading-none"}>
+                {getFlagEmoji(props.data.fullCountry.cca2)}
+              </span>
+              <span className={compact ? "text-xs" : ""}>{props.data.label}</span>
+            </div>
+          </components.SingleValue>
+        );
+      }) as React.ComponentType<SingleValueProps<CountrySelectOption, false, GroupBase<CountrySelectOption>>>,
       Input: CustomInput as React.ComponentType<
         InputProps<CountrySelectOption, false, GroupBase<CountrySelectOption>>
       >,
     }),
-    [],
+    [compact],
   );
 
   return (
@@ -197,7 +198,7 @@ const CountryComboboxSingle: React.FC<CountryComboboxSingleProps> = ({
         inputId="country-select-single"
         options={options}
         isLoading={isLoading}
-        loadingMessage={() => "Loading countries..."}
+        loadingMessage={() => compact ? "Loading…" : "Loading countries..."}
         value={selectedOption}
         onChange={handleSingleChange}
         isClearable
@@ -213,6 +214,7 @@ const CountryComboboxSingle: React.FC<CountryComboboxSingleProps> = ({
           isDisabled: error || isLoading,
           hasError: error,
           isMulti: false,
+          compact,
         })}
       />
       {error && (
