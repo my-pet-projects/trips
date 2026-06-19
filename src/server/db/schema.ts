@@ -23,8 +23,8 @@ export const trips = sqliteTable(
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     name: text("name", { length: 256 }).notNull(),
-    startDate: integer("start_date", { mode: "timestamp" }),
-    endDate: integer("end_date", { mode: "timestamp" }),
+    startDate: integer("start_date", { mode: "timestamp" }).notNull(),
+    endDate: integer("end_date", { mode: "timestamp" }).notNull(),
     createdAt: integer("created_at", { mode: "timestamp" })
       .default(sql`(unixepoch())`)
       .notNull(),
@@ -233,9 +233,10 @@ export const rawAttractions = sqliteTable(
     longitude: real("longitude"),
     sourceUrl: text("source_url", { length: 256 }),
     cityName: text("city_name", { length: 256 }),
+    cityId: integer("city_id"),
     countryCode: text("country_code", { length: 2 }).notNull(),
     source: text("source", { length: 64 }).notNull(),
-    status: text("status", { enum: ["pending", "approved", "rejected"] })
+    status: text("status", { enum: ["pending", "approved", "rejected", "duplicated"] })
       .default("pending")
       .notNull(),
     attractionId: integer("attraction_id").references(() => attractions.id, {
@@ -251,7 +252,8 @@ export const rawAttractions = sqliteTable(
   (table) => [
     index("raw_attractions_status_idx").on(table.status),
     index("raw_attractions_country_idx").on(table.countryCode),
-    index("raw_attractions_source_url_idx").on(table.sourceUrl),
+    index("raw_attractions_city_idx").on(table.cityId),
+    uniqueIndex("raw_attractions_source_url_idx").on(table.sourceUrl),
     index("raw_attractions_attraction_idx").on(table.attractionId),
   ],
 );

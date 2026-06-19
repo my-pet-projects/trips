@@ -4,14 +4,10 @@ import { attractionRouter } from "./routers/attraction";
 import { attractionScraperRouter } from "./routers/attraction-scraper";
 import { geoRouter } from "./routers/geo";
 import { itineraryRouter } from "./routers/itinerary";
+import { rawAttractionRouter } from "./routers/raw-attraction";
 import { routeRouter } from "./routers/route";
 import { tripRouter } from "./routers/trip";
 
-/**
- * This is the primary router for your server.
- *
- * All routers added in /api/routers should be manually added here.
- */
 export const appRouter = createTRPCRouter({
   geo: geoRouter,
   trip: tripRouter,
@@ -19,6 +15,7 @@ export const appRouter = createTRPCRouter({
   attractionScraper: attractionScraperRouter,
   itinerary: itineraryRouter,
   route: routeRouter,
+  rawAttraction: rawAttractionRouter,
 });
 
 // export type definition of API
