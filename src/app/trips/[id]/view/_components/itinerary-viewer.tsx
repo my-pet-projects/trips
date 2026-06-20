@@ -6,7 +6,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import { ItineraryMap } from "~/app/_components/map/itinerary-map";
 import { DayRoutesFetcher } from "~/app/_components/map/route-fetcher";
-import type { Attraction, BasicAttraction, RouteData, Trip } from "~/types";
+import type { AttractionDetail, BasicAttraction, RouteData, Trip } from "~/types";
 
 type ItineraryDayData = {
   id: number;
@@ -17,7 +17,7 @@ type ItineraryDayData = {
 
 type ItineraryViewerProps = {
   trip: Trip;
-  tripAttractions: Attraction[];
+  tripAttractions: AttractionDetail[];
 };
 
 const DAY_COLORS = [

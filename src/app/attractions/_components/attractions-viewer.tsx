@@ -1,13 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { SkipForward, Star, ThumbsUp } from "lucide-react";
 import { toast } from "sonner";
 
 import { ItineraryMap } from "~/app/_components/map/itinerary-map";
 import type { MarkerMeta } from "~/app/_components/map/hooks/useLeafletMarkers";
 import { api } from "~/trpc/react";
-import type { AllAttraction } from "~/types";
 
 const EMPTY_MAP = new Map();
 const EMPTY_ARRAY: never[] = [];
@@ -27,6 +26,11 @@ export const AttractionsViewer = () => {
     staleTime: Infinity,
     refetchOnWindowFocus: false,
   });
+
+  const { data: selectedAttractionDetail } = api.attraction.getAttractionById.useQuery(
+    { id: selectedAttractionId! },
+    { enabled: !!selectedAttractionId, staleTime: Infinity },
+  );
 
   const updateHighlight = api.attraction.updateHighlight.useMutation({
     onMutate: async ({ id, highlight }) => {
@@ -55,12 +59,6 @@ export const AttractionsViewer = () => {
     return allAttractions.filter((a) => a.isVerified);
   }, [allAttractions, showVerifiedOnly]);
 
-  useEffect(() => {
-    if (selectedAttractionId && !attractions.some((a) => a.id === selectedAttractionId)) {
-      setSelectedAttractionId(null);
-    }
-  }, [attractions, selectedAttractionId]);
-
   const markerMeta = useMemo<Map<number, MarkerMeta>>(() => {
     if (!allAttractions) return EMPTY_MAP as Map<number, MarkerMeta>;
     const map = new Map<number, MarkerMeta>();
@@ -76,22 +74,19 @@ export const AttractionsViewer = () => {
   }, [allAttractions]);
 
   const verifiedCount = useMemo(
-    () => allAttractions?.filter((a: AllAttraction) => a.isVerified).length ?? 0,
+    () => allAttractions?.filter((a) => a.isVerified).length ?? 0,
     [allAttractions],
   );
-
-  const recommendedCount = useMemo(
-    () => allAttractions?.filter((a: AllAttraction) => a.highlight === "recommended").length ?? 0,
-    [allAttractions],
-  );
-
   const mustSeeCount = useMemo(
-    () => allAttractions?.filter((a: AllAttraction) => a.highlight === "must_see").length ?? 0,
+    () => allAttractions?.filter((a) => a.highlight === "must_see").length ?? 0,
     [allAttractions],
   );
-
+  const recommendedCount = useMemo(
+    () => allAttractions?.filter((a) => a.highlight === "recommended").length ?? 0,
+    [allAttractions],
+  );
   const skipCount = useMemo(
-    () => allAttractions?.filter((a: AllAttraction) => a.highlight === "skip").length ?? 0,
+    () => allAttractions?.filter((a) => a.highlight === "skip").length ?? 0,
     [allAttractions],
   );
 
@@ -153,6 +148,7 @@ export const AttractionsViewer = () => {
 
       <ItineraryMap
         attractions={attractions}
+        selectedAttractionDetail={selectedAttractionDetail}
         selectedDayAttractions={EMPTY_ARRAY}
         selectedDayId={null}
         selectedAttractionId={selectedAttractionId}

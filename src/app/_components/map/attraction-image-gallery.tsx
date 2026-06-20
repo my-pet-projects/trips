@@ -2,10 +2,10 @@ import { BookOpen, ExternalLink, Images } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
 import { api } from "~/trpc/react";
-import type { Attraction } from "~/types";
+import type { AttractionDetail } from "~/types";
 
 interface AttractionImageGalleryProps {
-  attraction: Attraction;
+  attraction: AttractionDetail;
 }
 
 export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({

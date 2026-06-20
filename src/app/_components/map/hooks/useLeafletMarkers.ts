@@ -3,7 +3,7 @@ import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import { useEffect, useRef } from "react";
 
-import type { Attraction } from "~/types";
+import type { AttractionSummary } from "~/types";
 
 export type MarkerMeta = { color: string; tag: string };
 
@@ -128,15 +128,15 @@ function createClusterIconWithMeta(
 
 export const useLeafletMarkers = (
   mapRef: React.RefObject<L.Map | null>,
-  attractions: Attraction[],
-  attractionsMap: Map<number, Attraction>,
+  attractions: AttractionSummary[],
+  attractionsMap: Map<number, AttractionSummary>,
   attractionToDayMap: Map<number, number>,
   dayColors: Map<number, string>,
   hoveredAttractionId: number | null,
   selectedAttractionId: number | null,
   selectedDayId: number | null,
   selectedDayAttractionOrders: Map<number, number>,
-  onMarkerClick: (attraction: Attraction) => void,
+  onMarkerClick: (attraction: AttractionSummary) => void,
   enableClustering = false,
   markerMeta?: Map<number, MarkerMeta>,
 ) => {

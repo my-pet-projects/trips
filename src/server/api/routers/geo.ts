@@ -86,6 +86,8 @@ export type EnrichedCity = {
   id: number;
   name: string;
   countryCode: string;
+  latitude: number;
+  longitude: number;
   country: {
     cca2: string;
     cca3: string;
@@ -104,6 +106,8 @@ export async function fetchCitiesWithCountries(
       id: geoSchema.cities.id,
       name: geoSchema.cities.name,
       countryCode: geoSchema.cities.countryCode,
+      latitude: geoSchema.cities.latitude,
+      longitude: geoSchema.cities.longitude,
       country: {
         cca2: geoSchema.countries.cca2,
         cca3: geoSchema.countries.cca3,
