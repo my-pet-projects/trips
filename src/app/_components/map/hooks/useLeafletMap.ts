@@ -1,9 +1,9 @@
 import L from "leaflet";
 import { useEffect, useRef } from "react";
 
-import type { Attraction } from "~/types";
+import type { AttractionSummary } from "~/types";
 
-const getInitialMapCenter = (attractions: Attraction[]): [number, number] => {
+const getInitialMapCenter = (attractions: AttractionSummary[]): [number, number] => {
   const validAttractions = attractions.filter(
     (a) => a.latitude != null && a.longitude != null,
   );
@@ -24,7 +24,7 @@ const getInitialMapCenter = (attractions: Attraction[]): [number, number] => {
 
 export const useLeafletMap = (
   containerRef: React.RefObject<HTMLDivElement | null>,
-  attractions: Attraction[],
+  attractions: AttractionSummary[],
 ) => {
   const mapRef = useRef<L.Map | null>(null);
   const initialAttractionsRef = useRef(attractions);

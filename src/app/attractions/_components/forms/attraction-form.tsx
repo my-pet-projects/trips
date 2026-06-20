@@ -32,11 +32,11 @@ import { Label } from "~/app/_components/ui/label";
 import { Textarea } from "~/app/_components/ui/textarea";
 import { validateReturnTo } from "~/lib/utils";
 import { api } from "~/trpc/react";
-import type { AttractionById, City, Country } from "~/types";
+import type { AttractionDetail, City, Country } from "~/types";
 
 type AttractionFormProps = {
   mode: "create" | "edit";
-  attraction?: AttractionById;
+  attraction?: AttractionDetail;
   returnTo?: string;
 };
 
@@ -323,14 +323,14 @@ export function AttractionForm({
     hasValidLatitude && currentLatitude != null
       ? currentLatitude
       : isEditMode
-        ? (attraction?.latitude ?? attraction?.city?.latitude ?? 0)
+        ? (attraction?.latitude ?? 0)
         : 0;
 
   const mapLongitude =
     hasValidLongitude && currentLongitude != null
       ? currentLongitude
       : isEditMode
-        ? (attraction?.longitude ?? attraction?.city?.longitude ?? 0)
+        ? (attraction?.longitude ?? 0)
         : 0;
 
   const currentCity = isEditMode ? attraction?.city : undefined;
