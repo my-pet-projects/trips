@@ -18,6 +18,7 @@ type ItineraryMapProps = {
   dayRoutes: Map<number, RouteData>;
   onAttractionSelect: (attractionId: number | null) => void;
   onAddAttractionToDay?: (attraction: BasicAttraction) => void;
+  onHighlightChange?: (attractionId: number, highlight: "must_see" | "recommended" | "skip" | null) => void;
   enableLocationTracking?: boolean;
   enableClustering?: boolean;
   isLoadingRoutes: boolean;
@@ -48,6 +49,7 @@ export function ItineraryMap({
   dayRoutes,
   onAttractionSelect,
   onAddAttractionToDay,
+  onHighlightChange,
   enableLocationTracking = false,
   enableClustering = false,
   isLoadingRoutes,
@@ -154,6 +156,7 @@ export function ItineraryMap({
           onClosed={handlePanelClosed}
           onAddToDay={onAddAttractionToDay ? handleAddToDay : undefined}
           onPanelHeightChange={setPanelHeight}
+          onHighlightChange={onHighlightChange}
         />
       )}
     </div>

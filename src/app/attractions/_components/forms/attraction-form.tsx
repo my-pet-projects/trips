@@ -13,6 +13,9 @@ import {
   Plus,
   Save,
   Scan,
+  SkipForward,
+  Star,
+  ThumbsUp,
   XCircle,
 } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -50,6 +53,7 @@ const attractionSchema = z.object({
   cityId: z.number().min(1, "City is required"),
   countryCode: z.string().length(2, "Country is required"),
   isVerified: z.boolean(),
+  highlight: z.enum(["must_see", "recommended", "skip"]).nullable().optional(),
 });
 
 type AttractionFormData = z.infer<typeof attractionSchema>;
@@ -121,6 +125,7 @@ export function AttractionForm({
           countryCode: attraction?.countryCode ?? "",
           cityId: attraction?.city?.id,
           isVerified: attraction?.isVerified ?? false,
+          highlight: attraction?.highlight ?? null,
         }
       : {
           name: "",
@@ -131,6 +136,7 @@ export function AttractionForm({
           sourceUrl: null,
           countryCode: country ?? "",
           isVerified: false,
+          highlight: null,
         },
   });
 
@@ -416,6 +422,66 @@ export function AttractionForm({
                   {form.formState.errors.description.message}
                 </p>
               )}
+            </div>
+
+            {/* Highlight */}
+            <div>
+              <Label className="text-sm font-medium text-gray-700">
+                Highlight
+              </Label>
+              <div className="mt-1.5 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    form.setValue(
+                      "highlight",
+                      form.watch("highlight") === "must_see" ? null : "must_see",
+                    )
+                  }
+                  className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                    form.watch("highlight") === "must_see"
+                      ? "border-amber-400 bg-amber-50 text-amber-700"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-amber-300 hover:bg-amber-50/50"
+                  }`}
+                >
+                  <Star className="h-4 w-4" />
+                  Must see
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    form.setValue(
+                      "highlight",
+                      form.watch("highlight") === "recommended" ? null : "recommended",
+                    )
+                  }
+                  className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                    form.watch("highlight") === "recommended"
+                      ? "border-sky-400 bg-sky-50 text-sky-700"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-sky-300 hover:bg-sky-50/50"
+                  }`}
+                >
+                  <ThumbsUp className="h-4 w-4" />
+                  Recommended
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    form.setValue(
+                      "highlight",
+                      form.watch("highlight") === "skip" ? null : "skip",
+                    )
+                  }
+                  className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                    form.watch("highlight") === "skip"
+                      ? "border-red-300 bg-red-50 text-red-600"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-red-200 hover:bg-red-50/50"
+                  }`}
+                >
+                  <SkipForward className="h-4 w-4" />
+                  Skip
+                </button>
+              </div>
             </div>
 
             {/* Source URL */}

@@ -82,7 +82,7 @@ export const attractions = sqliteTable(
     address: text("address"),
     latitude: real("latitude"),
     longitude: real("longitude"),
-    isMustSee: integer("is_must_see", { mode: "boolean" }),
+    highlight: text("highlight", { enum: ["must_see", "recommended", "skip"] }),
     isPredefined: integer("is_predefined", { mode: "boolean" }),
     sourceUrl: text("source_url", { length: 256 }),
     cityId: integer("city_id").notNull(), // References cities.id in the geo database (cross-database FK not supported)
