@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { Attraction, BasicAttraction, RouteData } from "~/types";
 import { AttractionDetailPanel } from "./attraction-detail-panel";
+import type { MarkerMeta } from "./hooks/useLeafletMarkers";
 
 type ItineraryMapProps = {
   attractions: Attraction[];
@@ -16,11 +17,12 @@ type ItineraryMapProps = {
   hoveredAttractionId: number | null;
   dayRoutes: Map<number, RouteData>;
   onAttractionSelect: (attractionId: number | null) => void;
-  onAddAttractionToDay: (attraction: BasicAttraction) => void;
-  viewMode: "admin" | "viewer";
+  onAddAttractionToDay?: (attraction: BasicAttraction) => void;
   enableLocationTracking?: boolean;
   enableClustering?: boolean;
   isLoadingRoutes: boolean;
+  className?: string;
+  markerMeta?: Map<number, MarkerMeta>;
 };
 
 const LeafletMap = dynamic(() => import("./leaflet-map"), {
@@ -46,27 +48,27 @@ export function ItineraryMap({
   dayRoutes,
   onAttractionSelect,
   onAddAttractionToDay,
-  viewMode = "admin",
   enableLocationTracking = false,
   enableClustering = false,
   isLoadingRoutes,
+  className,
+  markerMeta,
 }: ItineraryMapProps) {
-  const [selectedAttraction, setSelectedAttraction] =
-    useState<Attraction | null>(null);
-  const [panelHeight, setPanelHeight] = useState(0);
-
   const attractionsMap = useMemo(() => {
     return new Map(attractions.map((a) => [a.id, a]));
   }, [attractions]);
 
+  const [panelAttraction, setPanelAttraction] = useState<Attraction | null>(null);
+  const [panelHeight, setPanelHeight] = useState(0);
+
   useEffect(() => {
     if (selectedAttractionId) {
       const attraction = attractionsMap.get(selectedAttractionId);
-      setSelectedAttraction(attraction ?? null);
-    } else {
-      setSelectedAttraction(null);
+      if (attraction) setPanelAttraction(attraction);
     }
   }, [selectedAttractionId, attractionsMap]);
+
+  const isPanelOpen = !!selectedAttractionId;
 
   const attractionToDayMap = useMemo(() => {
     const map = new Map<number, number>();
@@ -78,6 +80,14 @@ export function ItineraryMap({
     return map;
   }, [allDaysAttractions]);
 
+  const selectedDayAttractionOrders = useMemo(() => {
+    const map = new Map<number, number>();
+    selectedDayAttractions.forEach((attr, index) => {
+      map.set(attr.id, index + 1);
+    });
+    return map;
+  }, [selectedDayAttractions]);
+
   const handleMarkerClick = useCallback(
     (attraction: Attraction) => {
       onAttractionSelect(attraction.id);
@@ -86,55 +96,63 @@ export function ItineraryMap({
   );
 
   const handleAddToDay = useCallback(() => {
-    if (selectedAttraction) {
-      onAddAttractionToDay(selectedAttraction);
+    if (panelAttraction) {
+      onAddAttractionToDay?.(panelAttraction);
     }
-  }, [selectedAttraction, onAddAttractionToDay]);
+  }, [panelAttraction, onAddAttractionToDay]);
 
   const handleClose = useCallback(() => {
     onAttractionSelect(null);
   }, [onAttractionSelect]);
 
-  const attractionStatus = useMemo(() => {
-    if (!selectedAttraction) return null;
+  const handlePanelClosed = useCallback(() => {
+    setPanelAttraction(null);
+  }, []);
 
-    const dayId = attractionToDayMap.get(selectedAttraction.id);
+  const attractionStatus = useMemo(() => {
+    if (!panelAttraction) return null;
+
+    const dayId = attractionToDayMap.get(panelAttraction.id);
     return {
       dayId,
       isInAnyDay: dayId !== undefined,
       isInSelectedDay: dayId === selectedDayId,
     };
-  }, [selectedAttraction, attractionToDayMap, selectedDayId]);
+  }, [panelAttraction, attractionToDayMap, selectedDayId]);
 
   return (
-    <div className="relative h-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-      {/* Map */}
+    <div
+      className={`relative h-full overflow-hidden ${className ?? "rounded-lg border border-gray-200 bg-white shadow-sm"}`}
+    >
       <LeafletMap
         key="map"
         attractions={attractions}
+        attractionsMap={attractionsMap}
         selectedDayAttractions={selectedDayAttractions}
         selectedDayId={selectedDayId}
+        selectedDayAttractionOrders={selectedDayAttractionOrders}
         attractionToDayMap={attractionToDayMap}
         dayColors={dayColors}
         hoveredAttractionId={hoveredAttractionId}
-        selectedAttractionId={selectedAttraction?.id ?? null}
+        selectedAttractionId={selectedAttractionId}
         panelHeight={panelHeight}
         dayRoutes={dayRoutes}
         onMarkerClick={handleMarkerClick}
         enableLocationTracking={enableLocationTracking}
         enableClustering={enableClustering}
         isLoadingRoutes={isLoadingRoutes}
+        markerMeta={markerMeta}
       />
 
-      {/* Attraction Detail Panel */}
-      {selectedAttraction && attractionStatus && (
+      {panelAttraction && attractionStatus && (
         <AttractionDetailPanel
-          attraction={selectedAttraction}
+          attraction={panelAttraction}
           attractionStatus={attractionStatus}
           selectedDayId={selectedDayId}
-          viewMode={viewMode}
+          isOpen={isPanelOpen}
           onClose={handleClose}
-          onAddToDay={viewMode === "admin" ? handleAddToDay : undefined}
+          onClosed={handlePanelClosed}
+          onAddToDay={onAddAttractionToDay ? handleAddToDay : undefined}
           onPanelHeightChange={setPanelHeight}
         />
       )}

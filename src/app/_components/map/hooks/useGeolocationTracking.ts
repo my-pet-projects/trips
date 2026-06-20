@@ -1,6 +1,8 @@
 import L from "leaflet";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { useInjectStyles } from "./useInjectStyles";
+
 const USER_LOCATION_ZOOM = 16;
 
 const createCurrentLocationMarkerIcon = (size: number) => {
@@ -78,23 +80,7 @@ export const useGeolocationTracking = (
   const [isTrackingLocation, setIsTrackingLocation] = useState(false);
   const currentLocationMarkerRef = useRef<L.Marker | null>(null);
 
-  // Effect to inject styles for the geolocation marker
-  useEffect(() => {
-    const styleElement = document.createElement("style");
-    styleElement.id = "geolocation-marker-styles";
-    styleElement.textContent = GEOLOCATION_MARKER_STYLES;
-    document.head.appendChild(styleElement);
-
-    // Clean up the style element when the component unmounts
-    return () => {
-      const existingStyle = document.getElementById(
-        "geolocation-marker-styles",
-      );
-      if (existingStyle) {
-        existingStyle.remove();
-      }
-    };
-  }, []);
+  useInjectStyles("geolocation-marker-styles", GEOLOCATION_MARKER_STYLES);
 
   useEffect(() => {
     if (!mapRef.current || !isTrackingLocation || !enableTracking) {
