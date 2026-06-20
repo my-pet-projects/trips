@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import { MapPin, Navigation } from "lucide-react";
 import { useRef } from "react";
 
-import type { Attraction, BasicAttraction, RouteData } from "~/types";
+import type { AttractionSummary, BasicAttraction, RouteData } from "~/types";
 import { useGeolocationTracking } from "./hooks/useGeolocationTracking";
 import { useLeafletMap } from "./hooks/useLeafletMap";
 import { useLeafletMarkers } from "./hooks/useLeafletMarkers";
@@ -13,16 +13,16 @@ import { useLeafletRoutes } from "./hooks/useLeafletRoutes";
 import { useMapCenteringAndBounds } from "./hooks/useMapCenteringAndBounds";
 
 type LeafletMapProps = {
-  attractions: Attraction[];
+  attractions: AttractionSummary[];
   selectedDayAttractions: BasicAttraction[];
   selectedDayId: number | null;
   attractionToDayMap: Map<number, number>;
   dayColors: Map<number, string>;
-  attractionsMap: Map<number, Attraction>;
+  attractionsMap: Map<number, AttractionSummary>;
   hoveredAttractionId: number | null;
   selectedAttractionId: number | null;
   panelHeight: number;
-  onMarkerClick: (attraction: Attraction) => void;
+  onMarkerClick: (attraction: AttractionSummary) => void;
   dayRoutes: Map<number, RouteData>;
   selectedDayAttractionOrders: Map<number, number>;
   enableLocationTracking?: boolean;

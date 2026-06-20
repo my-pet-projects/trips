@@ -3,12 +3,18 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import type { Attraction, BasicAttraction, RouteData } from "~/types";
+import type {
+  AttractionDetail,
+  AttractionSummary,
+  BasicAttraction,
+  RouteData,
+} from "~/types";
 import { AttractionDetailPanel } from "./attraction-detail-panel";
 import type { MarkerMeta } from "./hooks/useLeafletMarkers";
 
 type ItineraryMapProps = {
-  attractions: Attraction[];
+  attractions: AttractionSummary[] | AttractionDetail[];
+  selectedAttractionDetail?: AttractionDetail | null;
   selectedDayAttractions: BasicAttraction[];
   selectedDayId: number | null;
   selectedAttractionId: number | null;
@@ -17,7 +23,7 @@ type ItineraryMapProps = {
   hoveredAttractionId: number | null;
   dayRoutes: Map<number, RouteData>;
   onAttractionSelect: (attractionId: number | null) => void;
-  onAddAttractionToDay?: (attraction: BasicAttraction) => void;
+  onAddAttractionToDay?: (attraction: AttractionDetail) => void;
   onHighlightChange?: (attractionId: number, highlight: "must_see" | "recommended" | "skip" | null) => void;
   enableLocationTracking?: boolean;
   enableClustering?: boolean;
@@ -40,6 +46,7 @@ const LeafletMap = dynamic(() => import("./leaflet-map"), {
 
 export function ItineraryMap({
   attractions,
+  selectedAttractionDetail,
   selectedDayAttractions,
   selectedDayId,
   selectedAttractionId,
@@ -60,15 +67,21 @@ export function ItineraryMap({
     return new Map(attractions.map((a) => [a.id, a]));
   }, [attractions]);
 
-  const [panelAttraction, setPanelAttraction] = useState<Attraction | null>(null);
+  const [panelAttraction, setPanelAttraction] =
+    useState<AttractionDetail | null>(null);
   const [panelHeight, setPanelHeight] = useState(0);
 
   useEffect(() => {
-    if (selectedAttractionId) {
-      const attraction = attractionsMap.get(selectedAttractionId);
-      if (attraction) setPanelAttraction(attraction);
+    setPanelAttraction(null);
+  }, [selectedAttractionId]);
+
+  useEffect(() => {
+    if (selectedAttractionDetail) setPanelAttraction(selectedAttractionDetail);
+    else if (selectedAttractionId) {
+      const fromMap = attractionsMap.get(selectedAttractionId);
+      if (fromMap && "city" in fromMap) setPanelAttraction(fromMap as AttractionDetail);
     }
-  }, [selectedAttractionId, attractionsMap]);
+  }, [selectedAttractionDetail, selectedAttractionId, attractionsMap]);
 
   const isPanelOpen = !!selectedAttractionId;
 
@@ -91,7 +104,7 @@ export function ItineraryMap({
   }, [selectedDayAttractions]);
 
   const handleMarkerClick = useCallback(
-    (attraction: Attraction) => {
+    (attraction: AttractionSummary) => {
       onAttractionSelect(attraction.id);
     },
     [onAttractionSelect],

@@ -4,13 +4,13 @@ import { MapPin, Pencil, SkipForward, Star, ThumbsUp, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-import type { Attraction } from "~/types";
+import type { AttractionDetail } from "~/types";
 import { AttractionImageGallery } from "./attraction-image-gallery";
 
 type Highlight = "must_see" | "recommended" | "skip" | null;
 
 type AttractionDetailPanelProps = {
-  attraction: Attraction;
+  attraction: AttractionDetail;
   attractionStatus: {
     dayId: number | undefined;
     isInAnyDay: boolean;

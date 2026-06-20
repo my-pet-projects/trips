@@ -1,6 +1,6 @@
 // HTML popup builders for the raw attractions map (imperative Leaflet — not React).
 
-import type { ExistingAttractionForRaw, RawAttraction } from "~/types";
+import type { ExistingAttraction, RawAttraction } from "~/types";
 
 const LINK_BLUE = "display:inline-flex;align-items:center;gap:4px;color:#2563eb;text-decoration:none;font-size:11px;padding:3px 7px;background:#eff6ff;border-radius:4px;border:1px solid #bfdbfe";
 const LINK_GREEN = "display:inline-flex;align-items:center;gap:4px;color:#15803d;text-decoration:none;font-size:11px;padding:3px 7px;background:#f0fdf4;border-radius:4px;border:1px solid #bbf7d0";
@@ -36,7 +36,7 @@ function buildPopup({ dotColor, name, nameLocal, links, actions = "" }: PopupOpt
   `;
 }
 
-export function existingAttractionPopup(a: ExistingAttractionForRaw) {
+export function existingAttractionPopup(a: ExistingAttraction) {
   return buildPopup({
     dotColor: "#3b82f6",
     name: a.name,

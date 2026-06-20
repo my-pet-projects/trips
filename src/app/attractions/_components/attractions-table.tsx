@@ -17,14 +17,14 @@ import {
   TableHeader,
   TableRow,
 } from "~/app/_components/ui/table";
-import type { PaginatedAttraction } from "~/types";
+import type { AttractionRow } from "~/types";
 
 import { cn } from "~/lib/utils";
 import { AttractionTableActions } from "./attraction-table-actions";
 import { Pagination } from "./pagination";
 
 type AttractionsTableProps = {
-  attractions: PaginatedAttraction[];
+  attractions: AttractionRow[];
   totalCount: number;
   currentPage: number;
   itemsPerPage: number;

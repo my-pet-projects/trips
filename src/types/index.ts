@@ -9,13 +9,13 @@ export type Country = RouterOutputs["geo"]["getCountries"][number];
 export type City = RouterOutputs["geo"]["getCitiesByCountry"][number];
 
 // Attraction types
-export type Attraction =
-  RouterOutputs["attraction"]["getAttractionsByCountries"][number];
-export type AttractionById = RouterOutputs["attraction"]["getAttractionById"];
-export type PaginatedAttraction =
-  RouterOutputs["attraction"]["paginateAttractions"]["attractions"][number];
-export type AllAttraction =
+export type AttractionSummary =
   RouterOutputs["attraction"]["getAllAttractions"][number];
+export type AttractionDetail = RouterOutputs["attraction"]["getAttractionById"];
+export type AttractionRow =
+  RouterOutputs["attraction"]["paginateAttractions"]["attractions"][number];
+
+export type AttractionHighlight = AttractionSummary["highlight"];
 
 // Trip types
 export type Trip = RouterOutputs["trip"]["getWithItinerary"];
@@ -25,7 +25,7 @@ export type TripListItem = RouterOutputs["trip"]["listTrips"][number];
 // Raw attraction types
 export type RawAttraction =
   RouterOutputs["rawAttraction"]["getByCountry"][number];
-export type ExistingAttractionForRaw =
+export type ExistingAttraction =
   RouterOutputs["rawAttraction"]["getExistingByCountry"][number];
 
 // Route types
