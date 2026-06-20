@@ -526,7 +526,6 @@ export function ItineraryPlanner({
             onAttractionSelect={setSelectedAttractionId}
             onAddAttractionToDay={handleAddAttractionToDay}
             isLoadingRoutes={isLoadingRoutes}
-            viewMode="admin"
           />
         </div>
       </div>

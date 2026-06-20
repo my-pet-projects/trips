@@ -1,21 +1,27 @@
 import { BookOpen, ExternalLink, Images } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { api } from "~/trpc/react";
 import type { Attraction } from "~/types";
 
 interface AttractionImageGalleryProps {
   attraction: Attraction;
-  sourceUrl?: string;
 }
 
 export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
   attraction,
-  sourceUrl,
 }) => {
-  const [loadedImages, setLoadedImages] = useState<string[]>([]);
-  const [failedImages, setFailedImages] = useState<string[]>([]);
+  const sourceUrl = attraction.sourceUrl ?? undefined;
+  const loadedImages = useRef(new Set<string>());
+  const failedImages = useRef(new Set<string>());
+  const [, forceUpdate] = useState(0);
 
+  // Reset image load/fail caches when the attraction changes
+  useEffect(() => {
+    loadedImages.current = new Set();
+    failedImages.current = new Set();
+    forceUpdate(0);
+  }, [attraction.id]);
   const { data, isLoading, isError, refetch } =
     api.attractionScraper.fetchAttractionDetails.useQuery(
       {
@@ -63,7 +69,7 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
   const articles = data?.articles ?? [];
   const googleImagesUrl = data?.googleImagesUrl;
 
-  const validImages = imageUrls.filter((url) => !failedImages.includes(url));
+  const validImages = imageUrls.filter((url) => !failedImages.current.has(url));
 
   return (
     <div className="mb-4 space-y-4">
@@ -108,7 +114,7 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
                 key={url || `image-${index}`}
                 className="group relative aspect-video overflow-hidden rounded-lg bg-gray-100"
               >
-                {!loadedImages.includes(url) && (
+                {!loadedImages.current.has(url) && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-200 border-t-sky-500" />
                   </div>
@@ -118,10 +124,10 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
                   src={url}
                   alt={`${attraction.name} ${index + 1}`}
                   className={`h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 ${
-                    loadedImages.includes(url) ? "opacity-100" : "opacity-0"
+                    loadedImages.current.has(url) ? "opacity-100" : "opacity-0"
                   }`}
-                  onLoad={() => setLoadedImages((prev) => [...prev, url])}
-                  onError={() => setFailedImages((prev) => [...prev, url])}
+                  onLoad={() => { loadedImages.current.add(url); forceUpdate(n => n + 1); }}
+                  onError={() => { failedImages.current.add(url); forceUpdate(n => n + 1); }}
                 />
               </div>
             ))}
