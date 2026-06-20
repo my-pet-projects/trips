@@ -4,6 +4,9 @@ import {
   Globe,
   MapPin,
   Search,
+  SkipForward,
+  Star,
+  ThumbsUp,
 } from "lucide-react";
 
 import {
@@ -106,8 +109,28 @@ export function AttractionsTable({
                       >
                         <TableCell className="px-6 py-3">
                           <div className="flex flex-col gap-0.5">
-                            <div className="leading-tight font-semibold text-gray-900">
-                              {attraction.name}
+                            <div className="flex items-center gap-2">
+                              <span className="leading-tight font-semibold text-gray-900">
+                                {attraction.name}
+                              </span>
+                              {attraction.highlight === "must_see" && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                                  <Star className="h-3 w-3" />
+                                  Must see
+                                </span>
+                              )}
+                              {attraction.highlight === "recommended" && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-700">
+                                  <ThumbsUp className="h-3 w-3" />
+                                  Recommended
+                                </span>
+                              )}
+                              {attraction.highlight === "skip" && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-600">
+                                  <SkipForward className="h-3 w-3" />
+                                  Skip
+                                </span>
+                              )}
                             </div>
                             {attraction.nameLocal && (
                               <div className="text-sm leading-tight text-gray-500">
