@@ -225,6 +225,26 @@ export const attractionRouter = createTRPCRouter({
       }
     }),
 
+  updateHighlight: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        highlight: z.enum(["must_see", "recommended", "skip"]).nullable(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const result = await ctx.db
+        .update(schema.attractions)
+        .set({ highlight: input.highlight })
+        .where(eq(schema.attractions.id, input.id))
+        .returning();
+
+      if (!result[0]) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Attraction not found" });
+      }
+      return result[0];
+    }),
+
   update: protectedProcedure
     .input(
       z.object({
@@ -238,6 +258,7 @@ export const attractionRouter = createTRPCRouter({
         cityId: z.number().min(1, "City is required"),
         countryCode: z.string().length(2, "Country is required"),
         isVerified: z.boolean().optional(),
+        highlight: z.enum(["must_see", "recommended", "skip"]).nullable().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -286,6 +307,7 @@ export const attractionRouter = createTRPCRouter({
         cityId: z.number().min(1, "City is required"),
         countryCode: z.string().length(2, "Country is required"),
         isVerified: z.boolean().optional(),
+        highlight: z.enum(["must_see", "recommended", "skip"]).nullable().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
