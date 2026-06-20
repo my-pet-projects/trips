@@ -1,4 +1,4 @@
-import { BookOpen, ExternalLink, Images } from "lucide-react";
+import { BookOpen, ChevronDown, ExternalLink } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
 import { api } from "~/trpc/react";
@@ -11,16 +11,17 @@ interface AttractionImageGalleryProps {
 export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
   attraction,
 }) => {
-  const sourceUrl = attraction.sourceUrl ?? undefined;
   const loadedImages = useRef(new Set<string>());
   const failedImages = useRef(new Set<string>());
   const [, forceUpdate] = useState(0);
+  const [articlesOpen, setArticlesOpen] = useState(false);
 
-  // Reset image load/fail caches when the attraction changes
+  // Reset image load/fail caches and disclosure state when the attraction changes
   useEffect(() => {
     loadedImages.current = new Set();
     failedImages.current = new Set();
     forceUpdate(0);
+    setArticlesOpen(false);
   }, [attraction.id]);
   const { data, isLoading, isError, refetch } =
     api.attractionScraper.fetchAttractionDetails.useQuery(
@@ -67,40 +68,11 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
 
   const imageUrls = data?.imageUrls ?? [];
   const articles = data?.articles ?? [];
-  const googleImagesUrl = data?.googleImagesUrl;
 
   const validImages = imageUrls.filter((url) => !failedImages.current.has(url));
 
   return (
     <div className="mb-4 space-y-4">
-      {/* Links row: Original article + Google Images */}
-      {(sourceUrl ?? googleImagesUrl) && (
-        <div className="flex flex-wrap items-center gap-2">
-          {sourceUrl && (
-            <a
-              href={sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-800"
-            >
-              <BookOpen className="h-3.5 w-3.5" />
-              Original article
-            </a>
-          )}
-          {googleImagesUrl && (
-            <a
-              href={googleImagesUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-800"
-            >
-              <Images className="h-3.5 w-3.5" />
-              Google Images
-            </a>
-          )}
-        </div>
-      )}
-
       {/* Images */}
       {validImages.length === 0 ? (
         <div className="rounded-lg bg-gray-50 py-4 text-center">
@@ -151,35 +123,41 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
         </div>
       )}
 
-      {/* Related Articles */}
+      {/* Wikipedia Articles */}
       {articles.length > 0 && (
-        <div>
-          <h4 className="mb-2 text-sm font-semibold text-gray-700">
-            Related Articles
-          </h4>
-          <ul className="space-y-2">
-            {articles.map((article) => (
-              <li
-                key={article.url}
-                className="rounded-lg border border-gray-100 bg-gray-50 p-3"
-              >
-                <a
-                  href={article.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm font-medium text-sky-600 hover:text-sky-700"
-                >
-                  {article.title}
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-                {article.snippet && (
-                  <p className="mt-1 text-xs leading-relaxed text-gray-500">
-                    {article.snippet}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
+        <div className="rounded-lg border border-gray-200">
+          <button
+            type="button"
+            onClick={() => setArticlesOpen((o) => !o)}
+            className={`flex w-full items-center justify-between px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 ${articlesOpen ? "rounded-t-lg border-b border-gray-200" : "rounded-lg"}`}
+          >
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-gray-400" />
+              <span>Wikipedia</span>
+              <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-500">{articles.length}</span>
+            </div>
+            <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${articlesOpen ? "rotate-180" : ""}`} />
+          </button>
+          {articlesOpen && (
+            <ul className="divide-y divide-gray-100">
+              {articles.map((article) => (
+                <li key={article.url} className="p-3">
+                  <a
+                    href={article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-sky-600 hover:text-sky-700"
+                  >
+                    {article.title}
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                  {article.snippet && (
+                    <p className="mt-1 text-xs leading-relaxed text-gray-500">{article.snippet}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
     </div>

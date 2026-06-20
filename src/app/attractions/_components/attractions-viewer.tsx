@@ -32,6 +32,20 @@ export const AttractionsViewer = () => {
     { enabled: !!selectedAttractionId, staleTime: Infinity },
   );
 
+  const deleteAttraction = api.attraction.delete.useMutation({
+    onMutate: async ({ id }) => {
+      await utils.attraction.getAllAttractions.cancel();
+      utils.attraction.getAllAttractions.setData(undefined, (prev) =>
+        prev?.filter((a) => a.id !== id),
+      );
+      setSelectedAttractionId(null);
+    },
+    onError: () => {
+      void utils.attraction.getAllAttractions.invalidate();
+      toast.error("Failed to delete attraction");
+    },
+  });
+
   const updateHighlight = api.attraction.updateHighlight.useMutation({
     onMutate: async ({ id, highlight }) => {
       await utils.attraction.getAllAttractions.cancel();
@@ -52,6 +66,11 @@ export const AttractionsViewer = () => {
   const handleHighlightChange = useCallback((attractionId: number, highlight: "must_see" | "recommended" | "skip" | null) => {
     updateHighlight.mutate({ id: attractionId, highlight });
   }, [updateHighlight]);
+
+  const handleDeleteAttraction = useCallback((attractionId: number) => {
+    if (deleteAttraction.isPending) return;
+    deleteAttraction.mutate({ id: attractionId });
+  }, [deleteAttraction]);
 
   const attractions = useMemo(() => {
     if (!allAttractions) return EMPTY_ARRAY;
@@ -104,7 +123,8 @@ export const AttractionsViewer = () => {
   return (
     <div className="relative h-full w-full">
       {/* Toolbar */}
-      <div className="absolute top-3 left-1/2 z-1000 flex -translate-x-1/2 items-center gap-2 rounded-xl border border-gray-200 bg-white/95 px-3 py-2 shadow-md backdrop-blur-sm whitespace-nowrap">
+      <div className="absolute top-3 left-1/2 z-1000 w-[calc(100%-1.5rem)] max-w-fit -translate-x-1/2 overflow-x-auto rounded-xl border border-gray-200 bg-white/95 shadow-md backdrop-blur-sm">
+        <div className="flex min-w-max items-center gap-2 px-3 py-2">
         <span className="text-xs font-medium text-gray-500">
           {attractions.length.toLocaleString()} attractions
         </span>
@@ -144,6 +164,7 @@ export const AttractionsViewer = () => {
             {skipCount}
           </span>
         </div>
+        </div>
       </div>
 
       <ItineraryMap
@@ -161,6 +182,7 @@ export const AttractionsViewer = () => {
         markerMeta={markerMeta}
         onAttractionSelect={handleAttractionSelect}
         onHighlightChange={handleHighlightChange}
+        onDeleteAttraction={handleDeleteAttraction}
         className="h-full w-full"
       />
     </div>
