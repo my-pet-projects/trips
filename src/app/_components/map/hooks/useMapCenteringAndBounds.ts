@@ -1,13 +1,13 @@
 import L from "leaflet";
 import { useEffect, useRef } from "react";
 
-import type { Attraction, BasicAttraction } from "~/types";
+import type { AttractionSummary, BasicAttraction } from "~/types";
 
 export const useMapCenteringAndBounds = (
   mapRef: React.RefObject<L.Map | null>,
   hasInitializedBounds: React.RefObject<boolean>,
-  attractions: Attraction[],
-  attractionsMap: Map<number, Attraction>,
+  attractions: AttractionSummary[],
+  attractionsMap: Map<number, AttractionSummary>,
   selectedDayAttractions: BasicAttraction[],
   selectedDayId: number | null,
   selectedAttractionId: number | null,

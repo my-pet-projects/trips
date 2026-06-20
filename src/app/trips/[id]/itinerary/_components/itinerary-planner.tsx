@@ -8,7 +8,7 @@ import { ItineraryMap } from "~/app/_components/map/itinerary-map";
 import { DayRoutesFetcher } from "~/app/_components/map/route-fetcher";
 import { generateAllDaysPdf } from "~/lib/pdf";
 import { api } from "~/trpc/react";
-import type { Attraction, BasicAttraction, RouteData, Trip } from "~/types";
+import type { AttractionDetail, BasicAttraction, RouteData, Trip } from "~/types";
 import { ItineraryDay } from "./itinerary-day";
 
 type ItineraryDayData = {
@@ -20,7 +20,7 @@ type ItineraryDayData = {
 
 type ItineraryPlannerProps = {
   trip: Trip;
-  tripAttractions: Attraction[];
+  tripAttractions: AttractionDetail[];
 };
 
 const DAY_COLORS = [
@@ -305,7 +305,7 @@ export function ItineraryPlanner({
   }, [trip.id, itineraryDays, updateDays]);
 
   const handleAddAttractionToDay = useCallback(
-    (attraction: BasicAttraction) => {
+    (attraction: AttractionDetail) => {
       if (!selectedDay) {
         toast.error("No day selected", {
           description: "Please select a day to add attractions.",

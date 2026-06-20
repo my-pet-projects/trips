@@ -13,7 +13,7 @@ import {
   type TaggedMarker,
 } from "./map-icons";
 import type { StatusFilter } from "./use-raw-triage";
-import type { ExistingAttractionForRaw, RawAttraction } from "~/types";
+import type { ExistingAttraction, RawAttraction } from "~/types";
 
 export function FitBounds({ points, countryCode }: { points: [number, number][]; countryCode?: string }) {
   const map = useMap();
@@ -29,7 +29,7 @@ export function FitBounds({ points, countryCode }: { points: [number, number][];
 
 interface MarkersLayerProps {
   rawAttractions: RawAttraction[];
-  existing: ExistingAttractionForRaw[];
+  existing: ExistingAttraction[];
   visibleStatuses: Set<StatusFilter>;
   isMutating: boolean;
   onApprove: (id: number) => void;

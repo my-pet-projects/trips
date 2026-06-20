@@ -33,24 +33,17 @@ export const attractionRouter = createTRPCRouter({
           });
         }
 
-        const [cityData] =
-          (await ctx.geoDb
-            .select()
-            .from(geoSchema.cities)
-            .where(eq(geoSchema.cities.id, attraction.cityId))
-            .limit(1)) ?? [];
+        const cities = await fetchCitiesWithCountries(ctx.geoDb, [attraction.cityId]);
+        const city = cities[0];
 
-        if (!cityData) {
+        if (!city) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: `City with ID ${attraction.cityId} not found for attraction ${input.id}`,
           });
         }
 
-        return {
-          ...attraction,
-          city: cityData,
-        };
+        return { ...attraction, city };
       } catch (error) {
         log.error(
           { id: input.id, error: errMsg(error) },
@@ -67,20 +60,23 @@ export const attractionRouter = createTRPCRouter({
   getAllAttractions: publicProcedure.query(async ({ ctx }) => {
     try {
       const attractions = await ctx.db
-        .select()
+        .select({
+          id: schema.attractions.id,
+          name: schema.attractions.name,
+          nameLocal: schema.attractions.nameLocal,
+          description: schema.attractions.description,
+          latitude: schema.attractions.latitude,
+          longitude: schema.attractions.longitude,
+          highlight: schema.attractions.highlight,
+          isVerified: schema.attractions.isVerified,
+          sourceUrl: schema.attractions.sourceUrl,
+          cityId: schema.attractions.cityId,
+          countryCode: schema.attractions.countryCode,
+        })
         .from(schema.attractions)
         .orderBy(schema.attractions.id);
 
-      const cityIds = [
-        ...new Set(attractions.map((attraction) => attraction.cityId)),
-      ];
-      const cities = await fetchCitiesWithCountries(ctx.geoDb, cityIds);
-      const enrichedAttractions = enrichAttractionsWithCities(
-        attractions,
-        cities,
-      );
-
-      return enrichedAttractions;
+      return attractions;
     } catch (error) {
       log.error({ error: errMsg(error) }, "Error fetching attractions");
       throw new TRPCError({
