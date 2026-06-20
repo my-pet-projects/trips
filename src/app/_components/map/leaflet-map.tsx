@@ -2,12 +2,13 @@
 
 import "leaflet/dist/leaflet.css";
 import { MapPin, Navigation } from "lucide-react";
-import { useMemo, useRef } from "react";
+import { useRef } from "react";
 
 import type { Attraction, BasicAttraction, RouteData } from "~/types";
 import { useGeolocationTracking } from "./hooks/useGeolocationTracking";
 import { useLeafletMap } from "./hooks/useLeafletMap";
 import { useLeafletMarkers } from "./hooks/useLeafletMarkers";
+import type { MarkerMeta } from "./hooks/useLeafletMarkers";
 import { useLeafletRoutes } from "./hooks/useLeafletRoutes";
 import { useMapCenteringAndBounds } from "./hooks/useMapCenteringAndBounds";
 
@@ -17,18 +18,22 @@ type LeafletMapProps = {
   selectedDayId: number | null;
   attractionToDayMap: Map<number, number>;
   dayColors: Map<number, string>;
+  attractionsMap: Map<number, Attraction>;
   hoveredAttractionId: number | null;
   selectedAttractionId: number | null;
   panelHeight: number;
   onMarkerClick: (attraction: Attraction) => void;
   dayRoutes: Map<number, RouteData>;
+  selectedDayAttractionOrders: Map<number, number>;
   enableLocationTracking?: boolean;
   enableClustering?: boolean;
   isLoadingRoutes: boolean;
+  markerMeta?: Map<number, MarkerMeta>;
 };
 
 export default function LeafletMap({
   attractions,
+  attractionsMap,
   selectedDayAttractions,
   selectedDayId,
   attractionToDayMap,
@@ -38,29 +43,15 @@ export default function LeafletMap({
   panelHeight,
   onMarkerClick,
   dayRoutes,
+  selectedDayAttractionOrders,
   enableLocationTracking = false,
   enableClustering = false,
   isLoadingRoutes,
+  markerMeta,
 }: LeafletMapProps) {
-  const attractionsMap = useMemo(
-    () => new Map(attractions.map((a) => [a.id, a])),
-    [attractions],
-  );
-
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const { mapRef, hasInitializedBounds } = useLeafletMap(
-    containerRef,
-    attractions,
-  );
-
-  const selectedDayAttractionOrders = useMemo(() => {
-    const map = new Map<number, number>();
-    selectedDayAttractions.forEach((attr, index) => {
-      map.set(attr.id, index + 1);
-    });
-    return map;
-  }, [selectedDayAttractions]);
+  const { mapRef, hasInitializedBounds } = useLeafletMap(containerRef, attractions);
 
   useLeafletMarkers(
     mapRef,
@@ -74,6 +65,7 @@ export default function LeafletMap({
     selectedDayAttractionOrders,
     onMarkerClick,
     enableClustering,
+    markerMeta,
   );
 
   useLeafletRoutes(
@@ -112,7 +104,6 @@ export default function LeafletMap({
     <div className="relative h-full w-full">
       <div ref={containerRef} className="h-full w-full" />
 
-      {/* Location controls */}
       {enableLocationTracking && (
         <div className="absolute top-4 right-4 z-1000 flex flex-col gap-2">
           <button
@@ -146,7 +137,6 @@ export default function LeafletMap({
         </div>
       )}
 
-      {/* Loading route indicator */}
       {showLoadingRoutesMessage && (
         <div className="absolute top-4 left-1/2 z-1000 -translate-x-1/2 rounded-lg bg-white p-3 font-medium whitespace-nowrap text-gray-700 shadow-md">
           Calculating Routes...
