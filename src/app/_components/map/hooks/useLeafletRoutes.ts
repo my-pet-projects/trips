@@ -2,9 +2,9 @@ import L from "leaflet";
 import { useEffect, useRef } from "react";
 
 import type { RouteData } from "~/types";
+import { useInjectStyles } from "./useInjectStyles";
 
 const ROUTE_STYLES = `
-  /* Keyframes for pulsing selected route segments */
   @keyframes route-pulse {
     0%, 100% {
       opacity: 1;
@@ -21,6 +21,17 @@ const ROUTE_STYLES = `
   }
 `;
 
+type LegPolyline = {
+  polyline: L.Polyline;
+  fromAttractionId: number;
+  toAttractionId: number;
+};
+
+type DayPolylines = {
+  main: L.Polyline;
+  legs: LegPolyline[];
+};
+
 export const useLeafletRoutes = (
   mapRef: React.RefObject<L.Map | null>,
   dayRoutes: Map<number, RouteData>,
@@ -30,45 +41,22 @@ export const useLeafletRoutes = (
   selectedAttractionId: number | null,
   isLoadingRoutes: boolean,
 ) => {
-  const polylinesRef = useRef<L.Polyline[]>([]);
+  const dayPolylinesRef = useRef<Map<number, DayPolylines>>(new Map());
 
-  // Effect to inject styles for route animations
-  useEffect(() => {
-    const styleElement = document.createElement("style");
-    styleElement.id = "leaflet-route-styles";
-    styleElement.textContent = ROUTE_STYLES;
-    document.head.appendChild(styleElement);
+  useInjectStyles("leaflet-route-styles", ROUTE_STYLES);
 
-    return () => {
-      const existingStyle = document.getElementById("leaflet-route-styles");
-      if (existingStyle) {
-        existingStyle.remove();
-      }
-    };
-  }, []);
-
+  // Rebuild polylines when routes/colors/selected-day change (not on hover/select)
   useEffect(() => {
     if (!mapRef.current || isLoadingRoutes) return;
 
     const map = mapRef.current;
 
-    polylinesRef.current.forEach((polyline) => polyline.remove());
-    polylinesRef.current = [];
-
-    // Track if any leg within the selected day is currently selected or hovered
-    let hasActiveLegHighlight = false;
-    if (selectedDayId && dayRoutes.has(selectedDayId)) {
-      const route = dayRoutes.get(selectedDayId);
-      if (route?.legs) {
-        hasActiveLegHighlight = route.legs.some(
-          (leg) =>
-            selectedAttractionId === leg.fromAttractionId ||
-            selectedAttractionId === leg.toAttractionId ||
-            hoveredAttractionId === leg.fromAttractionId ||
-            hoveredAttractionId === leg.toAttractionId,
-        );
-      }
-    }
+    // Remove all existing polylines
+    dayPolylinesRef.current.forEach(({ main, legs }) => {
+      main.remove();
+      legs.forEach(({ polyline }) => polyline.remove());
+    });
+    dayPolylinesRef.current.clear();
 
     dayRoutes.forEach((route, dayId) => {
       const color = dayColors.get(dayId) ?? "#3b82f6";
@@ -78,88 +66,113 @@ export const useLeafletRoutes = (
         ([lng, lat]) => [lat, lng] as [number, number],
       );
 
-      // Fade main polyline if not selected day or if there's an active leg highlight
-      let mainPolylineOpacity = isSelectedDay ? 0.8 : 0.5;
-      let mainPolylineWeight = isSelectedDay ? 4 : 3;
-
-      // Further fade if there's an active leg highlight on the selected day
-      if (isSelectedDay && hasActiveLegHighlight) {
-        mainPolylineOpacity = 0.3;
-        mainPolylineWeight = 2;
-      }
-
-      const mainPolyline = L.polyline(latLngs, {
-        color: color,
-        weight: mainPolylineWeight,
-        opacity: mainPolylineOpacity,
+      const main = L.polyline(latLngs, {
+        color,
+        weight: isSelectedDay ? 4 : 3,
+        opacity: isSelectedDay ? 0.8 : 0.5,
         lineJoin: "round",
         lineCap: "round",
       }).addTo(map);
 
-      // Ensure main polylines do NOT have the animation by default
-      const mainPathElement = mainPolyline.getElement();
-      if (mainPathElement instanceof SVGPathElement) {
-        mainPathElement.classList.remove("route-pulse-animation");
-        mainPathElement.style.animation = "none";
+      const mainPath = main.getElement();
+      if (mainPath instanceof SVGPathElement) {
+        mainPath.classList.remove("route-pulse-animation");
+        mainPath.style.animation = "none";
       }
-      polylinesRef.current.push(mainPolyline);
 
-      // Highlight legs if selected or hovered
+      const legs: LegPolyline[] = [];
+
       if (isSelectedDay && route.legs) {
         route.legs.forEach((leg) => {
-          const isLegSelected =
-            selectedAttractionId === leg.fromAttractionId ||
-            selectedAttractionId === leg.toAttractionId;
-          const isLegHovered =
-            hoveredAttractionId === leg.fromAttractionId ||
-            hoveredAttractionId === leg.toAttractionId;
-
-          if (!isLegSelected && !isLegHovered) return;
-
           const legLatLngs = leg.geometryGeojsonParsed.coordinates.map(
             ([lng, lat]) => [lat, lng] as [number, number],
           );
 
-          // Determine weight and opacity for highlighted legs
-          const legWeight = isLegSelected ? 7 : 5;
-          const legOpacity = 1;
-
-          const highlightPolyline = L.polyline(legLatLngs, {
-            color: color,
-            weight: legWeight,
-            opacity: legOpacity,
+          const legPolyline = L.polyline(legLatLngs, {
+            color,
+            weight: 5,
+            opacity: 0,
             lineJoin: "round",
             lineCap: "round",
           }).addTo(map);
 
-          const highlightPathElement = highlightPolyline.getElement();
-          if (highlightPathElement instanceof SVGPathElement) {
-            if (isLegSelected) {
-              // Selected leg: thicker, fully opaque, and pulsing
-              highlightPathElement.classList.add("route-pulse-animation");
-            } else {
-              // Hovered leg (not selected): thicker, fully opaque, no pulsing
-              highlightPathElement.classList.remove("route-pulse-animation");
-              highlightPathElement.style.animation = "none";
-            }
-          }
-
-          polylinesRef.current.push(highlightPolyline);
+          legs.push({
+            polyline: legPolyline,
+            fromAttractionId: leg.fromAttractionId,
+            toAttractionId: leg.toAttractionId,
+          });
         });
       }
+
+      dayPolylinesRef.current.set(dayId, { main, legs });
     });
 
     return () => {
-      polylinesRef.current.forEach((polyline) => polyline.remove());
-      polylinesRef.current = [];
+      dayPolylinesRef.current.forEach(({ main, legs }) => {
+        main.remove();
+        legs.forEach(({ polyline }) => polyline.remove());
+      });
+      dayPolylinesRef.current.clear();
     };
-  }, [
-    mapRef,
-    dayRoutes,
-    dayColors,
-    selectedDayId,
-    hoveredAttractionId,
-    selectedAttractionId,
-    isLoadingRoutes,
-  ]);
+  }, [mapRef, dayRoutes, dayColors, selectedDayId, isLoadingRoutes]);
+
+  // Update opacity/animation on existing polylines when hover/select changes.
+  // Also depends on dayRoutes/isLoadingRoutes so styling is re-applied after rebuild.
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const hasActiveLeg =
+      selectedDayId !== null &&
+      (selectedAttractionId !== null || hoveredAttractionId !== null) &&
+      (() => {
+        const dp = dayPolylinesRef.current.get(selectedDayId);
+        return dp?.legs.some(
+          (l) =>
+            l.fromAttractionId === selectedAttractionId ||
+            l.toAttractionId === selectedAttractionId ||
+            l.fromAttractionId === hoveredAttractionId ||
+            l.toAttractionId === hoveredAttractionId,
+        ) ?? false;
+      })();
+
+    dayPolylinesRef.current.forEach(({ main, legs }, dayId) => {
+      const isSelectedDay = dayId === selectedDayId;
+
+      // Main polyline opacity
+      let weight = isSelectedDay ? 4 : 3;
+      let opacity = isSelectedDay ? 0.8 : 0.5;
+      if (isSelectedDay && hasActiveLeg) {
+        opacity = 0.3;
+        weight = 2;
+      }
+      main.setStyle({ opacity, weight });
+
+      // Leg polylines
+      legs.forEach(({ polyline, fromAttractionId, toAttractionId }) => {
+        const isLegSelected =
+          selectedAttractionId === fromAttractionId ||
+          selectedAttractionId === toAttractionId;
+        const isLegHovered =
+          hoveredAttractionId === fromAttractionId ||
+          hoveredAttractionId === toAttractionId;
+
+        const active = isLegSelected || isLegHovered;
+        polyline.setStyle({
+          weight: isLegSelected ? 7 : 5,
+          opacity: active ? 1 : 0,
+        });
+
+        const path = polyline.getElement();
+        if (path instanceof SVGPathElement) {
+          if (isLegSelected) {
+            path.style.animation = "";  // clear inline override before adding class
+            path.classList.add("route-pulse-animation");
+          } else {
+            path.classList.remove("route-pulse-animation");
+            path.style.animation = "none";
+          }
+        }
+      });
+    });
+  }, [mapRef, hoveredAttractionId, selectedAttractionId, selectedDayId, dayRoutes, isLoadingRoutes]);
 };

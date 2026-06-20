@@ -5,7 +5,12 @@ import { useEffect, useRef } from "react";
 
 import type { Attraction } from "~/types";
 
+export type MarkerMeta = { color: string; tag: string };
+
+type TaggedMarker = L.Marker & { _metaTag?: string };
+
 const BASE_MARKER_SIZE = 26;
+const DEFAULT_COLOR = "#9ca3af";
 
 const createMarkerIcon = (
   color: string,
@@ -50,39 +55,76 @@ const createMarkerIcon = (
   `;
 };
 
-const createClusterIcon = (cluster: L.MarkerCluster) => {
-  const count = cluster.getChildCount();
-  let size = 40;
-  let className = "marker-cluster-small";
-
-  if (count >= 100) {
-    size = 50;
-    className = "marker-cluster-large";
-  } else if (count >= 10) {
-    size = 45;
-    className = "marker-cluster-medium";
+function buildPiePaths(
+  slices: { color: string; count: number }[],
+  cx: number,
+  cy: number,
+  r: number,
+): string {
+  const total = slices.reduce((s, sl) => s + sl.count, 0);
+  if (total === 0) return "";
+  const nonEmpty = slices.filter((sl) => sl.count > 0);
+  if (nonEmpty.length === 1) {
+    return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${nonEmpty[0]!.color}"/>`;
   }
+  let paths = "";
+  let angle = -Math.PI / 2;
+  for (const sl of nonEmpty) {
+    const sweep = (sl.count / total) * 2 * Math.PI;
+    const x1 = cx + r * Math.cos(angle);
+    const y1 = cy + r * Math.sin(angle);
+    angle += sweep;
+    const x2 = cx + r * Math.cos(angle);
+    const y2 = cy + r * Math.sin(angle);
+    paths += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${sweep > Math.PI ? 1 : 0},1 ${x2},${y2} Z" fill="${sl.color}"/>`;
+  }
+  return paths;
+}
 
-  return L.divIcon({
-    html: `<div style="
-      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-      width: ${size}px;
-      height: ${size}px;
-      border-radius: 50%;
-      border: 3px solid white;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 700;
-      font-size: ${count >= 100 ? "14px" : "13px"};
-    ">${count}</div>`,
-    className: `marker-cluster ${className}`,
-    iconSize: L.point(size, size),
-    iconAnchor: L.point(size / 2, size / 2),
-  });
-};
+function createClusterIconWithMeta(
+  markerMetaRef: React.RefObject<Map<number, MarkerMeta> | undefined>,
+): (cluster: L.MarkerCluster) => L.DivIcon {
+  return (cluster) => {
+    const count = cluster.getChildCount();
+    const size = count >= 100 ? 50 : count >= 10 ? 45 : 38;
+    const r = size / 2;
+    const pieR = r - 3;
+    const innerR = Math.round(pieR * 0.55);
+    const fontSize = count >= 100 ? 13 : 12;
+
+    const meta = markerMetaRef.current;
+    let pie = "";
+
+    if (meta && meta.size > 0) {
+      const tally = new Map<string, { color: string; count: number }>();
+      for (const m of cluster.getAllChildMarkers()) {
+        const tag = (m as TaggedMarker)._metaTag ?? "default";
+        const color = (m as TaggedMarker & { _metaColor?: string })._metaColor ?? DEFAULT_COLOR;
+        const entry = tally.get(tag);
+        if (entry) entry.count++;
+        else tally.set(tag, { color, count: 1 });
+      }
+      const slices = [...tally.values()];
+      pie = buildPiePaths(slices, r, r, pieR);
+    } else {
+      pie = `<circle cx="${r}" cy="${r}" r="${pieR}" fill="#0ea5e9"/>`;
+    }
+
+    const html = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" style="filter:drop-shadow(0 2px 6px rgba(0,0,0,0.3))">
+      <circle cx="${r}" cy="${r}" r="${r}" fill="white"/>
+      ${pie}
+      <circle cx="${r}" cy="${r}" r="${innerR}" fill="white"/>
+      <text x="${r}" y="${r}" text-anchor="middle" dominant-baseline="central" fill="#1f2937" font-weight="700" font-size="${fontSize}" font-family="system-ui,sans-serif">${count}</text>
+    </svg>`;
+
+    return L.divIcon({
+      html,
+      className: "marker-cluster",
+      iconSize: L.point(size, size),
+      iconAnchor: L.point(r, r),
+    });
+  };
+}
 
 export const useLeafletMarkers = (
   mapRef: React.RefObject<L.Map | null>,
@@ -96,6 +138,7 @@ export const useLeafletMarkers = (
   selectedDayAttractionOrders: Map<number, number>,
   onMarkerClick: (attraction: Attraction) => void,
   enableClustering = false,
+  markerMeta?: Map<number, MarkerMeta>,
 ) => {
   const markersRef = useRef<Map<number, L.Marker>>(new Map());
   const clusterGroupRef = useRef<L.MarkerClusterGroup | null>(null);
@@ -103,15 +146,23 @@ export const useLeafletMarkers = (
   const previousSelectedIdRef = useRef<number | null>(null);
   const previousAttractionIdsRef = useRef<Set<number>>(new Set());
 
-  // Store callback in ref to avoid re-creating markers when callback changes
   const onMarkerClickRef = useRef(onMarkerClick);
   onMarkerClickRef.current = onMarkerClick;
+  const attractionToDayMapRef = useRef(attractionToDayMap);
+  attractionToDayMapRef.current = attractionToDayMap;
+  const dayColorsRef = useRef(dayColors);
+  dayColorsRef.current = dayColors;
+  const selectedDayIdRef = useRef(selectedDayId);
+  selectedDayIdRef.current = selectedDayId;
+  const selectedDayAttractionOrdersRef = useRef(selectedDayAttractionOrders);
+  selectedDayAttractionOrdersRef.current = selectedDayAttractionOrders;
+  const markerMetaRef = useRef(markerMeta);
+  markerMetaRef.current = markerMeta;
 
-  // Create all markers initially - only runs when attractions actually change (by IDs)
+  // Create/recreate markers only when the attraction set changes.
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Check if attractions actually changed by comparing IDs
     const currentIds = new Set(attractions.map((a) => a.id));
     const prevIds = previousAttractionIdsRef.current;
 
@@ -120,7 +171,6 @@ export const useLeafletMarkers = (
       attractions.every((a) => prevIds.has(a.id)) &&
       markersRef.current.size > 0
     ) {
-      // Same attractions - skip recreation
       return;
     }
 
@@ -129,7 +179,6 @@ export const useLeafletMarkers = (
     const map = mapRef.current;
     const markers = markersRef.current;
 
-    // Clear existing markers and cluster group
     markers.forEach((marker) => marker.remove());
     markers.clear();
     if (clusterGroupRef.current) {
@@ -139,11 +188,10 @@ export const useLeafletMarkers = (
 
     if (attractions.length === 0) return;
 
-    // Create cluster group if clustering is enabled
     let clusterGroup: L.MarkerClusterGroup | null = null;
     if (enableClustering) {
       clusterGroup = L.markerClusterGroup({
-        iconCreateFunction: createClusterIcon,
+        iconCreateFunction: createClusterIconWithMeta(markerMetaRef),
         maxClusterRadius: 60,
         spiderfyOnMaxZoom: true,
         showCoverageOnHover: false,
@@ -157,22 +205,22 @@ export const useLeafletMarkers = (
     attractions.forEach((attraction) => {
       if (attraction.latitude == null || attraction.longitude == null) return;
 
-      const baseSize = BASE_MARKER_SIZE;
+      const attractionDayId = attractionToDayMapRef.current.get(attraction.id);
+      const isInAnyDay = attractionDayId !== undefined;
+      const isInSelectedDay = attractionDayId === selectedDayIdRef.current;
+      const orderNumber = selectedDayAttractionOrdersRef.current.get(attraction.id);
 
-      // Create with default appearance
-      const iconHtml = createMarkerIcon(
-        "#9ca3af", // Default gray color
-        baseSize,
-        false,
-        false,
-        undefined,
-      );
+      let color = markerMetaRef.current?.get(attraction.id)?.color ?? DEFAULT_COLOR;
+      if (isInAnyDay) {
+        color = dayColorsRef.current.get(attractionDayId!) ?? DEFAULT_COLOR;
+      }
 
+      const iconHtml = createMarkerIcon(color, BASE_MARKER_SIZE, isInAnyDay, false, isInSelectedDay ? orderNumber : undefined);
       const customIcon = L.divIcon({
         html: iconHtml,
         className: "custom-marker",
-        iconSize: [baseSize, baseSize],
-        iconAnchor: [baseSize / 2, baseSize / 2],
+        iconSize: [BASE_MARKER_SIZE, BASE_MARKER_SIZE],
+        iconAnchor: [BASE_MARKER_SIZE / 2, BASE_MARKER_SIZE / 2],
       });
 
       const marker = L.marker([attraction.latitude, attraction.longitude], {
@@ -185,7 +233,12 @@ export const useLeafletMarkers = (
         onMarkerClickRef.current(attraction);
       });
 
-      // Add to cluster group or directly to map
+      const meta = markerMetaRef.current?.get(attraction.id);
+      if (meta) {
+        (marker as TaggedMarker)._metaTag = meta.tag;
+        (marker as TaggedMarker & { _metaColor?: string })._metaColor = meta.color;
+      }
+
       if (clusterGroup) {
         clusterGroup.addLayer(marker);
       } else {
@@ -195,12 +248,10 @@ export const useLeafletMarkers = (
       markers.set(attraction.id, marker);
     });
 
-    // Add cluster group to map
     if (clusterGroup) {
       map.addLayer(clusterGroup);
     }
 
-    // Cleanup function for markers
     return () => {
       markers.forEach((marker) => marker.remove());
       markers.clear();
@@ -211,23 +262,16 @@ export const useLeafletMarkers = (
     };
   }, [mapRef, attractions, enableClustering]);
 
-  // Update all markers when day selection or day assignments change
-  // Skip this when clustering is enabled and no day data exists (pure attraction view)
+  // Update all markers when day assignments or selected day change
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Skip expensive update when there's no day-related styling to apply
-    if (
-      enableClustering &&
-      attractionToDayMap.size === 0 &&
-      dayColors.size === 0
-    ) {
+    if (enableClustering && attractionToDayMap.size === 0 && dayColors.size === 0 && !markerMeta) {
       return;
     }
 
     const markers = markersRef.current;
 
-    // Update all markers with current day/color information
     attractions.forEach((attraction) => {
       const marker = markers.get(attraction.id);
       if (!marker) return;
@@ -237,29 +281,18 @@ export const useLeafletMarkers = (
       const isInSelectedDay = attractionDayId === selectedDayId;
       const orderNumber = selectedDayAttractionOrders.get(attraction.id);
 
-      let color = "#9ca3af";
-      if (isInAnyDay && attractionDayId !== undefined) {
-        color = dayColors.get(attractionDayId) ?? "#9ca3af";
+      let color = markerMeta?.get(attraction.id)?.color ?? DEFAULT_COLOR;
+      if (isInAnyDay) {
+        color = dayColors.get(attractionDayId!) ?? DEFAULT_COLOR;
       }
 
-      const baseSize = BASE_MARKER_SIZE;
-
-      const iconHtml = createMarkerIcon(
-        color,
-        baseSize,
-        isInAnyDay,
-        false, // Not highlighted yet
-        isInSelectedDay ? orderNumber : undefined,
-      );
-
-      const customIcon = L.divIcon({
+      const iconHtml = createMarkerIcon(color, BASE_MARKER_SIZE, isInAnyDay, false, isInSelectedDay ? orderNumber : undefined);
+      marker.setIcon(L.divIcon({
         html: iconHtml,
         className: "custom-marker",
-        iconSize: [baseSize, baseSize],
-        iconAnchor: [baseSize / 2, baseSize / 2],
-      });
-
-      marker.setIcon(customIcon);
+        iconSize: [BASE_MARKER_SIZE, BASE_MARKER_SIZE],
+        iconAnchor: [BASE_MARKER_SIZE / 2, BASE_MARKER_SIZE / 2],
+      }));
     });
   }, [
     attractions,
@@ -269,6 +302,7 @@ export const useLeafletMarkers = (
     selectedDayAttractionOrders,
     mapRef,
     enableClustering,
+    markerMeta,
   ]);
 
   // Update only affected markers when hover/selection changes
@@ -278,21 +312,14 @@ export const useLeafletMarkers = (
     const markers = markersRef.current;
     const affectedIds = new Set<number>();
 
-    // Add currently hovered/selected
     if (hoveredAttractionId) affectedIds.add(hoveredAttractionId);
     if (selectedAttractionId) affectedIds.add(selectedAttractionId);
+    if (previousHoveredIdRef.current) affectedIds.add(previousHoveredIdRef.current);
+    if (previousSelectedIdRef.current) affectedIds.add(previousSelectedIdRef.current);
 
-    // Add previously hovered/selected to reset them
-    if (previousHoveredIdRef.current)
-      affectedIds.add(previousHoveredIdRef.current);
-    if (previousSelectedIdRef.current)
-      affectedIds.add(previousSelectedIdRef.current);
-
-    // Update each affected marker
     affectedIds.forEach((attractionId) => {
       const marker = markers.get(attractionId);
       const attraction = attractionsMap.get(attractionId);
-
       if (!marker || !attraction) return;
 
       const attractionDayId = attractionToDayMap.get(attraction.id);
@@ -302,40 +329,24 @@ export const useLeafletMarkers = (
       const isSelected = selectedAttractionId === attraction.id;
       const orderNumber = selectedDayAttractionOrders.get(attraction.id);
 
-      let color = "#9ca3af";
-      if (isInAnyDay && attractionDayId !== undefined) {
-        color = dayColors.get(attractionDayId) ?? "#9ca3af";
+      let color = markerMeta?.get(attraction.id)?.color ?? DEFAULT_COLOR;
+      if (isInAnyDay) {
+        color = dayColors.get(attractionDayId!) ?? DEFAULT_COLOR;
       }
 
-      const baseSize = BASE_MARKER_SIZE;
-      const size = isSelected
-        ? baseSize + 8
-        : isHovered
-          ? baseSize + 4
-          : baseSize;
-
+      const size = isSelected ? BASE_MARKER_SIZE + 8 : isHovered ? BASE_MARKER_SIZE + 4 : BASE_MARKER_SIZE;
       const zIndexOffset = isSelected ? 1000 : isHovered ? 500 : 0;
 
-      const iconHtml = createMarkerIcon(
-        color,
-        size,
-        isInAnyDay,
-        isHovered || isSelected,
-        isInSelectedDay ? orderNumber : undefined,
-      );
-
-      const customIcon = L.divIcon({
+      const iconHtml = createMarkerIcon(color, size, isInAnyDay, isHovered || isSelected, isInSelectedDay ? orderNumber : undefined);
+      marker.setIcon(L.divIcon({
         html: iconHtml,
         className: "custom-marker",
         iconSize: [size, size],
         iconAnchor: [size / 2, size / 2],
-      });
-
-      marker.setIcon(customIcon);
+      }));
       marker.setZIndexOffset(zIndexOffset);
     });
 
-    // Update refs for next render
     previousHoveredIdRef.current = hoveredAttractionId;
     previousSelectedIdRef.current = selectedAttractionId;
   }, [
@@ -347,6 +358,7 @@ export const useLeafletMarkers = (
     dayColors,
     selectedDayAttractionOrders,
     mapRef,
+    markerMeta,
   ]);
 
   return markersRef;

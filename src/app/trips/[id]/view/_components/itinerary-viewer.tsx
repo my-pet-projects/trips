@@ -233,7 +233,6 @@ export function ItineraryViewer({
             dayRoutes={dayRoutes}
             onAttractionSelect={setSelectedAttractionId}
             onAddAttractionToDay={handleAddAttractionToDay}
-            viewMode="viewer"
             enableLocationTracking
             isLoadingRoutes={isLoadingRoutes}
           />

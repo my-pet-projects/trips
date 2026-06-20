@@ -8,6 +8,7 @@ export { DayRoutesFetcher, useDayRouteFetch } from "./route-fetcher";
 
 // Hooks
 export { useGeolocationTracking } from "./hooks/useGeolocationTracking";
+export { useInjectStyles } from "./hooks/useInjectStyles";
 export { useLeafletMap } from "./hooks/useLeafletMap";
 export { useLeafletMarkers } from "./hooks/useLeafletMarkers";
 export { useLeafletRoutes } from "./hooks/useLeafletRoutes";
