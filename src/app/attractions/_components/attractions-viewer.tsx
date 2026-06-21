@@ -122,17 +122,16 @@ export const AttractionsViewer = () => {
 
   return (
     <div className="relative h-full w-full">
-      {/* Toolbar */}
-      <div className="absolute top-3 left-1/2 z-1000 w-[calc(100%-1.5rem)] max-w-fit -translate-x-1/2 overflow-x-auto rounded-xl border border-gray-200 bg-white/95 shadow-md backdrop-blur-sm">
-        <div className="flex min-w-max items-center gap-2 px-3 py-2">
-        <span className="text-xs font-medium text-gray-500">
+      {/* Desktop toolbar */}
+      <div className="absolute top-3 left-1/2 z-1000 hidden md:flex w-[calc(100%-1.5rem)] max-w-fit -translate-x-1/2 items-center gap-2 rounded-xl border border-gray-200 bg-white/95 px-4 py-2 shadow-md backdrop-blur-sm">
+        <span className="whitespace-nowrap text-xs font-medium text-gray-500">
           {attractions.length.toLocaleString()} attractions
         </span>
         <div className="mx-1 h-4 w-px bg-gray-200" />
         <button
           type="button"
           onClick={() => setShowVerifiedOnly((v) => !v)}
-          className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-opacity ${
+          className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1 text-xs font-medium transition-opacity ${
             showVerifiedOnly ? "opacity-100" : "opacity-40"
           }`}
         >
@@ -143,27 +142,64 @@ export const AttractionsViewer = () => {
           </span>
         </button>
         <div className="mx-1 h-4 w-px bg-gray-200" />
-        <div className="flex items-center gap-1.5 text-xs font-medium text-amber-600">
+        <div className="flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-amber-600">
           <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
           Must see
           <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-gray-600">
             {mustSeeCount}
           </span>
         </div>
-        <div className="flex items-center gap-1.5 text-xs font-medium text-sky-600">
+        <div className="flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-sky-600">
           <ThumbsUp className="h-3.5 w-3.5" />
           Recommended
           <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-gray-600">
             {recommendedCount}
           </span>
         </div>
-        <div className="flex items-center gap-1.5 text-xs font-medium text-red-500">
+        <div className="flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-red-500">
           <SkipForward className="h-3.5 w-3.5" />
           Skip
           <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-gray-600">
             {skipCount}
           </span>
         </div>
+      </div>
+
+      {/* Mobile top — total count */}
+      <div className="absolute top-3 left-1/2 z-1000 -translate-x-1/2 md:hidden">
+        <div className="rounded-xl border border-gray-200 bg-white/95 px-3 py-1.5 shadow-md backdrop-blur-sm">
+          <span className="text-xs font-medium text-gray-500">
+            {attractions.length.toLocaleString()} attractions
+          </span>
+        </div>
+      </div>
+
+      {/* Mobile bottom — icon + count pills */}
+      <div className="absolute bottom-6 left-3 right-3 z-1000 md:hidden">
+        <div className="flex items-center justify-center gap-1.5 rounded-2xl border border-gray-200 bg-white/95 px-3 py-2 shadow-md backdrop-blur-sm">
+          <button
+            type="button"
+            onClick={() => setShowVerifiedOnly((v) => !v)}
+            className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-opacity ${
+              showVerifiedOnly ? "opacity-100" : "opacity-30"
+            }`}
+          >
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+            {verifiedCount}
+          </button>
+          <div className="mx-0.5 h-4 w-px shrink-0 bg-gray-200" />
+          <div className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-amber-600">
+            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+            {mustSeeCount}
+          </div>
+          <div className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-sky-600">
+            <ThumbsUp className="h-3.5 w-3.5" />
+            {recommendedCount}
+          </div>
+          <div className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-red-500">
+            <SkipForward className="h-3.5 w-3.5" />
+            {skipCount}
+          </div>
         </div>
       </div>
 
