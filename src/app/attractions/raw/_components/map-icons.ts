@@ -24,13 +24,18 @@ function createPinIcon(color: string, size = 32) {
   });
 }
 
-type IconKey = "pending" | "rejected" | "duplicated" | "existing";
+type RawIconKey = "pending" | "rejected" | "duplicated";
+export type HighlightIconKey = "must_see" | "recommended" | "skip" | "none";
+type IconKey = RawIconKey | HighlightIconKey;
 
 const ICON_CONFIGS: Record<IconKey, { color: string; size?: number }> = {
-  pending: { color: "#f59e0b" },
-  rejected: { color: "#ef4444", size: 24 },
-  duplicated: { color: "#a855f7", size: 24 },
-  existing: { color: "#3b82f6", size: 28 },
+  pending:     { color: "#f59e0b" },
+  rejected:    { color: "#ef4444", size: 24 },
+  duplicated:  { color: "#a855f7", size: 24 },
+  must_see:    { color: "#06b6d4", size: 28 },
+  recommended: { color: "#10b981", size: 28 },
+  skip:        { color: "#fb7185", size: 24 },
+  none:        { color: "#94a3b8", size: 28 },
 };
 
 // Must match ICON_CONFIGS colors above
@@ -40,9 +45,9 @@ export const STATUS_COLOR: Record<string, string> = Object.fromEntries(
 
 const iconCache: Partial<Record<IconKey, L.DivIcon>> = {};
 
-export function getIcon(status: IconKey): L.DivIcon {
-  const cfg = ICON_CONFIGS[status];
-  return (iconCache[status] ??= createPinIcon(cfg.color, cfg.size));
+export function getIcon(key: IconKey): L.DivIcon {
+  const cfg = ICON_CONFIGS[key];
+  return (iconCache[key] ??= createPinIcon(cfg.color, cfg.size));
 }
 
 export type TaggedMarker = L.Marker & { markerStatus: string };
@@ -83,11 +88,11 @@ export function createClusterIcon(cluster: L.MarkerCluster) {
 
   const tally: Record<string, number> = {};
   for (const m of cluster.getAllChildMarkers()) {
-    const status = (m as TaggedMarker).markerStatus ?? "existing";
+    const status = (m as TaggedMarker).markerStatus ?? "none";
     tally[status] = (tally[status] ?? 0) + 1;
   }
 
-  const slices = ["pending", "rejected", "duplicated", "existing"].map(
+  const slices = ["pending", "rejected", "duplicated", "must_see", "recommended", "skip", "none"].map(
     (key) => ({
       color: STATUS_COLOR[key]!,
       count: tally[key] ?? 0,

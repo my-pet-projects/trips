@@ -36,13 +36,21 @@ function buildPopup({ dotColor, name, nameLocal, links, actions = "" }: PopupOpt
   `;
 }
 
+function domainLabel(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "Source";
+  }
+}
+
 export function existingAttractionPopup(a: ExistingAttraction) {
   return buildPopup({
     dotColor: "#3b82f6",
     name: a.name,
     nameLocal: a.nameLocal,
     links: [
-      a.sourceUrl && `<a href="${a.sourceUrl}" target="_blank" style="${LINK_BLUE}">🔗 Source</a>`,
+      a.sourceUrl && `<a href="${a.sourceUrl}" target="_blank" style="${LINK_BLUE}">🔗 ${domainLabel(a.sourceUrl)}</a>`,
       `<a href="https://www.google.com/maps?q=${a.latitude!},${a.longitude!}" target="_blank" style="${LINK_BLUE}">📍 Maps</a>`,
       `<a href="/attractions/${a.id}/edit" target="_blank" style="${LINK_GREEN}">✏ Edit</a>`,
     ],
