@@ -25,6 +25,7 @@ type ItineraryMapProps = {
   onAttractionSelect: (attractionId: number | null) => void;
   onAddAttractionToDay?: (attraction: AttractionDetail) => void;
   onHighlightChange?: (attractionId: number, highlight: "must_see" | "recommended" | "skip" | null) => void;
+  onDeleteAttraction?: (attractionId: number) => void;
   enableLocationTracking?: boolean;
   enableClustering?: boolean;
   isLoadingRoutes: boolean;
@@ -57,6 +58,7 @@ export function ItineraryMap({
   onAttractionSelect,
   onAddAttractionToDay,
   onHighlightChange,
+  onDeleteAttraction,
   enableLocationTracking = false,
   enableClustering = false,
   isLoadingRoutes,
@@ -72,12 +74,9 @@ export function ItineraryMap({
   const [panelHeight, setPanelHeight] = useState(0);
 
   useEffect(() => {
-    setPanelAttraction(null);
-  }, [selectedAttractionId]);
-
-  useEffect(() => {
-    if (selectedAttractionDetail) setPanelAttraction(selectedAttractionDetail);
-    else if (selectedAttractionId) {
+    if (selectedAttractionDetail) {
+      setPanelAttraction(selectedAttractionDetail);
+    } else if (selectedAttractionId) {
       const fromMap = attractionsMap.get(selectedAttractionId);
       if (fromMap && "city" in fromMap) setPanelAttraction(fromMap as AttractionDetail);
     }
@@ -170,6 +169,7 @@ export function ItineraryMap({
           onAddToDay={onAddAttractionToDay ? handleAddToDay : undefined}
           onPanelHeightChange={setPanelHeight}
           onHighlightChange={onHighlightChange}
+          onDelete={onDeleteAttraction}
         />
       )}
     </div>

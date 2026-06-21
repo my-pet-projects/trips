@@ -43,7 +43,8 @@ export function RawAttractionsMapInner({
           </div>
         </div>
       )}
-      <div className="absolute top-3 left-1/2 z-1000 flex -translate-x-1/2 items-center gap-2 rounded-xl border border-gray-200 bg-white/95 px-3 py-2 shadow-md backdrop-blur-sm">
+      <div className="absolute top-3 left-1/2 z-1000 w-[calc(100%-1.5rem)] max-w-fit -translate-x-1/2 overflow-x-auto rounded-xl border border-gray-200 bg-white/95 shadow-md backdrop-blur-sm">
+        <div className="flex min-w-max items-center gap-2 px-3 py-2">
         <div className="w-52">
           <RawCountrySelector selected={countryCode} compact />
         </div>
@@ -65,9 +66,10 @@ export function RawAttractionsMapInner({
           </button>
         ))}
         <div className="mx-1 h-4 w-px bg-gray-200" />
-        <div className="flex items-center gap-1.5 px-1 text-xs text-gray-500">
-          <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
-          Existing ({existing.length})
+          <div className="flex items-center gap-1.5 px-1 text-xs text-gray-500">
+            <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+            Existing ({existing.length})
+          </div>
         </div>
       </div>
 
