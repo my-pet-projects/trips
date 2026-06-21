@@ -5,7 +5,7 @@ import { MapContainer, TileLayer } from "react-leaflet";
 
 import { FitBounds, MarkersLayer } from "./markers-layer";
 import { RawCountrySelector } from "./raw-country-selector";
-import { FILTERS, useRawTriage } from "./use-raw-triage";
+import { FILTERS, HIGHLIGHT_FILTERS, useRawTriage } from "./use-raw-triage";
 
 interface RawAttractionsMapInnerProps {
   countryCode?: string;
@@ -21,6 +21,9 @@ export function RawAttractionsMapInner({
     visibleStatuses,
     toggleStatus,
     counts,
+    visibleHighlights,
+    toggleHighlight,
+    highlightCounts,
     allPoints,
     isMutating,
     onApprove,
@@ -43,33 +46,87 @@ export function RawAttractionsMapInner({
           </div>
         </div>
       )}
-      <div className="absolute top-3 left-1/2 z-1000 w-[calc(100%-1.5rem)] max-w-fit -translate-x-1/2 overflow-x-auto rounded-xl border border-gray-200 bg-white/95 shadow-md backdrop-blur-sm">
-        <div className="flex min-w-max items-center gap-2 px-3 py-2">
-        <div className="w-52">
+
+      {/* Desktop toolbar */}
+      <div className="absolute top-3 left-1/2 z-1000 hidden md:flex w-[calc(100%-1.5rem)] max-w-fit -translate-x-1/2 items-center gap-2 rounded-xl border border-gray-200 bg-white/95 px-4 py-2 shadow-md backdrop-blur-sm">
+        <div className="w-52 shrink-0">
           <RawCountrySelector selected={countryCode} compact />
         </div>
-        <div className="mx-1 h-4 w-px bg-gray-200" />
-        {FILTERS.map(({ key, label, color }) => (
-          <button
-            type="button"
-            key={key}
-            onClick={() => toggleStatus(key)}
-            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-opacity ${
-              visibleStatuses.has(key) ? "opacity-100" : "opacity-40"
-            }`}
-          >
-            <span className={`h-2.5 w-2.5 rounded-full ${color}`} />
-            {label}
-            <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-gray-600">
+        <div className="mx-1 h-4 w-px shrink-0 bg-gray-200" />
+        <div className="flex items-center gap-2">
+          {FILTERS.map(({ key, label, color }) => (
+            <button
+              type="button"
+              key={key}
+              onClick={() => toggleStatus(key)}
+              className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1 text-xs font-medium transition-opacity ${
+                visibleStatuses.has(key) ? "opacity-100" : "opacity-40"
+              }`}
+            >
+              <span className={`h-2.5 w-2.5 rounded-full ${color}`} />
+              {label}
+              <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-gray-600">
+                {counts[key]}
+              </span>
+            </button>
+          ))}
+          <div className="mx-1 h-4 w-px shrink-0 bg-gray-200" />
+          {HIGHLIGHT_FILTERS.map(({ key, label, color }) => (
+            <button
+              type="button"
+              key={key}
+              onClick={() => toggleHighlight(key)}
+              className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1 text-xs font-medium transition-opacity ${
+                visibleHighlights.has(key) ? "opacity-100" : "opacity-40"
+              }`}
+            >
+              <span className={`h-2.5 w-2.5 rounded-full ${color}`} />
+              {label}
+              <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-gray-600">
+                {highlightCounts[key]}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Mobile top bar — country selector */}
+      <div className="absolute top-3 left-3 right-3 z-1000 md:hidden">
+        <div className="rounded-xl border border-gray-200 bg-white/95 px-3 py-2 shadow-md backdrop-blur-sm">
+          <RawCountrySelector selected={countryCode} compact />
+        </div>
+      </div>
+
+      {/* Mobile bottom bar — dot + count pills */}
+      <div className="absolute bottom-6 left-3 right-3 z-1000 md:hidden">
+        <div className="flex items-center justify-center gap-1.5 rounded-2xl border border-gray-200 bg-white/95 px-3 py-2 shadow-md backdrop-blur-sm">
+          {FILTERS.map(({ key, color }) => (
+            <button
+              type="button"
+              key={key}
+              onClick={() => toggleStatus(key)}
+              className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-opacity ${
+                visibleStatuses.has(key) ? "opacity-100" : "opacity-30"
+              }`}
+            >
+              <span className={`h-2.5 w-2.5 rounded-full ${color}`} />
               {counts[key]}
-            </span>
-          </button>
-        ))}
-        <div className="mx-1 h-4 w-px bg-gray-200" />
-          <div className="flex items-center gap-1.5 px-1 text-xs text-gray-500">
-            <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
-            Existing ({existing.length})
-          </div>
+            </button>
+          ))}
+          <div className="mx-0.5 h-4 w-px shrink-0 bg-gray-200" />
+          {HIGHLIGHT_FILTERS.map(({ key, color }) => (
+            <button
+              type="button"
+              key={key}
+              onClick={() => toggleHighlight(key)}
+              className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-opacity ${
+                visibleHighlights.has(key) ? "opacity-100" : "opacity-30"
+              }`}
+            >
+              <span className={`h-2.5 w-2.5 rounded-full ${color}`} />
+              {highlightCounts[key]}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -88,6 +145,7 @@ export function RawAttractionsMapInner({
           rawAttractions={rawAttractions}
           existing={existing}
           visibleStatuses={visibleStatuses}
+          visibleHighlights={visibleHighlights}
           isMutating={isMutating}
           onApprove={onApprove}
           onReject={onReject}

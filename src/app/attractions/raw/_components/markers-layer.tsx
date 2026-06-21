@@ -10,6 +10,7 @@ import { existingAttractionPopup, rawAttractionPopup } from "./popup-content";
 import {
   createClusterIcon,
   getIcon,
+  type HighlightIconKey,
   type TaggedMarker,
 } from "./map-icons";
 import type { StatusFilter } from "./use-raw-triage";
@@ -31,6 +32,7 @@ interface MarkersLayerProps {
   rawAttractions: RawAttraction[];
   existing: ExistingAttraction[];
   visibleStatuses: Set<StatusFilter>;
+  visibleHighlights: Set<HighlightIconKey>;
   isMutating: boolean;
   onApprove: (id: number) => void;
   onReject: (id: number) => void;
@@ -41,6 +43,7 @@ export function MarkersLayer({
   rawAttractions,
   existing,
   visibleStatuses,
+  visibleHighlights,
   isMutating,
   onApprove,
   onReject,
@@ -68,7 +71,14 @@ export function MarkersLayer({
     const cluster = clusterRef.current;
     if (!cluster) return;
 
-    const incoming = new Map(existing.map((a) => [a.id, a]));
+    const highlightKey = (a: ExistingAttraction): HighlightIconKey =>
+      (a.highlight as HighlightIconKey | null) ?? "none";
+
+    const incoming = new Map(
+      existing
+        .filter((a) => visibleHighlights.has(highlightKey(a)))
+        .map((a) => [a.id, a]),
+    );
 
     for (const [id, marker] of existingMarkersRef.current) {
       if (!incoming.has(id)) {
@@ -80,13 +90,14 @@ export function MarkersLayer({
     for (const [id, a] of incoming) {
       if (existingMarkersRef.current.has(id)) continue;
       if (a.latitude == null || a.longitude == null) continue;
-      const marker = L.marker([a.latitude, a.longitude], { icon: getIcon("existing") });
-      (marker as TaggedMarker).markerStatus = "existing";
+      const key = highlightKey(a);
+      const marker = L.marker([a.latitude, a.longitude], { icon: getIcon(key) });
+      (marker as TaggedMarker).markerStatus = key;
       marker.bindPopup(existingAttractionPopup(a), { maxWidth: 260 });
       cluster.addLayer(marker);
       existingMarkersRef.current.set(id, marker);
     }
-  }, [existing]);
+  }, [existing, visibleHighlights]);
 
   const rawMarkersRef = useRef<Map<number, { marker: L.Marker; status: string }>>(new Map());
   useEffect(() => {
