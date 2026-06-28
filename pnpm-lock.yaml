@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@clerk/nextjs':
         specifier: ^7.0.0
-        version: 7.5.8(next@16.2.9(@babel/core@7.29.7)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: 7.5.9(next@16.2.9(@babel/core@7.29.7)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.4.0(react-hook-form@7.80.0(react@19.2.7))
@@ -247,8 +247,8 @@ packages:
     resolution: {integrity: sha512-3G+kEu8kalqQokJ/n0IynhBh2i6TtiilRzuAg5UWMburkK658/elrG0Uqsapd5yKhmkNuvizHwOPWwKAMxP2EQ==}
     engines: {node: '>=20.9.0'}
 
-  '@clerk/nextjs@7.5.8':
-    resolution: {integrity: sha512-KHiisnF+DpXEdMebeO1WGY4v/P2D6hMBxYbrvsf+RXS0MEz8oRclAuTJX96D9uxgjUt/e6VtTb3Bua0VQFRgsA==}
+  '@clerk/nextjs@7.5.9':
+    resolution: {integrity: sha512-5QzCWT4DpEcTK7/GgkSanuclXaWE9KbvmbIgoxwN5eMSOPFgkcrcSvR106OuDoY27Yo9I+z5xWDUdb+DJBMtuA==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       next: ^15.2.8 || ^15.3.8 || ^15.4.10 || ^15.5.9 || ^15.6.0-0 || ^16.0.10 || ^16.1.0-0
@@ -1625,6 +1625,9 @@ packages:
 
   '@tanstack/query-core@5.101.1':
     resolution: {integrity: sha512-Y6Y92dkXtNqx67m2pMSxUsA3zOCwv862JexZRP8/EPwvKXMPu9m8rv43spiXWzOUIggQ3SQApttALStzhA8B4g==}
+
+  '@tanstack/query-core@5.101.2':
+    resolution: {integrity: sha512-hH5MLoJhF7KaIGd7q3xTXGXvslI+GYlM1Z/35aSHHWaCJWB7XvTSHYuV3eM7tw+aE0mT/xMro4M4Q9rCGHT0lw==}
 
   '@tanstack/react-query@5.101.1':
     resolution: {integrity: sha512-ZnONUuQKJe1bJMStXUL1s5uKN9FcfC28j5cK+iDZcdSHtUv1wtin1cGc/Oewhf2Oc4eKY7lggtpvT/AbMmhHew==}
@@ -3918,7 +3921,7 @@ snapshots:
       - react
       - react-dom
 
-  '@clerk/nextjs@7.5.8(next@16.2.9(@babel/core@7.29.7)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
+  '@clerk/nextjs@7.5.9(next@16.2.9(@babel/core@7.29.7)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@clerk/backend': 3.8.4(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@clerk/react': 6.11.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -3938,7 +3941,7 @@ snapshots:
 
   '@clerk/shared@4.22.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
-      '@tanstack/query-core': 5.101.1
+      '@tanstack/query-core': 5.101.2
       dequal: 2.0.3
       glob-to-regexp: 0.4.1
       js-cookie: 3.0.7
@@ -4961,6 +4964,8 @@ snapshots:
       tailwindcss: 4.3.1
 
   '@tanstack/query-core@5.101.1': {}
+
+  '@tanstack/query-core@5.101.2': {}
 
   '@tanstack/react-query@5.101.1(react@19.2.7)':
     dependencies:
