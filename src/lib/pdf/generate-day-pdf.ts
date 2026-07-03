@@ -4,6 +4,7 @@
  */
 
 import { jsPDF } from "jspdf";
+import { DEFAULT_DAY_COLOR } from "~/lib/map/colors";
 import { loadCyrillicFont } from "./pdf-font";
 import {
   type BasicAttraction,
@@ -76,7 +77,7 @@ function renderDayCoverPage(
   overviewMapImage?: string | null,
   dayColor?: string,
 ): void {
-  const color = dayColor ?? "#3b82f6";
+  const color = dayColor ?? DEFAULT_DAY_COLOR;
   let yPosition = MARGIN;
 
   // Trip name (if provided)
@@ -397,14 +398,14 @@ export async function generateAllDaysPdf(
   const [overviewMaps, allMapImages] = await Promise.all([
     Promise.all(
       daysWithAttractions.map((day) => {
-        const dayColor = dayColors?.get(day.id) ?? "#3b82f6";
+        const dayColor = dayColors?.get(day.id) ?? DEFAULT_DAY_COLOR;
         const markers = extractMarkers(day.attractions);
         return fetchOverviewMap(markers, dayColor);
       }),
     ),
     Promise.all(
       daysWithAttractions.map((day) => {
-        const dayColor = dayColors?.get(day.id) ?? "#3b82f6";
+        const dayColor = dayColors?.get(day.id) ?? DEFAULT_DAY_COLOR;
         return Promise.all(
           day.attractions.map((attraction, index) =>
             attraction.latitude && attraction.longitude
@@ -427,7 +428,7 @@ export async function generateAllDaysPdf(
 
   // Generate pages for each day
   daysWithAttractions.forEach((day, dayIndex) => {
-    const dayColor = dayColors?.get(day.id) ?? "#3b82f6";
+    const dayColor = dayColors?.get(day.id) ?? DEFAULT_DAY_COLOR;
     const dayMapImages = allMapImages[dayIndex] ?? [];
     const overviewMap = overviewMaps[dayIndex] ?? null;
 

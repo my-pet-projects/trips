@@ -1,18 +1,15 @@
 "use client";
 
-import "leaflet/dist/leaflet.css";
+import "~/lib/map/leaflet-styles";
 import { useRef } from "react";
 
 import type { MarkerMeta } from "~/lib/map/marker-meta";
 import type { AttractionSummary } from "~/types";
 
-import { useLeafletMap } from "./hooks/useLeafletMap";
-import { useLeafletMarkers } from "./hooks/useLeafletMarkers";
-import { useMapCenteringAndBounds } from "./hooks/useMapCenteringAndBounds";
-
-const EMPTY_ORDERS = new Map<number, number>();
-const EMPTY_DAY_MAP = new Map<number, number>();
-const EMPTY_DAY_COLORS = new Map<number, string>();
+import { useLeafletMap } from "./useLeafletMap";
+import { useLeafletMarkers } from "./useLeafletMarkers";
+import { useMapCenteringAndBounds } from "./useMapCenteringAndBounds";
+import { LeafletMapCanvas } from "./leaflet-map-core";
 
 type BrowseLeafletMapProps = {
   attractions: AttractionSummary[];
@@ -20,7 +17,7 @@ type BrowseLeafletMapProps = {
   selectedAttractionId: number | null;
   panelHeight: number;
   onMarkerClick: (attraction: AttractionSummary) => void;
-  markerMeta: Map<number, MarkerMeta>;
+  markerMeta?: Map<number, MarkerMeta>;
 };
 
 export default function BrowseLeafletMap({
@@ -32,38 +29,27 @@ export default function BrowseLeafletMap({
   markerMeta,
 }: BrowseLeafletMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const { mapRef, hasInitializedBounds } = useLeafletMap(containerRef, attractions);
+  const { mapRef, hasInitializedBounds, mapReady } = useLeafletMap(containerRef, attractions);
 
-  useLeafletMarkers(
+  useLeafletMarkers({
     mapRef,
+    mapReady,
     attractions,
     attractionsMap,
-    EMPTY_DAY_MAP,
-    EMPTY_DAY_COLORS,
-    null,
     selectedAttractionId,
-    null,
-    EMPTY_ORDERS,
     onMarkerClick,
-    true,
+    enableClustering: true,
     markerMeta,
-  );
+  });
 
-  useMapCenteringAndBounds(
+  useMapCenteringAndBounds({
     mapRef,
     hasInitializedBounds,
     attractions,
     attractionsMap,
-    [],
-    null,
     selectedAttractionId,
     panelHeight,
-    null,
-  );
+  });
 
-  return (
-    <div className="relative h-full w-full">
-      <div ref={containerRef} className="h-full w-full" />
-    </div>
-  );
+  return <LeafletMapCanvas containerRef={containerRef} />;
 }

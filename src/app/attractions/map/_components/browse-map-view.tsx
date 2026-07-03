@@ -1,12 +1,25 @@
 "use client";
 
-import { BrowseMap } from "~/app/_components/map/browse-map";
-import { MapLoadingOverlay } from "~/lib/map/map-loading";
+import dynamic from "next/dynamic";
+import { useCallback } from "react";
+
+import { AttractionMapShell } from "~/app/_components/map/attraction-map-shell";
+import { LoadErrorBanner } from "~/app/attractions/raw/_components/load-error-banner";
+import { MapDynamicLoading, MapLoadingOverlay } from "~/lib/map/map-loading";
+import type { AttractionSummary } from "~/types";
 
 import { BrowseMapProvider, useBrowseMapContext } from "./browse-context";
 import { BrowseToolbar } from "./toolbar/browse-toolbar";
 
-function BrowseMapShell() {
+const BrowseLeafletMap = dynamic(
+  () => import("~/app/_components/map/browse-leaflet-map"),
+  {
+    ssr: false,
+    loading: () => <MapDynamicLoading label="Loading map…" />,
+  },
+);
+
+function BrowseMapContent() {
   const {
     attractions,
     selectedAttractionId,
@@ -17,22 +30,43 @@ function BrowseMapShell() {
     onDeleteAttraction,
   } = useBrowseMapContext();
 
+  const handleMarkerClick = useCallback(
+    (attraction: AttractionSummary) => {
+      selectAttraction(attraction.id);
+    },
+    [selectAttraction],
+  );
+
   return (
-    <BrowseMap
+    <AttractionMapShell
       attractions={attractions}
       selectedAttractionId={selectedAttractionId}
       selectedAttractionDetail={selectedAttractionDetail}
-      markerMeta={markerMeta}
       onAttractionSelect={selectAttraction}
       onHighlightChange={onHighlightChange}
       onDeleteAttraction={onDeleteAttraction}
       className="h-full w-full border-0 shadow-none"
-    />
+    >
+      {(panelHeight, attractionsMap) => (
+        <BrowseLeafletMap
+          attractions={attractions}
+          attractionsMap={attractionsMap}
+          selectedAttractionId={selectedAttractionId}
+          panelHeight={panelHeight}
+          onMarkerClick={handleMarkerClick}
+          markerMeta={markerMeta}
+        />
+      )}
+    </AttractionMapShell>
   );
 }
 
 function BrowseOverlays() {
-  const { isLoading } = useBrowseMapContext();
+  const { isLoading, isError, loadErrorMessage, retryLoad } = useBrowseMapContext();
+
+  if (isError && loadErrorMessage) {
+    return <LoadErrorBanner message={loadErrorMessage} onRetry={retryLoad} />;
+  }
 
   if (!isLoading) return null;
 
@@ -46,10 +80,10 @@ function BrowseOverlays() {
 export function BrowseMapView() {
   return (
     <BrowseMapProvider>
-      <div className="relative h-full w-full">
+      <div className="relative h-full w-full" data-testid="browse-map-view">
         <BrowseOverlays />
         <BrowseToolbar />
-        <BrowseMapShell />
+        <BrowseMapContent />
       </div>
     </BrowseMapProvider>
   );

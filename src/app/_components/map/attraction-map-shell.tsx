@@ -1,37 +1,50 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
-import type { MarkerMeta } from "~/lib/map/marker-meta";
 import type { AttractionDetail, AttractionSummary } from "~/types";
 
-import BrowseLeafletMap from "./browse-leaflet-map";
 import { AttractionDetailPanel } from "./attraction-detail-panel";
 
-export type BrowseMapProps = {
-  attractions: AttractionSummary[];
+export type AttractionMapStatus = {
+  dayId: number | undefined;
+  isInAnyDay: boolean;
+  isInSelectedDay: boolean;
+};
+
+export type AttractionMapShellProps = {
+  attractions: AttractionSummary[] | AttractionDetail[];
   selectedAttractionId: number | null;
   selectedAttractionDetail?: AttractionDetail | null;
-  markerMeta: Map<number, MarkerMeta>;
   onAttractionSelect: (attractionId: number | null) => void;
   onHighlightChange?: (
     attractionId: number,
     highlight: "must_see" | "recommended" | "skip" | null,
   ) => void;
   onDeleteAttraction?: (attractionId: number) => void;
+  onAddToDay?: (attraction: AttractionDetail) => void;
+  selectedDayId?: number | null;
+  resolveAttractionStatus?: (attraction: AttractionDetail) => AttractionMapStatus;
   className?: string;
+  children: (
+    panelHeight: number,
+    attractionsMap: Map<number, AttractionSummary | AttractionDetail>,
+  ) => ReactNode;
 };
 
-export function BrowseMap({
+export function AttractionMapShell({
   attractions,
   selectedAttractionId,
   selectedAttractionDetail,
-  markerMeta,
   onAttractionSelect,
   onHighlightChange,
   onDeleteAttraction,
+  onAddToDay,
+  selectedDayId = null,
+  resolveAttractionStatus,
   className,
-}: BrowseMapProps) {
+  children,
+}: AttractionMapShellProps) {
   const attractionsMap = useMemo(
     () => new Map(attractions.map((a) => [a.id, a])),
     [attractions],
@@ -51,47 +64,40 @@ export function BrowseMap({
     }
   }, [selectedAttractionDetail, selectedAttractionId, attractionsMap]);
 
-  const handleMarkerClick = useCallback(
-    (attraction: AttractionSummary) => {
-      onAttractionSelect(attraction.id);
-    },
-    [onAttractionSelect],
-  );
-
   const handleClose = useCallback(() => {
     onAttractionSelect(null);
   }, [onAttractionSelect]);
 
-  const browseStatus = useMemo(
-    () => ({
-      dayId: undefined,
-      isInAnyDay: false,
-      isInSelectedDay: false,
-    }),
-    [],
-  );
+  const handlePanelClosed = useCallback(() => {
+    setPanelAttraction(null);
+  }, []);
+
+  const attractionStatus = useMemo(() => {
+    if (!panelAttraction) return null;
+    return (
+      resolveAttractionStatus?.(panelAttraction) ?? {
+        dayId: undefined,
+        isInAnyDay: false,
+        isInSelectedDay: false,
+      }
+    );
+  }, [panelAttraction, resolveAttractionStatus]);
 
   return (
     <div
       className={`relative h-full overflow-hidden ${className ?? "rounded-lg border border-gray-200 bg-white shadow-sm"}`}
     >
-      <BrowseLeafletMap
-        attractions={attractions}
-        attractionsMap={attractionsMap}
-        selectedAttractionId={selectedAttractionId}
-        panelHeight={panelHeight}
-        onMarkerClick={handleMarkerClick}
-        markerMeta={markerMeta}
-      />
+      {children(panelHeight, attractionsMap)}
 
-      {panelAttraction && (
+      {panelAttraction && attractionStatus && (
         <AttractionDetailPanel
           attraction={panelAttraction}
-          attractionStatus={browseStatus}
-          selectedDayId={null}
+          attractionStatus={attractionStatus}
+          selectedDayId={selectedDayId}
           isOpen={!!selectedAttractionId}
           onClose={handleClose}
-          onClosed={() => setPanelAttraction(null)}
+          onClosed={handlePanelClosed}
+          onAddToDay={onAddToDay && panelAttraction ? () => onAddToDay(panelAttraction) : undefined}
           onPanelHeightChange={setPanelHeight}
           onHighlightChange={onHighlightChange}
           onDelete={onDeleteAttraction}

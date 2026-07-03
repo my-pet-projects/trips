@@ -37,7 +37,7 @@ export function RawTriagePanel() {
 
   return (
     <div className="pointer-events-none absolute bottom-24 left-3 right-3 z-1001 md:bottom-6 md:left-1/2 md:w-full md:max-w-lg md:-translate-x-1/2">
-      <div className="pointer-events-auto rounded-xl border border-gray-200 bg-white/95 p-4 shadow-lg backdrop-blur-sm">
+      <div className="pointer-events-auto rounded-xl border border-gray-200 bg-white/95 p-4 shadow-lg backdrop-blur-sm" data-testid="raw-triage-panel">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h3 className="truncate text-sm font-semibold text-gray-900">
@@ -116,6 +116,7 @@ export function RawTriagePanel() {
               <Link
                 href={`/attractions/${selection.attraction.id}/edit`}
                 target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 rounded-md border border-green-200 bg-green-50 px-2 py-1 text-xs text-green-700 hover:bg-green-100"
               >
                 <Pencil className="h-3 w-3" />
@@ -133,6 +134,7 @@ export function RawTriagePanel() {
               <Link
                 href={`/attractions/${selection.attraction.attractionId}/edit`}
                 target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 rounded-md border border-green-200 bg-green-50 px-2 py-1 text-xs text-green-700 hover:bg-green-100"
               >
                 <Pencil className="h-3 w-3" />

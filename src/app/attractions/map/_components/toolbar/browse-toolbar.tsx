@@ -1,9 +1,12 @@
 "use client";
 
 import { MapFilterBar } from "~/lib/map/map-filter-bar";
-import { VERIFIED_FILTER_PILL } from "~/lib/map/colors";
+import {
+  HIGHLIGHT_FILTER_PILLS,
+  VERIFIED_FILTER_PILL,
+  type AttractionHighlightKey,
+} from "~/lib/map/colors";
 
-import { BROWSE_HIGHLIGHT_FILTERS } from "../hooks/use-browse-map";
 import { useBrowseMapContext } from "../browse-context";
 
 export function BrowseToolbar() {
@@ -16,7 +19,7 @@ export function BrowseToolbar() {
     toggleHighlight,
   } = useBrowseMapContext();
 
-  const highlightPills = BROWSE_HIGHLIGHT_FILTERS.map(({ key, label, color }) => ({
+  const highlightPills = HIGHLIGHT_FILTER_PILLS.map(({ key, label, color }) => ({
     key,
     label,
     color,
@@ -44,8 +47,7 @@ export function BrowseToolbar() {
         {
           filters: highlightPills,
           visible: visibleHighlights,
-          onToggle: (key) =>
-            toggleHighlight(key as (typeof BROWSE_HIGHLIGHT_FILTERS)[number]["key"]),
+          onToggle: (key) => toggleHighlight(key as AttractionHighlightKey),
           disabled: showVerifiedOnly,
         },
       ]}

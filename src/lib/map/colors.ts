@@ -19,10 +19,32 @@ export const VERIFIED_COLOR: MapColorDef = {
   label: "Verified",
 };
 
+/** Default itinerary day / PDF map marker color when no day color is set. */
+export const DEFAULT_DAY_COLOR = "#3b82f6";
+
+export const ITINERARY_DAY_PALETTE = [
+  "#3b82f6",
+  "#ef4444",
+  "#10b981",
+  "#f59e0b",
+  "#8b5cf6",
+  "#ec4899",
+  "#06b6d4",
+  "#f97316",
+  "#14b8a6",
+  "#a855f7",
+  "#84cc16",
+  "#f43f5e",
+] as const;
+
+export function getItineraryDayColor(index: number): string {
+  return ITINERARY_DAY_PALETTE[index % ITINERARY_DAY_PALETTE.length]!;
+}
+
 export type RawStatusKey = "pending" | "rejected" | "duplicated";
 
 export const RAW_STATUS_COLORS: Record<RawStatusKey, MapColorDef> = {
-  pending: { hex: "#f59e0b", pill: "bg-amber-400", label: "Pending" },
+  pending: { hex: "#6366f1", pill: "bg-indigo-500", label: "Pending" },
   rejected: { hex: "#ef4444", pill: "bg-red-500", label: "Rejected" },
   duplicated: { hex: "#a855f7", pill: "bg-purple-500", label: "Duplicated" },
 };

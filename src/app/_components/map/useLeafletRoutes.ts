@@ -1,6 +1,7 @@
 import L from "leaflet";
 import { useEffect, useRef } from "react";
 
+import { DEFAULT_DAY_COLOR } from "~/lib/map/colors";
 import type { RouteData } from "~/types";
 import { useInjectStyles } from "./useInjectStyles";
 
@@ -59,7 +60,7 @@ export const useLeafletRoutes = (
     dayPolylinesRef.current.clear();
 
     dayRoutes.forEach((route, dayId) => {
-      const color = dayColors.get(dayId) ?? "#3b82f6";
+      const color = dayColors.get(dayId) ?? DEFAULT_DAY_COLOR;
       const isSelectedDay = dayId === selectedDayId;
 
       const latLngs = route.geojson.geometry.coordinates.map(

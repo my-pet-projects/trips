@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
@@ -8,6 +8,8 @@ import { CountryCombobox } from "~/app/_components/geo/country-combobox";
 import { api } from "~/trpc/react";
 import type { Country } from "~/types";
 import { getTriageErrorMessage } from "./errors";
+
+let lastCountriesError: unknown = null;
 
 interface RawCountrySelectorProps {
   selected?: string;
@@ -17,7 +19,6 @@ interface RawCountrySelectorProps {
 export function RawCountrySelector({ selected, compact }: RawCountrySelectorProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const lastErrorRef = useRef<unknown>(null);
 
   const {
     data: countries = [],
@@ -28,8 +29,8 @@ export function RawCountrySelector({ selected, compact }: RawCountrySelectorProp
   } = api.geo.getCountries.useQuery(undefined, { retry: 1 });
 
   useEffect(() => {
-    if (!isError || !error || error === lastErrorRef.current) return;
-    lastErrorRef.current = error;
+    if (!isError || !error || error === lastCountriesError) return;
+    lastCountriesError = error;
     toast.error(getTriageErrorMessage(error), {
       action: {
         label: "Retry",

@@ -46,34 +46,36 @@ export function useRawTriageMutations({
           cache.decrementPending();
         }
 
-        const optimisticExisting: ExistingAttraction = {
-          id: -id,
-          name: raw.name,
-          nameLocal: raw.nameLocal,
-          description: raw.description,
-          address: null,
-          latitude: raw.latitude ?? 0,
-          longitude: raw.longitude ?? 0,
-          highlight: highlight ?? null,
-          isPredefined: null,
-          sourceUrl: raw.sourceUrl,
-          cityId: raw.cityId!,
-          countryCode: raw.countryCode,
-          createdAt: new Date(),
-          updatedAt: null,
-          isVerified: false,
-        };
+        if (raw.cityId) {
+          const optimisticExisting: ExistingAttraction = {
+            id: -id,
+            name: raw.name,
+            nameLocal: raw.nameLocal,
+            description: raw.description,
+            address: null,
+            latitude: raw.latitude ?? 0,
+            longitude: raw.longitude ?? 0,
+            highlight: highlight ?? null,
+            isPredefined: null,
+            sourceUrl: raw.sourceUrl,
+            cityId: raw.cityId,
+            countryCode: raw.countryCode,
+            createdAt: new Date(),
+            updatedAt: null,
+            isVerified: false,
+          };
 
-        cache.patchExisting((prev) => [...prev, optimisticExisting]);
-        const highlightKey = toHighlightIconKey(highlight);
-        cache.patchHighlightCounts((prev) => ({
-          ...prev,
-          [highlightKey]: prev[highlightKey] + 1,
-        }));
-        setSelection({
-          kind: "existing",
-          attraction: normalizeMapCoords(optimisticExisting),
-        });
+          cache.patchExisting((prev) => [...prev, optimisticExisting]);
+          const highlightKey = toHighlightIconKey(highlight);
+          cache.patchHighlightCounts((prev) => ({
+            ...prev,
+            [highlightKey]: prev[highlightKey] + 1,
+          }));
+          setSelection({
+            kind: "existing",
+            attraction: normalizeMapCoords(optimisticExisting),
+          });
+        }
       }
 
       return { previous };

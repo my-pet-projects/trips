@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { HIGHLIGHT_FILTER_PILLS } from "~/lib/map/colors";
 import {
   buildAttractionMarkerMeta,
   isAttractionVerified,
@@ -11,8 +10,6 @@ import {
 import { useSetToggleFilter } from "~/lib/map/use-set-toggle-filter";
 import { api } from "~/trpc/react";
 
-export { HIGHLIGHT_FILTER_PILLS as BROWSE_HIGHLIGHT_FILTERS };
-
 export function useBrowseMap() {
   const [selectedAttractionId, setSelectedAttractionId] = useState<number | null>(null);
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
@@ -20,10 +17,16 @@ export function useBrowseMap() {
     useSetToggleFilter<AttractionHighlightKey>(["must_see", "recommended", "skip", "none"]);
   const utils = api.useUtils();
 
-  const { data: allAttractions, isLoading } = api.attraction.getAllAttractions.useQuery(
-    undefined,
-    { staleTime: Infinity, refetchOnWindowFocus: false },
-  );
+  const {
+    data: allAttractions,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = api.attraction.getAllAttractions.useQuery(undefined, {
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+  });
 
   const { data: selectedAttractionDetail } = api.attraction.getAttractionById.useQuery(
     { id: selectedAttractionId! },
@@ -42,6 +45,9 @@ export function useBrowseMap() {
       void utils.attraction.getAllAttractions.invalidate();
       toast.error("Failed to delete attraction");
     },
+    onSettled: () => {
+      void utils.attraction.getAllAttractions.invalidate();
+    },
   });
 
   const updateHighlight = api.attraction.updateHighlight.useMutation({
@@ -55,18 +61,27 @@ export function useBrowseMap() {
       void utils.attraction.getAllAttractions.invalidate();
       toast.error("Failed to update highlight");
     },
+    onSettled: () => {
+      void utils.attraction.getAllAttractions.invalidate();
+    },
   });
 
   const counts = useMemo(() => {
     const list = allAttractions ?? [];
-    return {
+    const result = {
       total: list.length,
-      verified: list.filter(isAttractionVerified).length,
-      must_see: list.filter((a) => a.highlight === "must_see").length,
-      recommended: list.filter((a) => a.highlight === "recommended").length,
-      skip: list.filter((a) => a.highlight === "skip").length,
-      none: list.filter((a) => !a.highlight).length,
+      verified: 0,
+      must_see: 0,
+      recommended: 0,
+      skip: 0,
+      none: 0,
     };
+    for (const attraction of list) {
+      if (isAttractionVerified(attraction)) result.verified++;
+      const key = toAttractionHighlightKey(attraction.highlight);
+      result[key]++;
+    }
+    return result;
   }, [allAttractions]);
 
   const attractions = useMemo(() => {
@@ -80,12 +95,26 @@ export function useBrowseMap() {
   const markerMeta = useMemo(() => buildAttractionMarkerMeta(attractions), [attractions]);
 
   useEffect(() => {
-    if (!showVerifiedOnly || selectedAttractionId == null || !allAttractions) return;
+    if (selectedAttractionId == null || !allAttractions) return;
+
     const selected = allAttractions.find((a) => a.id === selectedAttractionId);
-    if (selected && !isAttractionVerified(selected)) {
+    if (!selected) {
+      setSelectedAttractionId(null);
+      return;
+    }
+
+    if (showVerifiedOnly && !isAttractionVerified(selected)) {
+      setSelectedAttractionId(null);
+      return;
+    }
+
+    if (
+      !showVerifiedOnly &&
+      !visibleHighlights.has(toAttractionHighlightKey(selected.highlight))
+    ) {
       setSelectedAttractionId(null);
     }
-  }, [showVerifiedOnly, selectedAttractionId, allAttractions]);
+  }, [showVerifiedOnly, visibleHighlights, selectedAttractionId, allAttractions]);
 
   const toggleVerifiedOnly = useCallback(() => {
     setShowVerifiedOnly((v) => !v);
@@ -97,6 +126,7 @@ export function useBrowseMap() {
 
   const onHighlightChange = useCallback(
     (attractionId: number, highlight: "must_see" | "recommended" | "skip" | null) => {
+      if (updateHighlight.isPending) return;
       updateHighlight.mutate({ id: attractionId, highlight });
     },
     [updateHighlight],
@@ -110,8 +140,20 @@ export function useBrowseMap() {
     [deleteAttraction],
   );
 
+  const retryLoad = useCallback(() => {
+    void refetch();
+  }, [refetch]);
+
+  const loadErrorMessage = useMemo(() => {
+    if (!error) return null;
+    return error.message || "Failed to load attractions";
+  }, [error]);
+
   return {
     isLoading,
+    isError,
+    loadErrorMessage,
+    retryLoad,
     attractions,
     counts,
     showVerifiedOnly,

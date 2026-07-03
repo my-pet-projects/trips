@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { count, eq } from "drizzle-orm";
+import { and, count, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 
 import { createLogger, errMsg } from "~/lib/logger";
@@ -26,7 +26,12 @@ export const rawAttractionRouter = createTRPCRouter({
           ctx.db
             .select()
             .from(schema.rawAttractions)
-            .where(eq(schema.rawAttractions.countryCode, input.countryCode))
+            .where(
+              and(
+                eq(schema.rawAttractions.countryCode, input.countryCode),
+                ne(schema.rawAttractions.status, "approved"),
+              ),
+            )
             .orderBy(schema.rawAttractions.id),
           ctx.db
             .select()

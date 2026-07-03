@@ -1,3 +1,4 @@
+import { skipToken } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 
 import { api } from "~/trpc/react";
@@ -17,11 +18,13 @@ export function useRawTriageQueries(
     return { countryCode };
   }, [countryCode]);
 
-  const triageQuery = api.rawAttraction.getTriageMapData.useQuery(queryInput!, {
-    enabled: !!queryInput,
-    retry: 1,
-    staleTime: 5 * 60 * 1000,
-  });
+  const triageQuery = api.rawAttraction.getTriageMapData.useQuery(
+    queryInput ?? skipToken,
+    {
+      retry: 1,
+      staleTime: 5 * 60 * 1000,
+    },
+  );
 
   const rawData = triageQuery.data?.raw ?? [];
   const existingData = triageQuery.data?.existing ?? [];

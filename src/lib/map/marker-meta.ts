@@ -1,6 +1,7 @@
 import type { AttractionSummary } from "~/types";
 
 import {
+  DEFAULT_DAY_COLOR,
   HIGHLIGHT_COLORS,
   VERIFIED_COLOR,
   type AttractionHighlightKey,
@@ -29,6 +30,19 @@ export function toAttractionHighlightKey(
 
 export function isAttractionVerified(attraction: { isVerified?: boolean | null }): boolean {
   return attraction.isVerified === true;
+}
+
+export function getCircleMarkerColor(
+  attractionId: number,
+  markerMeta: Map<number, MarkerMeta> | undefined,
+  attractionToDayMap: Map<number, number>,
+  dayColors: Map<number, string>,
+): string {
+  const attractionDayId = attractionToDayMap.get(attractionId);
+  if (attractionDayId !== undefined) {
+    return dayColors.get(attractionDayId) ?? DEFAULT_DAY_COLOR;
+  }
+  return markerMeta?.get(attractionId)?.color ?? ATTRACTION_MARKER_COLORS.default;
 }
 
 export function buildAttractionMarkerMeta(

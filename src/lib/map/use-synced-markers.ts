@@ -3,8 +3,12 @@
 import type L from "leaflet";
 import { useEffect, useRef } from "react";
 
-type UseSyncedMarkersOptions<T> = {
-  cluster: L.MarkerClusterGroup | null;
+export type UseSyncedMarkersOptions<T> = {
+  cluster?: L.MarkerClusterGroup | null;
+  clusterRef?: React.RefObject<L.MarkerClusterGroup | null>;
+  clusterGen?: number;
+  mapRef?: React.RefObject<L.Map | null>;
+  mapReady?: boolean;
   items: Map<number, T>;
   markersRef: React.MutableRefObject<Map<number, L.Marker>>;
   dataRef: React.MutableRefObject<Map<number, T>>;
@@ -17,8 +21,29 @@ type UseSyncedMarkersOptions<T> = {
   ) => { newId: number; item: T } | null;
 };
 
+function attachMarker(
+  marker: L.Marker,
+  clusterGroup: L.MarkerClusterGroup | null,
+  directMap: L.Map | null,
+) {
+  if (clusterGroup) {
+    if (!clusterGroup.hasLayer(marker)) {
+      clusterGroup.addLayer(marker);
+    }
+    return;
+  }
+
+  if (directMap && !directMap.hasLayer(marker)) {
+    marker.addTo(directMap);
+  }
+}
+
 export function useSyncedMarkers<T>({
   cluster,
+  clusterRef,
+  clusterGen,
+  mapRef,
+  mapReady = true,
   items,
   markersRef,
   dataRef,
@@ -29,12 +54,19 @@ export function useSyncedMarkers<T>({
   const bindClickRef = useRef(bindClick);
   const createMarkerRef = useRef(createMarker);
   const tryRekeyRef = useRef(tryRekey);
+  const layerRef = useRef<L.MarkerClusterGroup | L.Map | null>(null);
   bindClickRef.current = bindClick;
   createMarkerRef.current = createMarker;
   tryRekeyRef.current = tryRekey;
 
   useEffect(() => {
-    if (!cluster) return;
+    const clusterGroup = cluster ?? clusterRef?.current ?? null;
+    const directMap = !clusterGroup && mapReady ? mapRef?.current ?? null : null;
+    const layer = clusterGroup ?? directMap;
+    if (!layer) return;
+
+    const layerChanged = layerRef.current !== layer;
+    layerRef.current = layer;
 
     dataRef.current = items;
 
@@ -46,23 +78,32 @@ export function useSyncedMarkers<T>({
         markersRef.current.delete(id);
         markersRef.current.set(rekeyed.newId, marker);
         bindClickRef.current(marker, rekeyed.newId);
+        attachMarker(marker, clusterGroup, directMap);
         continue;
       }
 
-      cluster.removeLayer(marker);
+      if (clusterGroup) {
+        clusterGroup.removeLayer(marker);
+      } else {
+        marker.remove();
+      }
       markersRef.current.delete(id);
     }
 
     for (const [id, item] of items) {
       if (markersRef.current.has(id)) {
-        bindClickRef.current(markersRef.current.get(id)!, id);
+        const marker = markersRef.current.get(id)!;
+        bindClickRef.current(marker, id);
+        if (layerChanged) {
+          attachMarker(marker, clusterGroup, directMap);
+        }
         continue;
       }
 
       const marker = createMarkerRef.current(item);
       bindClickRef.current(marker, id);
-      cluster.addLayer(marker);
+      attachMarker(marker, clusterGroup, directMap);
       markersRef.current.set(id, marker);
     }
-  }, [cluster, items, markersRef, dataRef]);
+  }, [cluster, clusterRef, clusterGen, mapRef, mapReady, items, markersRef, dataRef]);
 }

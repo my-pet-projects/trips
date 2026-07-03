@@ -32,5 +32,4 @@ export type TriageMapQueryInput = {
   countryCode: string;
 };
 
-export { STATUS_FILTER_PILLS as STATUS_FILTERS, HIGHLIGHT_FILTER_PILLS as HIGHLIGHT_FILTERS } from "~/lib/map/colors";
 export { toAttractionHighlightKey as toHighlightIconKey };
