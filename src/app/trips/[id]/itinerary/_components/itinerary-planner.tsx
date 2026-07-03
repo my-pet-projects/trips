@@ -23,23 +23,7 @@ type ItineraryPlannerProps = {
   tripAttractions: AttractionDetail[];
 };
 
-const DAY_COLORS = [
-  "#3b82f6",
-  "#ef4444",
-  "#10b981",
-  "#f59e0b",
-  "#8b5cf6",
-  "#ec4899",
-  "#06b6d4",
-  "#f97316",
-  "#14b8a6",
-  "#a855f7",
-  "#84cc16",
-  "#f43f5e",
-] as const;
-
-const generateDayColor = (index: number): string =>
-  DAY_COLORS[index % DAY_COLORS.length]!;
+import { getItineraryDayColor } from "~/lib/map/colors";
 
 const transformTripDays = (trip: Trip): ItineraryDayData[] => {
   if (!trip) return [];
@@ -135,7 +119,7 @@ export function ItineraryPlanner({
   const dayColors = useMemo(() => {
     const map = new Map<number, string>();
     itineraryDays.forEach((day, index) =>
-      map.set(day.id, generateDayColor(index)),
+      map.set(day.id, getItineraryDayColor(index)),
     );
     return map;
   }, [itineraryDays]);
@@ -464,7 +448,7 @@ export function ItineraryPlanner({
                 <ItineraryDay
                   key={day.id}
                   day={day}
-                  color={generateDayColor(index)}
+                  color={getItineraryDayColor(index)}
                   isSelected={selectedDay === day.id}
                   onSelect={() => setSelectedDay(day.id)}
                   onRemove={() => handleRemoveDay(day.id)}

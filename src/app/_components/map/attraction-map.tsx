@@ -1,17 +1,10 @@
+"use client";
+
 import L, { divIcon } from "leaflet";
-import "leaflet/dist/leaflet.css";
+import "~/lib/map/leaflet-styles";
 import { BuildingIcon } from "lucide-react";
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import {
-  MapContainer,
-  Marker,
-  Popup,
-  TileLayer,
-  Tooltip,
-  useMap,
-  useMapEvents,
-} from "react-leaflet";
 
 import { api } from "~/trpc/react";
 import type { City } from "~/types";
@@ -24,21 +17,11 @@ interface AttractionMapProps {
   className?: string;
 }
 
-interface MapControllerProps extends AttractionMapProps {
-  nearestCities?: City[];
-}
-
-// Constants
 const DEFAULT_ZOOM = 13;
 const COORDINATE_THRESHOLD = 0.001;
 const SEARCH_RADIUS_DEGREES = 0.3;
 
-// Memoized icon creators (moved outside component to prevent recreation)
-const createDivIcon = (
-  IconComponent: React.ElementType,
-  color: string,
-  size: number,
-) => {
+const createDivIcon = (IconComponent: React.ElementType, color: string, size: number) => {
   const iconHtml = renderToStaticMarkup(
     <IconComponent
       size={size}
@@ -103,108 +86,9 @@ ${pulse ? `<circle class='pulse' cx='${halfOuter}' cy='${halfOuter}' r='${outerT
   });
 }
 
-// Create icons once
 const CURRENT_CITY_MARKER_ICON = createDivIcon(BuildingIcon, "blue", 32);
 const NEAREST_CITY_MARKER_ICON = createDivIcon(BuildingIcon, "green", 32);
 const ATTRACTION_MARKER_ICON = createAttractionIcon({});
-
-function MapController({
-  latitude,
-  longitude,
-  currentCity,
-  nearestCities,
-  onCoordinatesChange,
-}: MapControllerProps) {
-  const map = useMap();
-  const markerRef = useRef<L.Marker>(null);
-  const prevCoordsRef = useRef({ lat: latitude, lng: longitude });
-
-  useEffect(() => {
-    const latDiff = Math.abs(latitude - prevCoordsRef.current.lat);
-    const lngDiff = Math.abs(longitude - prevCoordsRef.current.lng);
-
-    // Only update view if coordinates changed significantly
-    if (latDiff > COORDINATE_THRESHOLD || lngDiff > COORDINATE_THRESHOLD) {
-      const currentZoom = map.getZoom();
-
-      map.setView([latitude, longitude], currentZoom, {
-        animate: true,
-        duration: 0.5,
-      });
-
-      prevCoordsRef.current = { lat: latitude, lng: longitude };
-    }
-  }, [latitude, longitude, map]);
-
-  const handleMapClick = useCallback(
-    (e: L.LeafletMouseEvent) => {
-      onCoordinatesChange(e.latlng.lat, e.latlng.lng);
-    },
-    [onCoordinatesChange],
-  );
-
-  // Marker drag handler
-  const markerEventHandlers = useMemo(
-    () => ({
-      dragend() {
-        const marker = markerRef.current;
-        if (marker != null) {
-          const latLng = marker.getLatLng();
-          onCoordinatesChange(latLng.lat, latLng.lng);
-        }
-      },
-    }),
-    [onCoordinatesChange],
-  );
-
-  // Handle map clicks
-  useMapEvents({
-    click: handleMapClick,
-  });
-
-  return (
-    <>
-      <Marker
-        draggable={true}
-        eventHandlers={markerEventHandlers}
-        position={[latitude, longitude]}
-        ref={markerRef}
-        icon={ATTRACTION_MARKER_ICON}
-      />
-
-      {currentCity && (
-        <Marker
-          draggable={false}
-          position={[currentCity.latitude, currentCity.longitude]}
-          icon={CURRENT_CITY_MARKER_ICON}
-        >
-          <Tooltip>
-            <span>Current City: {currentCity.name}</span>
-          </Tooltip>
-        </Marker>
-      )}
-
-      {nearestCities?.map((city) => (
-        <Marker
-          key={city.id}
-          position={[city.latitude, city.longitude]}
-          icon={NEAREST_CITY_MARKER_ICON}
-        >
-          <Tooltip>
-            <span className="text-sm font-medium text-gray-900">
-              {city.name}
-            </span>
-          </Tooltip>
-          <Popup>
-            <span className="text-sm font-medium text-gray-900">
-              {city.name}
-            </span>
-          </Popup>
-        </Marker>
-      ))}
-    </>
-  );
-}
 
 export function AttractionMap({
   latitude,
@@ -213,7 +97,14 @@ export function AttractionMap({
   onCoordinatesChange,
   className,
 }: AttractionMapProps) {
-  const initialCenter: [number, number] = [latitude, longitude];
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const attractionMarkerRef = useRef<L.Marker | null>(null);
+  const cityMarkersRef = useRef<L.Marker[]>([]);
+  const onCoordinatesChangeRef = useRef(onCoordinatesChange);
+  const prevCoordsRef = useRef({ lat: latitude, lng: longitude });
+  const initialCoordsRef = useRef({ lat: latitude, lng: longitude });
+  onCoordinatesChangeRef.current = onCoordinatesChange;
 
   const {
     data: nearbyCities,
@@ -239,6 +130,89 @@ export function AttractionMap({
     nearbyCities?.length ? nearbyCities : (extendedNearbyCities ?? [])
   ).filter((city) => city.id !== currentCity?.id);
 
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) return;
+
+    const map = L.map(containerRef.current, {
+      center: [initialCoordsRef.current.lat, initialCoordsRef.current.lng],
+      zoom: DEFAULT_ZOOM,
+      scrollWheelZoom: true,
+      attributionControl: false,
+    });
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+    }).addTo(map);
+
+    map.on("click", (e) => {
+      onCoordinatesChangeRef.current(e.latlng.lat, e.latlng.lng);
+    });
+
+    const marker = L.marker(
+      [initialCoordsRef.current.lat, initialCoordsRef.current.lng],
+      {
+        icon: ATTRACTION_MARKER_ICON,
+        draggable: true,
+      },
+    ).addTo(map);
+
+    marker.on("dragend", () => {
+      const latLng = marker.getLatLng();
+      onCoordinatesChangeRef.current(latLng.lat, latLng.lng);
+    });
+
+    mapRef.current = map;
+    attractionMarkerRef.current = marker;
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+      attractionMarkerRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const marker = attractionMarkerRef.current;
+    if (!map || !marker) return;
+
+    marker.setLatLng([latitude, longitude]);
+
+    const latDiff = Math.abs(latitude - prevCoordsRef.current.lat);
+    const lngDiff = Math.abs(longitude - prevCoordsRef.current.lng);
+    if (latDiff > COORDINATE_THRESHOLD || lngDiff > COORDINATE_THRESHOLD) {
+      map.setView([latitude, longitude], map.getZoom(), { animate: true, duration: 0.5 });
+      prevCoordsRef.current = { lat: latitude, lng: longitude };
+    }
+  }, [latitude, longitude]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    for (const marker of cityMarkersRef.current) {
+      marker.remove();
+    }
+    cityMarkersRef.current = [];
+
+    if (currentCity) {
+      const marker = L.marker([currentCity.latitude, currentCity.longitude], {
+        icon: CURRENT_CITY_MARKER_ICON,
+      }).addTo(map);
+      marker.bindTooltip(`Current City: ${currentCity.name}`);
+      cityMarkersRef.current.push(marker);
+    }
+
+    for (const city of cities) {
+      const marker = L.marker([city.latitude, city.longitude], {
+        icon: NEAREST_CITY_MARKER_ICON,
+      }).addTo(map);
+      marker.bindTooltip(city.name);
+      marker.bindPopup(city.name);
+      cityMarkersRef.current.push(marker);
+    }
+  }, [currentCity, cities]);
+
   return (
     <div className={className}>
       {error && (
@@ -255,23 +229,10 @@ export function AttractionMap({
         </div>
       )}
 
-      <MapContainer
-        center={initialCenter}
-        zoom={DEFAULT_ZOOM}
-        scrollWheelZoom={true}
-        style={{ height: "100%", width: "100%" }}
-        className="rounded-lg border border-gray-200 bg-gray-100"
-        attributionControl={false}
-      >
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        <MapController
-          latitude={latitude}
-          longitude={longitude}
-          currentCity={currentCity}
-          nearestCities={cities}
-          onCoordinatesChange={onCoordinatesChange}
-        />
-      </MapContainer>
+      <div
+        ref={containerRef}
+        className="h-full w-full rounded-lg border border-gray-200 bg-gray-100"
+      />
     </div>
   );
 }

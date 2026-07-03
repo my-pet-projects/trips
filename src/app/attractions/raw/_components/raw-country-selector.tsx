@@ -1,10 +1,15 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 
 import { CountryCombobox } from "~/app/_components/geo/country-combobox";
 import { api } from "~/trpc/react";
 import type { Country } from "~/types";
+import { getTriageErrorMessage } from "./errors";
+
+let lastCountriesError: unknown = null;
 
 interface RawCountrySelectorProps {
   selected?: string;
@@ -15,7 +20,24 @@ export function RawCountrySelector({ selected, compact }: RawCountrySelectorProp
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const { data: countries = [], isLoading, isError } = api.geo.getCountries.useQuery();
+  const {
+    data: countries = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = api.geo.getCountries.useQuery(undefined, { retry: 1 });
+
+  useEffect(() => {
+    if (!isError || !error || error === lastCountriesError) return;
+    lastCountriesError = error;
+    toast.error(getTriageErrorMessage(error), {
+      action: {
+        label: "Retry",
+        onClick: () => void refetch(),
+      },
+    });
+  }, [isError, error, refetch]);
 
   const options = countries.map((c) => ({
     value: c.cca2,
@@ -44,7 +66,7 @@ export function RawCountrySelector({ selected, compact }: RawCountrySelectorProp
       compact={compact}
       value={selectedCountry}
       onChange={handleChange}
-      placeholder="Select country…"
+      placeholder={isError ? "Failed to load countries" : "Select country…"}
     />
   );
 }
