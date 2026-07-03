@@ -18,7 +18,6 @@ export default defineConfig({
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
-    // Bypass Vercel deployment protection if secret is provided
     ...(bypassSecret && {
       extraHTTPHeaders: {
         "x-vercel-protection-bypass": bypassSecret,
@@ -27,11 +26,21 @@ export default defineConfig({
   },
   projects: [
     {
+      name: "setup",
+      testMatch: /global\.setup\.ts/,
+    },
+    {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      testIgnore: [/global\.setup\.ts/, /.*\.auth\.spec\.ts/],
+    },
+    {
+      name: "chromium-authenticated",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /.*\.auth\.spec\.ts/,
+      dependencies: ["setup"],
     },
   ],
-  // Only start local dev server if no external URL is provided
   ...(process.env.PLAYWRIGHT_BASE_URL
     ? {}
     : {

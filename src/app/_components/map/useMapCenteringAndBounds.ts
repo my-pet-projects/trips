@@ -3,17 +3,29 @@ import { useEffect, useRef } from "react";
 
 import type { AttractionSummary, BasicAttraction } from "~/types";
 
-export const useMapCenteringAndBounds = (
-  mapRef: React.RefObject<L.Map | null>,
-  hasInitializedBounds: React.RefObject<boolean>,
-  attractions: AttractionSummary[],
-  attractionsMap: Map<number, AttractionSummary>,
-  selectedDayAttractions: BasicAttraction[],
-  selectedDayId: number | null,
-  selectedAttractionId: number | null,
-  panelHeight: number,
-  userLocation: [number, number] | null,
-) => {
+export type MapCenteringAndBoundsOptions = {
+  mapRef: React.RefObject<L.Map | null>;
+  hasInitializedBounds: React.RefObject<boolean>;
+  attractions: AttractionSummary[];
+  attractionsMap: Map<number, AttractionSummary>;
+  selectedDayAttractions?: BasicAttraction[];
+  selectedDayId?: number | null;
+  selectedAttractionId?: number | null;
+  panelHeight?: number;
+  userLocation?: [number, number] | null;
+};
+
+export const useMapCenteringAndBounds = ({
+  mapRef,
+  hasInitializedBounds,
+  attractions,
+  attractionsMap,
+  selectedDayAttractions = [],
+  selectedDayId = null,
+  selectedAttractionId = null,
+  panelHeight = 0,
+  userLocation = null,
+}: MapCenteringAndBoundsOptions) => {
   // Track whether we've already centered for the current selection
   const lastCenteredIdRef = useRef<number | null>(null);
   const panelHeightRef = useRef(panelHeight);

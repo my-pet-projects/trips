@@ -24,9 +24,9 @@ export type TripListItem = RouterOutputs["trip"]["listTrips"][number];
 
 // Raw attraction types
 export type RawAttraction =
-  RouterOutputs["rawAttraction"]["getByCountry"][number];
+  RouterOutputs["rawAttraction"]["getTriageMapData"]["raw"][number];
 export type ExistingAttraction =
-  RouterOutputs["rawAttraction"]["getExistingByCountry"][number];
+  RouterOutputs["rawAttraction"]["getTriageMapData"]["existing"][number];
 
 // Route types
 export type RouteData = RouterOutputs["route"]["buildRoute"];

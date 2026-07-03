@@ -20,20 +20,7 @@ type ItineraryViewerProps = {
   tripAttractions: AttractionDetail[];
 };
 
-const DAY_COLORS = [
-  "#3b82f6",
-  "#ef4444",
-  "#10b981",
-  "#f59e0b",
-  "#8b5cf6",
-  "#ec4899",
-  "#06b6d4",
-  "#f97316",
-  "#14b8a6",
-  "#a855f7",
-  "#84cc16",
-  "#f43f5e",
-] as const;
+import { DEFAULT_DAY_COLOR, getItineraryDayColor } from "~/lib/map/colors";
 
 const transformTripDays = (trip: Trip): ItineraryDayData[] => {
   if (!trip) return [];
@@ -117,13 +104,13 @@ export function ItineraryViewer({
   const dayColors = useMemo(() => {
     const map = new Map<number, string>();
     itineraryDays.forEach((day, index) =>
-      map.set(day.id, DAY_COLORS[index % DAY_COLORS.length]!),
+      map.set(day.id, getItineraryDayColor(index)),
     );
     return map;
   }, [itineraryDays]);
 
   const dayColor = useMemo(
-    () => dayColors.get(selectedDayId ?? 0) ?? "#3b82f6",
+    () => dayColors.get(selectedDayId ?? 0) ?? DEFAULT_DAY_COLOR,
     [dayColors, selectedDayId],
   );
 
@@ -178,6 +165,7 @@ export function ItineraryViewer({
 
             <button
               type="button"
+              data-testid="itinerary-prev-day"
               onClick={handlePrevDay}
               disabled={!canGoPrevDay}
               className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 md:p-2"
@@ -201,6 +189,7 @@ export function ItineraryViewer({
 
             <button
               type="button"
+              data-testid="itinerary-next-day"
               onClick={handleNextDay}
               disabled={!canGoNextDay}
               className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 md:p-2"
