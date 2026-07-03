@@ -2,9 +2,14 @@
 
 import dynamic from "next/dynamic";
 
-const RawAttractionsMapInner = dynamic(
-  () => import("./raw-attractions-map-inner").then((m) => m.RawAttractionsMapInner),
-  { ssr: false, loading: () => <div className="flex h-full items-center justify-center text-gray-500">Loading map…</div> },
+import { MapDynamicLoading } from "~/lib/map/map-loading";
+
+const RawTriageMapView = dynamic(
+  () => import("./raw-triage-map-view").then((m) => m.RawTriageMapView),
+  {
+    ssr: false,
+    loading: () => <MapDynamicLoading label="Loading map…" />,
+  },
 );
 
 interface RawAttractionsMapProps {
@@ -12,5 +17,5 @@ interface RawAttractionsMapProps {
 }
 
 export function RawAttractionsMap({ countryCode }: RawAttractionsMapProps) {
-  return <RawAttractionsMapInner countryCode={countryCode} />;
+  return <RawTriageMapView countryCode={countryCode} />;
 }

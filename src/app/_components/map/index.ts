@@ -1,4 +1,6 @@
 // Map feature module exports
+export { BrowseMap } from "./browse-map";
+export type { BrowseMapProps } from "./browse-map";
 export { AttractionDetailPanel } from "./attraction-detail-panel";
 export { AttractionImageGallery } from "./attraction-image-gallery";
 export { AttractionMap } from "./attraction-map";

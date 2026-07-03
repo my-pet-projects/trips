@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { MapDynamicLoading } from "~/lib/map/map-loading";
 import type {
   AttractionDetail,
   AttractionSummary,
@@ -35,14 +36,7 @@ type ItineraryMapProps = {
 
 const LeafletMap = dynamic(() => import("./leaflet-map"), {
   ssr: false,
-  loading: () => (
-    <div className="flex h-full items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <div className="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-sky-600" />
-        <p className="text-sm text-gray-500">Loading map...</p>
-      </div>
-    </div>
-  ),
+  loading: () => <MapDynamicLoading label="Loading map…" />,
 });
 
 export function ItineraryMap({
