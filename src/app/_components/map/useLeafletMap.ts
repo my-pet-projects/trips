@@ -1,7 +1,13 @@
 import L from "leaflet";
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 import type { AttractionSummary } from "~/types";
+
+export type LeafletMapViewOptions = {
+  center?: [number, number];
+  zoom?: number;
+  attributionControl?: boolean;
+};
 
 const getInitialMapCenter = (attractions: AttractionSummary[]): [number, number] => {
   const validAttractions = attractions.filter(
@@ -9,7 +15,7 @@ const getInitialMapCenter = (attractions: AttractionSummary[]): [number, number]
   );
 
   if (validAttractions.length === 0) {
-    return [48.8566, 2.3522]; // Fallback to Paris
+    return [48.8566, 2.3522];
   }
 
   const avgLat =
@@ -25,20 +31,27 @@ const getInitialMapCenter = (attractions: AttractionSummary[]): [number, number]
 export const useLeafletMap = (
   containerRef: React.RefObject<HTMLDivElement | null>,
   attractions: AttractionSummary[],
+  viewOptions?: LeafletMapViewOptions,
 ) => {
   const mapRef = useRef<L.Map | null>(null);
   const initialAttractionsRef = useRef(attractions);
+  const viewOptionsRef = useRef(viewOptions);
+  viewOptionsRef.current = viewOptions;
   const hasInitializedBounds = useRef<boolean>(false);
+  const [mapReady, setMapReady] = useState(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    const center = getInitialMapCenter(initialAttractionsRef.current);
+    const center =
+      viewOptionsRef.current?.center ?? getInitialMapCenter(initialAttractionsRef.current);
+    const zoom = viewOptionsRef.current?.zoom ?? 5;
     const map = L.map(containerRef.current, {
       zoomControl: true,
       scrollWheelZoom: true,
-    }).setView(center, 5);
-    map.attributionControl.setPrefix("");
+      attributionControl: viewOptionsRef.current?.attributionControl ?? true,
+    }).setView(center, zoom);
+    map.attributionControl?.setPrefix("");
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
@@ -48,13 +61,15 @@ export const useLeafletMap = (
     }).addTo(map);
 
     mapRef.current = map;
+    setMapReady(true);
 
     return () => {
       map.remove();
       mapRef.current = null;
       hasInitializedBounds.current = false;
+      setMapReady(false);
     };
   }, [containerRef]);
 
-  return { mapRef, hasInitializedBounds };
+  return { mapRef, hasInitializedBounds, mapReady };
 };

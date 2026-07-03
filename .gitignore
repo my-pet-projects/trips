@@ -11,6 +11,8 @@
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/playwright/.clerk/
+/.playwright-browsers/
 
 # database
 /prisma/db.sqlite

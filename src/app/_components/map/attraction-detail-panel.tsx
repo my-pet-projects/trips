@@ -108,6 +108,7 @@ export function AttractionDetailPanel({
   return (
     <div
       ref={panelRef}
+      data-testid="map-detail-panel"
       className={`absolute inset-x-[2.5%] bottom-0 z-1000 flex max-h-[70%] flex-col overflow-hidden rounded-t-2xl border border-b-0 border-gray-200 bg-white shadow-2xl transition-transform duration-300 ease-out sm:inset-x-[16.67%] ${
         isVisible ? "translate-y-0" : "translate-y-full"
       }`}
