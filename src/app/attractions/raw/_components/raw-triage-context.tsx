@@ -16,8 +16,11 @@ export function RawTriageProvider({
   children: ReactNode;
 }) {
   const value = useRawTriage(countryCode);
+
   return (
-    <RawTriageContext.Provider value={value}>{children}</RawTriageContext.Provider>
+    <RawTriageContext.Provider value={value}>
+      {children}
+    </RawTriageContext.Provider>
   );
 }
 
