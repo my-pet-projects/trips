@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useCallback } from "react";
 
 import { AttractionMapShell } from "~/app/_components/map/attraction-map-shell";
-import { notifyMapExtensionSelection } from "~/lib/map/map-extension-bridge";
+import { notifyTripsImageExtension } from "~/lib/trips-image-extension";
 import { LoadErrorBanner } from "~/app/attractions/raw/_components/load-error-banner";
 import { MapDynamicLoading, MapLoadingOverlay } from "~/lib/map/map-loading";
 import type { AttractionSummary } from "~/types";
@@ -33,7 +33,7 @@ function BrowseMapContent() {
 
   const handleMarkerClick = useCallback(
     (attraction: AttractionSummary) => {
-      notifyMapExtensionSelection("browse", attraction);
+      notifyTripsImageExtension("map-browse", attraction);
       selectAttraction(attraction.id);
     },
     [selectAttraction],
