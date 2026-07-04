@@ -1,20 +1,20 @@
 /// <reference types="chrome" />
 
-/** @typedef {import("./types").AttractionSelectedDetail} AttractionSelectedDetail */
+/** @typedef {import("./types").TripsImageSearchDetail} TripsImageSearchDetail */
 /** @typedef {import("./types").TripsPageMessage} TripsPageMessage */
 
-const EVENT_SELECTED = "trips-attraction-selected";
-const MESSAGE_SOURCE = "trips-map-images";
+const EVENT_IMAGE_SEARCH = "trips-image-search";
+const MESSAGE_SOURCE = "trips-image-extension";
 
 /**
- * @param {AttractionSelectedDetail | undefined} detail
+ * @param {TripsImageSearchDetail | undefined} detail
  */
-function forwardSelection(detail) {
+function forwardImageSearch(detail) {
   if (!detail?.query) return;
 
   chrome.runtime
     .sendMessage({
-      type: "TRIPS_ATTRACTION_SELECTED",
+      type: "TRIPS_IMAGE_SEARCH",
       detail,
     })
     .catch(() => {
@@ -29,7 +29,7 @@ window.addEventListener("message", (event) => {
   /** @type {TripsPageMessage} */
   const data = event.data;
   if (data?.source !== MESSAGE_SOURCE) return;
-  if (data?.type !== EVENT_SELECTED) return;
+  if (data?.type !== EVENT_IMAGE_SEARCH) return;
 
-  forwardSelection(data.detail);
+  forwardImageSearch(data.detail);
 });

@@ -224,7 +224,7 @@ export function ItineraryViewer({
             onAddAttractionToDay={handleAddAttractionToDay}
             enableLocationTracking
             isLoadingRoutes={isLoadingRoutes}
-            extensionMapContext="view"
+            tripsImageSource="map-view"
           />
         </div>
 
