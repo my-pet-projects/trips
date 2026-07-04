@@ -35,7 +35,7 @@ export default async function ItineraryPage({ params }: TripViewPageProps) {
   });
 
   return (
-    <div className="flex h-dvh flex-col bg-linear-to-br from-sky-50 via-white to-orange-50">
+    <div className="flex h-dvh flex-col overflow-hidden bg-linear-to-br from-sky-50 via-white to-orange-50">
       <Navbar
         title={trip.name}
         subtitle="View your itinerary"
