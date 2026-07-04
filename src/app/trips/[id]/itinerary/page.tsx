@@ -35,7 +35,7 @@ export default async function ItineraryPage({ params }: ItineraryPageProps) {
   });
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-sky-50 via-white to-orange-50">
+    <div className="flex h-dvh flex-col overflow-hidden bg-linear-to-br from-sky-50 via-white to-orange-50">
       <Navbar
         title={trip.name}
         subtitle="Plan your itinerary"
@@ -51,8 +51,7 @@ export default async function ItineraryPage({ params }: ItineraryPageProps) {
         }
       />
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto min-h-0 flex-1 overflow-y-auto px-4 py-6">
         <ItineraryPlanner trip={trip} tripAttractions={attractions} />
       </main>
     </div>

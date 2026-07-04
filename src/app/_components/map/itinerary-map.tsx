@@ -4,6 +4,10 @@ import dynamic from "next/dynamic";
 import { useCallback } from "react";
 
 import { MapDynamicLoading } from "~/lib/map/map-loading";
+import {
+  notifyMapExtensionSelection,
+  type MapExtensionContext,
+} from "~/lib/map/map-extension-bridge";
 import type { MarkerMeta } from "~/lib/map/marker-meta";
 import type {
   AttractionDetail,
@@ -12,9 +16,7 @@ import type {
   RouteData,
 } from "~/types";
 
-import {
-  AttractionMapShell,
-} from "./attraction-map-shell";
+import { AttractionMapShell } from "./attraction-map-shell";
 import { useItineraryMapDerivedState } from "./use-itinerary-map-derived-state";
 
 const ItineraryLeafletMap = dynamic(
@@ -47,6 +49,7 @@ type ItineraryMapProps = {
   isLoadingRoutes: boolean;
   className?: string;
   markerMeta?: Map<number, MarkerMeta>;
+  extensionMapContext?: MapExtensionContext;
 };
 
 export function ItineraryMap({
@@ -68,15 +71,19 @@ export function ItineraryMap({
   isLoadingRoutes,
   className,
   markerMeta,
+  extensionMapContext,
 }: ItineraryMapProps) {
   const { attractionToDayMap, selectedDayAttractionOrders, resolveAttractionStatus } =
     useItineraryMapDerivedState(allDaysAttractions, selectedDayAttractions, selectedDayId);
 
   const handleMarkerClick = useCallback(
     (attraction: AttractionSummary) => {
+      if (extensionMapContext) {
+        notifyMapExtensionSelection(extensionMapContext, attraction);
+      }
       onAttractionSelect(attraction.id);
     },
-    [onAttractionSelect],
+    [extensionMapContext, onAttractionSelect],
   );
 
   return (
