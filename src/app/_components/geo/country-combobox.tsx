@@ -76,7 +76,7 @@ const getSelectClassNames = ({
   indicatorSeparator: () => "!bg-gray-300",
   dropdownIndicator: () => compact ? "!text-gray-400 hover:!text-gray-500 !p-1" : "!text-gray-400 hover:!text-gray-500",
   clearIndicator: () => compact ? "!text-gray-400 hover:!text-red-500 !p-1" : "!text-gray-400 hover:!text-red-500",
-  menu: () => "!rounded-lg !shadow-md !mt-2",
+  menu: () => "!rounded-lg !shadow-md !mt-2 !z-[1000]",
   option: (state: { isSelected: boolean; isFocused: boolean }) =>
     `${compact ? "!text-xs !py-1" : ""} !text-gray-800 ${
       state.isSelected
@@ -125,7 +125,18 @@ const CustomInput = (
     boolean,
     GroupBase<CountrySelectOption>
   >,
-) => <components.Input {...props} autoComplete="off" />;
+) => (
+  <components.Input
+    {...props}
+    autoComplete="nope"
+    autoCorrect="off"
+    autoCapitalize="off"
+    spellCheck={false}
+    data-lpignore="true"
+    data-1p-ignore="true"
+    data-form-type="other"
+  />
+);
 
 const CountryComboboxSingle: React.FC<CountryComboboxSingleProps> = ({
   options,
@@ -186,16 +197,14 @@ const CountryComboboxSingle: React.FC<CountryComboboxSingleProps> = ({
   return (
     <div className="w-full" data-testid="country-select-container">
       {showLabel && (
-        <label
-          htmlFor="country-select-single"
-          className="mb-1.5 block text-sm font-medium text-gray-700"
-        >
+        <div className="mb-1.5 block text-sm font-medium text-gray-700">
           Country
-        </label>
+        </div>
       )}
       <Select<CountrySelectOption, false, GroupBase<CountrySelectOption>>
         instanceId="country-select-single"
         inputId="country-select-single"
+        aria-label="Country"
         options={options}
         isLoading={isLoading}
         loadingMessage={() => compact ? "Loading…" : "Loading countries..."}
@@ -265,16 +274,14 @@ const CountryComboboxMulti: React.FC<CountryComboboxMultiProps> = ({
   return (
     <div className="w-full">
       {showLabel && (
-        <label
-          htmlFor="country-select-multi"
-          className="mb-1.5 block text-sm font-medium text-gray-700"
-        >
+        <div className="mb-1.5 block text-sm font-medium text-gray-700">
           Countries
-        </label>
+        </div>
       )}
       <Select<CountrySelectOption, true, GroupBase<CountrySelectOption>>
         instanceId="country-select-multi"
         inputId="country-select-multi"
+        aria-label="Countries"
         options={options}
         isLoading={isLoading}
         loadingMessage={() => "Loading countries..."}

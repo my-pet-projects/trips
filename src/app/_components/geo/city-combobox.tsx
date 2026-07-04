@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef } from "react";
-import Select, { components, type InputProps } from "react-select";
+import Select, { components, type GroupBase, type InputProps } from "react-select";
 
 import type { City } from "~/types";
 
@@ -63,8 +63,17 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
 
   const customComponents = useMemo(
     () => ({
-      Input: (props: InputProps<CitySelectOption>) => (
-        <components.Input {...props} autoComplete="nope" />
+      Input: (props: InputProps<CitySelectOption, false, GroupBase<CitySelectOption>>) => (
+        <components.Input
+          {...props}
+          autoComplete="nope"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          data-lpignore="true"
+          data-1p-ignore="true"
+          data-form-type="other"
+        />
       ),
     }),
     [],
@@ -73,16 +82,12 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
   return (
     <div className="h-12 w-full">
       {showLabel && (
-        <label
-          htmlFor="city-select"
-          className="mb-1 block text-sm font-medium text-gray-700"
-        >
-          City
-        </label>
+        <div className="mb-1 block text-sm font-medium text-gray-700">City</div>
       )}
       <Select<CitySelectOption>
         instanceId="city-select"
         inputId="city-select"
+        aria-label="City"
         options={options}
         isLoading={isLoading}
         loadingMessage={() => "Loading cities..."}
@@ -127,7 +132,7 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
           indicatorSeparator: () => "!bg-gray-300",
           dropdownIndicator: () => "!text-gray-400 hover:!text-gray-500",
           clearIndicator: () => "!text-gray-400 hover:!text-red-500",
-          menu: () => "!rounded-lg !shadow-md !mt-2",
+          menu: () => "!rounded-lg !shadow-md !mt-2 !z-[1000]",
           option: (state) =>
             `!text-gray-800 ${state.isSelected ? "!bg-orange-200 !text-orange-700" : state.isFocused ? "!bg-orange-50" : "!bg-white"}`,
         }}
