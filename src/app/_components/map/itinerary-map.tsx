@@ -4,11 +4,11 @@ import dynamic from "next/dynamic";
 import { useCallback } from "react";
 
 import { MapDynamicLoading } from "~/lib/map/map-loading";
-import {
-  notifyMapExtensionSelection,
-  type MapExtensionContext,
-} from "~/lib/map/map-extension-bridge";
 import type { MarkerMeta } from "~/lib/map/marker-meta";
+import {
+  notifyTripsImageExtension,
+  type TripsImageSource,
+} from "~/lib/trips-image-extension";
 import type {
   AttractionDetail,
   AttractionSummary,
@@ -49,7 +49,7 @@ type ItineraryMapProps = {
   isLoadingRoutes: boolean;
   className?: string;
   markerMeta?: Map<number, MarkerMeta>;
-  extensionMapContext?: MapExtensionContext;
+  tripsImageSource: TripsImageSource;
 };
 
 export function ItineraryMap({
@@ -71,19 +71,17 @@ export function ItineraryMap({
   isLoadingRoutes,
   className,
   markerMeta,
-  extensionMapContext,
+  tripsImageSource,
 }: ItineraryMapProps) {
   const { attractionToDayMap, selectedDayAttractionOrders, resolveAttractionStatus } =
     useItineraryMapDerivedState(allDaysAttractions, selectedDayAttractions, selectedDayId);
 
   const handleMarkerClick = useCallback(
     (attraction: AttractionSummary) => {
-      if (extensionMapContext) {
-        notifyMapExtensionSelection(extensionMapContext, attraction);
-      }
+      notifyTripsImageExtension(tripsImageSource, attraction);
       onAttractionSelect(attraction.id);
     },
-    [extensionMapContext, onAttractionSelect],
+    [tripsImageSource, onAttractionSelect],
   );
 
   return (

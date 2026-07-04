@@ -6,6 +6,7 @@ import {
   CheckCircle,
   Clipboard,
   Globe,
+  Images,
   Loader2,
   Map as MapIcon,
   MapPin,
@@ -25,6 +26,9 @@ import { Button } from "~/app/_components/ui/button";
 import { Input } from "~/app/_components/ui/input";
 import { Label } from "~/app/_components/ui/label";
 import { Textarea } from "~/app/_components/ui/textarea";
+import {
+  notifyTripsImageExtension,
+} from "~/lib/trips-image-extension";
 import { getTrpcErrorMessage } from "~/lib/trpc-error-message";
 import { validateReturnTo } from "~/lib/utils";
 import {
@@ -155,7 +159,7 @@ export function AttractionForm(props: AttractionFormProps) {
         : getExistingAttractionDefaultValues(props.attraction),
   });
 
-  const [highlight, isVerified, currentLatitude, currentLongitude, sourceUrl] =
+  const [highlight, isVerified, currentLatitude, currentLongitude, sourceUrl, nameLocal] =
     useWatch({
       control: form.control,
       name: [
@@ -164,6 +168,7 @@ export function AttractionForm(props: AttractionFormProps) {
         "latitude",
         "longitude",
         "sourceUrl",
+        "nameLocal",
       ],
     });
 
@@ -388,6 +393,19 @@ export function AttractionForm(props: AttractionFormProps) {
         : `https://www.google.com/maps?q=${mapLatitude},${mapLongitude}`;
 
     window.open(url, "_blank");
+  };
+
+  const handleSearchImages = () => {
+    if (!attraction || !hasValidLatitude || !hasValidLongitude) return;
+    if (currentLatitude == null || currentLongitude == null) return;
+
+    notifyTripsImageExtension("form-verify", {
+      name: form.getValues("name").trim() || attraction.name,
+      nameLocal: form.getValues("nameLocal")?.trim() || null,
+      city: attraction.city.name,
+      latitude: currentLatitude,
+      longitude: currentLongitude,
+    });
   };
 
   const currentCity = mode !== "create" ? attraction?.city : undefined;
@@ -660,6 +678,20 @@ export function AttractionForm(props: AttractionFormProps) {
                 >
                   <MapPin className="h-4 w-4" />
                 </Button>
+                {isVerifyMode ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleSearchImages}
+                    title="Search images in side panel"
+                    disabled={!hasValidLatitude || !hasValidLongitude}
+                    className="h-10 w-10"
+                    data-testid="search-images-button"
+                  >
+                    <Images className="h-4 w-4" />
+                  </Button>
+                ) : null}
               </div>
             </div>
 

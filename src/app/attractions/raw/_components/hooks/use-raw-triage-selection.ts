@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from "react";
 
-import {
-  notifyMapExtensionSelection,
-} from "~/lib/map/map-extension-bridge";
+import { notifyTripsImageExtension } from "~/lib/trips-image-extension";
 
 import type {
   ExistingMapAttraction,
@@ -39,7 +37,7 @@ export function useRawTriageSelection(
   }, [rawAttractions, existing, resolveExistingId]);
 
   const selectRaw = useCallback((attraction: RawMapAttraction) => {
-    notifyMapExtensionSelection("raw", {
+    notifyTripsImageExtension("map-raw", {
       ...attraction,
       city: attraction.cityName,
     });
@@ -47,7 +45,13 @@ export function useRawTriageSelection(
   }, []);
 
   const selectExisting = useCallback((attraction: ExistingMapAttraction) => {
-    notifyMapExtensionSelection("raw", attraction);
+    notifyTripsImageExtension("map-raw", {
+      name: attraction.name,
+      nameLocal: attraction.nameLocal,
+      city: null,
+      latitude: attraction.latitude,
+      longitude: attraction.longitude,
+    });
     setSelection({ kind: "existing", attraction });
   }, []);
 

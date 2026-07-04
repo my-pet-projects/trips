@@ -1,6 +1,6 @@
 /// <reference types="chrome" />
 
-const STORAGE_KEY = "tripsRawMapSelection";
+const STORAGE_KEY = "tripsImageSearchSelection";
 const SIDE_PANEL_PATH = "src/sidepanel.html";
 
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
@@ -23,7 +23,7 @@ function openSidePanelFromSender(sender) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender) => {
-  if (message?.type !== "TRIPS_ATTRACTION_SELECTED") return;
+  if (message?.type !== "TRIPS_IMAGE_SEARCH") return;
 
   const tabId = sender.tab?.id;
   if (tabId == null) return;
