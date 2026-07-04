@@ -1,8 +1,13 @@
 import { TRPCError } from "@trpc/server";
-import { and, count, eq, inArray, like, or } from "drizzle-orm";
+import { and, count, eq, inArray, like, or, sql } from "drizzle-orm";
 import z from "zod";
 
 import { createLogger, errMsg } from "~/lib/logger";
+import {
+  attractionCreateInputSchema,
+  attractionHighlightSchema,
+  attractionUpdateInputSchema,
+} from "~/lib/validators/attraction";
 import {
   createTRPCRouter,
   protectedProcedure,
@@ -45,6 +50,9 @@ export const attractionRouter = createTRPCRouter({
 
         return { ...attraction, city };
       } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
         log.error(
           { id: input.id, error: errMsg(error) },
           "Error fetching attraction by ID",
@@ -115,6 +123,59 @@ export const attractionRouter = createTRPCRouter({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to fetch attractions",
+          cause: error,
+        });
+      }
+    }),
+
+  getVerificationQueue: protectedProcedure
+    .input(
+      z.object({
+        countryCode: z
+          .string()
+          .length(2)
+          .transform((value) => value.toUpperCase()),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      try {
+        const rows = await ctx.db
+          .select({
+            id: schema.attractions.id,
+            name: schema.attractions.name,
+            nameLocal: schema.attractions.nameLocal,
+            highlight: schema.attractions.highlight,
+          })
+          .from(schema.attractions)
+          .where(
+            and(
+              eq(schema.attractions.countryCode, input.countryCode),
+              eq(schema.attractions.isVerified, false),
+            ),
+          )
+          .orderBy(
+            sql`CASE ${schema.attractions.highlight} WHEN 'must_see' THEN 0 WHEN 'recommended' THEN 1 WHEN 'skip' THEN 2 ELSE 3 END`,
+            sql`CASE WHEN ${schema.attractions.latitude} IS NULL OR ${schema.attractions.longitude} IS NULL THEN 1 ELSE 0 END`,
+            schema.attractions.id,
+          );
+
+        return {
+          countryCode: input.countryCode,
+          total: rows.length,
+          items: rows,
+          ids: rows.map((row) => row.id),
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        log.error(
+          { countryCode: input.countryCode, error: errMsg(error) },
+          "Error fetching verification queue",
+        );
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch verification queue",
           cause: error,
         });
       }
@@ -225,7 +286,7 @@ export const attractionRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.number(),
-        highlight: z.enum(["must_see", "recommended", "skip"]).nullable(),
+        highlight: attractionHighlightSchema.nullable(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -242,21 +303,7 @@ export const attractionRouter = createTRPCRouter({
     }),
 
   update: protectedProcedure
-    .input(
-      z.object({
-        id: z.number(),
-        name: z.string().min(1, "Name is required").max(256).trim(),
-        nameLocal: z.string().max(256).optional(),
-        description: z.string().optional(),
-        latitude: z.coerce.number().min(-90).max(90).optional().nullable(),
-        longitude: z.coerce.number().min(-180).max(180).optional().nullable(),
-        sourceUrl: z.string().max(256).optional().nullable(),
-        cityId: z.number().min(1, "City is required"),
-        countryCode: z.string().length(2, "Country is required"),
-        isVerified: z.boolean().optional(),
-        highlight: z.enum(["must_see", "recommended", "skip"]).nullable().optional(),
-      }),
-    )
+    .input(attractionUpdateInputSchema)
     .mutation(async ({ ctx, input }) => {
       const { id, ...updateData } = input;
 
@@ -292,20 +339,7 @@ export const attractionRouter = createTRPCRouter({
     }),
 
   create: protectedProcedure
-    .input(
-      z.object({
-        name: z.string().min(1, "Name is required").max(256).trim(),
-        nameLocal: z.string().max(256).optional(),
-        description: z.string().optional(),
-        latitude: z.coerce.number().min(-90).max(90).optional().nullable(),
-        longitude: z.coerce.number().min(-180).max(180).optional().nullable(),
-        sourceUrl: z.string().max(256).optional().nullable(),
-        cityId: z.number().min(1, "City is required"),
-        countryCode: z.string().length(2, "Country is required"),
-        isVerified: z.boolean().optional(),
-        highlight: z.enum(["must_see", "recommended", "skip"]).nullable().optional(),
-      }),
-    )
+    .input(attractionCreateInputSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const result = await ctx.db
