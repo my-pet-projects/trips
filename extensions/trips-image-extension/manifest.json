@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Trips Attraction Images",
+  "name": "Trips Image Extension",
   "version": "1.0.0",
-  "description": "DuckDuckGo image search in Chrome's side panel for Trips maps.",
+  "description": "DuckDuckGo image search in Chrome's side panel for Trips attractions.",
   "permissions": [
     "sidePanel",
     "storage"
@@ -48,7 +48,7 @@
     "default_path": "src/sidepanel.html"
   },
   "action": {
-    "default_title": "Trips attraction images"
+    "default_title": "Trips image search"
   },
   "icons": {
     "16": "icons/icon16.png",

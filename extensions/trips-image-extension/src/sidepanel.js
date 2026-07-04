@@ -1,9 +1,9 @@
 /// <reference types="chrome" />
 
-/** @typedef {import("./types").AttractionSelectedDetail} AttractionSelectedDetail */
+/** @typedef {import("./types").TripsImageSearchDetail} TripsImageSearchDetail */
 /** @typedef {import("./types").DdgImageResult} DdgImageResult */
 
-const STORAGE_KEY = "tripsRawMapSelection";
+const STORAGE_KEY = "tripsImageSearchSelection";
 
 /**
  * @param {string} id
@@ -11,7 +11,7 @@ const STORAGE_KEY = "tripsRawMapSelection";
 function getRequiredElement(id) {
   const element = document.getElementById(id);
   if (!element) {
-    throw new Error(`[trips-map-images] Side panel markup is missing #${id}`);
+    throw new Error(`[trips-image-extension] Side panel markup is missing #${id}`);
   }
   return element;
 }
@@ -141,16 +141,16 @@ function renderImages(results) {
   }
 }
 
-/** @param {AttractionSelectedDetail | undefined} detail */
+/** @param {TripsImageSearchDetail | undefined} detail */
 async function loadSelection(detail) {
   const query = detail?.query?.trim();
   if (!query || !detail) {
     activeQuery = null;
-    titleEl.textContent = "Select a map marker";
+    titleEl.textContent = "Select an attraction";
     subtitleEl.textContent = "Images from DuckDuckGo appear here.";
     ddgLinkEl.classList.add("hidden");
     setStatus("");
-    renderEmpty("Click a marker on any Trips map to search images.");
+    renderEmpty("Click a map marker or use Search images on an attraction form.");
     return;
   }
 
@@ -188,7 +188,7 @@ async function loadSelection(detail) {
     if (currentRequest !== requestId) return;
 
     activeQuery = null;
-    console.error("[trips-map-images] image search failed:", error);
+    console.error("[trips-image-extension] image search failed:", error);
     setStatus("Image search failed. Try again or open DuckDuckGo.", { error: true });
     renderEmpty("Could not load images from DuckDuckGo.");
   }
