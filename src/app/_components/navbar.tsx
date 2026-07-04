@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   Building,
   Calendar,
+  CheckCircle2,
   Compass,
   CopyPlus,
   Database,
@@ -164,6 +165,13 @@ export function Navbar({
                   <Database className="mr-2 h-4 w-4" />
                   Raw
                 </Link>
+                <Link
+                  href="/attractions/verify"
+                  className="inline-flex items-center justify-center rounded-lg border border-emerald-500 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:outline-none"
+                >
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Verify
+                </Link>
               </>
             )}
 
@@ -265,6 +273,14 @@ export function Navbar({
                   >
                     <Database className="mr-2 h-4 w-4" />
                     Raw
+                  </Link>
+                  <Link
+                    href="/attractions/verify"
+                    onClick={closeMobileMenu}
+                    className="inline-flex items-center justify-center rounded-lg border border-emerald-500 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100"
+                  >
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    Verify
                   </Link>
                 </>
               )}
