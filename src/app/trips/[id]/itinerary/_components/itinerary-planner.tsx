@@ -510,6 +510,7 @@ export function ItineraryPlanner({
             onAttractionSelect={setSelectedAttractionId}
             onAddAttractionToDay={handleAddAttractionToDay}
             isLoadingRoutes={isLoadingRoutes}
+            extensionMapContext="itinerary"
           />
         </div>
       </div>

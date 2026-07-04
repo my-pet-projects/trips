@@ -1,0 +1,58 @@
+{
+  "manifest_version": 3,
+  "name": "Trips Attraction Images",
+  "version": "1.0.0",
+  "description": "DuckDuckGo image search in Chrome's side panel for Trips maps.",
+  "permissions": [
+    "sidePanel",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "http://127.0.0.1:3000/*",
+    "https://trips.seasharper.com/*",
+    "https://*.vercel.app/*",
+    "https://duckduckgo.com/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:3000/*",
+        "http://127.0.0.1:3000/*",
+        "https://trips.seasharper.com/*",
+        "https://*.vercel.app/*"
+      ],
+      "js": [
+        "src/page-bridge.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "http://localhost:3000/*",
+        "http://127.0.0.1:3000/*",
+        "https://trips.seasharper.com/*",
+        "https://*.vercel.app/*"
+      ],
+      "js": [
+        "src/content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "side_panel": {
+    "default_path": "src/sidepanel.html"
+  },
+  "action": {
+    "default_title": "Trips attraction images"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
