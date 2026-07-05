@@ -1,3 +1,5 @@
+import { UNRATED_MARKER_BORDER } from "~/lib/map/colors";
+
 export function buildPiePaths(
   slices: { color: string; count: number }[],
   cx: number,
@@ -8,7 +10,12 @@ export function buildPiePaths(
   if (total === 0) return "";
   const nonEmpty = slices.filter((sl) => sl.count > 0);
   if (nonEmpty.length === 1) {
-    return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${nonEmpty[0]!.color}"/>`;
+    const slice = nonEmpty[0]!;
+    const stroke =
+      slice.color.toLowerCase() === "#ffffff"
+        ? ` stroke="${UNRATED_MARKER_BORDER}" stroke-width="1.5"`
+        : "";
+    return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${slice.color}"${stroke}/>`;
   }
   let paths = "";
   let angle = -Math.PI / 2;
@@ -19,7 +26,11 @@ export function buildPiePaths(
     angle += sweep;
     const x2 = cx + r * Math.cos(angle);
     const y2 = cy + r * Math.sin(angle);
-    paths += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${sweep > Math.PI ? 1 : 0},1 ${x2},${y2} Z" fill="${sl.color}"/>`;
+    const stroke =
+      sl.color.toLowerCase() === "#ffffff"
+        ? ` stroke="${UNRATED_MARKER_BORDER}" stroke-width="1.5"`
+        : "";
+    paths += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${sweep > Math.PI ? 1 : 0},1 ${x2},${y2} Z" fill="${sl.color}"${stroke}/>`;
   }
   return paths;
 }

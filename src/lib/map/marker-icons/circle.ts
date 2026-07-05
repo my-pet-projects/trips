@@ -1,9 +1,10 @@
 import L from "leaflet";
 
 import { ATTRACTION_MARKER_COLORS } from "~/lib/map/marker-meta";
+import { HIGHLIGHT_COLORS, UNRATED_MARKER_BORDER } from "~/lib/map/colors";
 
 export const BASE_CIRCLE_MARKER_SIZE = 26;
-export const DEFAULT_CIRCLE_COLOR = "#9ca3af";
+export const DEFAULT_CIRCLE_COLOR = HIGHLIGHT_COLORS.none.hex;
 const VERIFIED_RING_WIDTH = 3;
 
 export type CircleMarkerIconOptions = {
@@ -31,6 +32,8 @@ export function createCircleMarkerIcon({
 }: CircleMarkerIconOptions): CircleMarkerIconResult {
   const showVerifiedRing = isVerified;
   const outerSize = showVerifiedRing ? size + VERIFIED_RING_WIDTH * 2 : size;
+  const isUnrated = color.toLowerCase() === HIGHLIGHT_COLORS.none.hex.toLowerCase();
+  const border = isUnrated ? `3px solid ${UNRATED_MARKER_BORDER}` : "3px solid white";
 
   const innerHtml = `
       <div style="
@@ -38,7 +41,7 @@ export function createCircleMarkerIcon({
         width: ${size}px;
         height: ${size}px;
         border-radius: 50%;
-        border: 3px solid white;
+        border: ${border};
         box-shadow: 0 ${isHighlighted ? "4" : "2"}px ${isHighlighted ? "12" : "8"}px rgba(0,0,0,${isHighlighted ? "0.4" : "0.3"});
         cursor: pointer;
         transition: all 0.2s ease;
@@ -56,7 +59,7 @@ export function createCircleMarkerIcon({
           display: flex;
           align-items: center;
           justify-content: center;
-          color: white;
+          color: ${isUnrated ? UNRATED_MARKER_BORDER : "white"};
           font-weight: 600;
           font-size: ${size > 28 ? "14px" : "12px"};
           line-height: 1;

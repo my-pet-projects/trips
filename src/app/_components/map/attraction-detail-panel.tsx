@@ -194,8 +194,8 @@ export function AttractionDetailPanel({
               onClick={() => handleHighlight("recommended")}
               className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
                 highlight === "recommended"
-                  ? "border-sky-400 bg-sky-50 text-sky-700"
-                  : "border-gray-200 text-gray-500 hover:border-sky-300 hover:bg-sky-50/50"
+                  ? "border-teal-400 bg-teal-50 text-teal-700"
+                  : "border-gray-200 text-gray-500 hover:border-teal-300 hover:bg-teal-50/50"
               }`}
             >
               <ThumbsUp className="h-3.5 w-3.5" />
