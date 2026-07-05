@@ -24,8 +24,8 @@ const HIGHLIGHT_OPTIONS: {
     value: "recommended",
     label: "Recommended",
     icon: ThumbsUp,
-    activeClass: "border-sky-400 bg-sky-50 text-sky-700",
-    idleHoverClass: "hover:border-sky-300 hover:bg-sky-50/50",
+    activeClass: "border-teal-400 bg-teal-50 text-teal-700",
+    idleHoverClass: "hover:border-teal-300 hover:bg-teal-50/50",
   },
   {
     value: "skip",
