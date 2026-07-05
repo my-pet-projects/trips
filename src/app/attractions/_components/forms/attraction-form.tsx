@@ -14,14 +14,26 @@ import {
   Save,
   Scan,
   SkipForward,
+  Trash2,
   XCircle,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
 import { CountryCitySelector } from "~/app/_components/geo/country-city-selector";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/app/_components/ui/alert-dialog";
 import { Button } from "~/app/_components/ui/button";
 import { Input } from "~/app/_components/ui/input";
 import { Label } from "~/app/_components/ui/label";
@@ -29,6 +41,7 @@ import { Textarea } from "~/app/_components/ui/textarea";
 import {
   notifyTripsImageExtension,
 } from "~/lib/trips-image-extension";
+import type { NearbyPoi } from "~/lib/geo/nearby-pois";
 import { getTrpcErrorMessage } from "~/lib/trpc-error-message";
 import { validateReturnTo } from "~/lib/utils";
 import {
@@ -41,6 +54,7 @@ import { api } from "~/trpc/react";
 import type { AttractionDetail, City, Country } from "~/types";
 
 import { HighlightPicker } from "./highlight-picker";
+import { NearbyPoiSuggestions } from "./nearby-poi-suggestions";
 
 export type AttractionFormMode = "create" | "edit" | "verify";
 
@@ -126,6 +140,10 @@ export function AttractionForm(props: AttractionFormProps) {
   const attraction = props.mode === "create" ? undefined : props.attraction;
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [hoveredPoi, setHoveredPoi] = useState<NearbyPoi | null>(null);
+  const [nearbyPois, setNearbyPois] = useState<NearbyPoi[]>([]);
+  const [poiLoadError, setPoiLoadError] = useState<string | null>(null);
   const isVerifyMode = mode === "verify";
   const verificationQueueNextId = getVerificationQueueNextId(
     verificationQueue?.ids,
@@ -146,20 +164,20 @@ export function AttractionForm(props: AttractionFormProps) {
     defaultValues:
       props.mode === "create"
         ? {
-            name: "",
-            nameLocal: "",
-            description: "",
-            latitude: null,
-            longitude: null,
-            sourceUrl: null,
-            countryCode: country ?? "",
-            isVerified: false,
-            highlight: null,
-          }
+          name: "",
+          nameLocal: "",
+          description: "",
+          latitude: null,
+          longitude: null,
+          sourceUrl: null,
+          countryCode: country ?? "",
+          isVerified: false,
+          highlight: null,
+        }
         : getExistingAttractionDefaultValues(props.attraction),
   });
 
-  const [highlight, isVerified, currentLatitude, currentLongitude, sourceUrl, nameLocal] =
+  const [highlight, isVerified, currentLatitude, currentLongitude, sourceUrl, nameLocal, countryCode] =
     useWatch({
       control: form.control,
       name: [
@@ -169,8 +187,13 @@ export function AttractionForm(props: AttractionFormProps) {
         "longitude",
         "sourceUrl",
         "nameLocal",
+        "countryCode",
       ],
     });
+
+  const handlePoiSelect = (poi: NearbyPoi) => {
+    form.setValue("nameLocal", poi.name, { shouldDirty: true });
+  };
 
   const parseSiteMutation = api.attractionScraper.parseUrl.useMutation({
     onMutate: () => {
@@ -243,10 +266,27 @@ export function AttractionForm(props: AttractionFormProps) {
     },
   });
 
+  const deleteMutation = api.attraction.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Attraction deleted");
+      if (isVerifyMode) {
+        navigateToNextInQueue();
+        return;
+      }
+      router.push(cancelHref);
+    },
+    onError: (err) => {
+      toast.error("Failed to delete attraction", {
+        description: getTrpcErrorMessage(err),
+      });
+    },
+  });
+
   const isSubmitting =
     createMutation.isPending ||
     updateMutation.isPending ||
-    parseSiteMutation.isPending;
+    parseSiteMutation.isPending ||
+    deleteMutation.isPending;
 
   const navigateToNextInQueue = () => {
     if (!verifyCountry) return;
@@ -268,6 +308,17 @@ export function AttractionForm(props: AttractionFormProps) {
 
   const handleSkipInQueue = () => {
     navigateToNextInQueue();
+  };
+
+  const handleDelete = async () => {
+    if (!attraction) return;
+    try {
+      await deleteMutation.mutateAsync({ id: attraction.id });
+    } catch {
+      // Mutation onError callbacks show user-facing toasts.
+    } finally {
+      setShowConfirmDelete(false);
+    }
   };
 
   const handleParseSourceUrl = () => {
@@ -489,6 +540,16 @@ export function AttractionForm(props: AttractionFormProps) {
                     {form.formState.errors.nameLocal.message}
                   </p>
                 )}
+                <NearbyPoiSuggestions
+                  latitude={currentLatitude}
+                  longitude={currentLongitude}
+                  countryCode={countryCode}
+                  selectedName={nameLocal ?? ""}
+                  onSelect={handlePoiSelect}
+                  onHover={setHoveredPoi}
+                  onPoisChange={setNearbyPois}
+                  onPoisError={setPoiLoadError}
+                />
               </div>
             </div>
 
@@ -581,11 +642,11 @@ export function AttractionForm(props: AttractionFormProps) {
               />
               {(form.formState.errors.countryCode ??
                 form.formState.errors.cityId) && (
-                <p className="mt-1 text-sm text-red-600">
-                  {form.formState.errors.countryCode?.message ??
-                    form.formState.errors.cityId?.message}
-                </p>
-              )}
+                  <p className="mt-1 text-sm text-red-600">
+                    {form.formState.errors.countryCode?.message ??
+                      form.formState.errors.cityId?.message}
+                  </p>
+                )}
             </div>
 
             <div className="flex flex-wrap items-end gap-2">
@@ -696,11 +757,28 @@ export function AttractionForm(props: AttractionFormProps) {
             </div>
 
             <div className="relative z-0 min-h-48 flex-1 lg:min-h-0">
+              {poiLoadError ? (
+                <div
+                  className="absolute inset-x-2 top-2 z-10 rounded-lg border border-red-200 bg-red-50/95 p-2.5 shadow-sm backdrop-blur-sm"
+                  role="alert"
+                >
+                  <p className="text-xs font-medium text-red-800">
+                    Nearby places unavailable
+                  </p>
+                  <p className="mt-0.5 break-words text-xs text-red-700">
+                    {poiLoadError}
+                  </p>
+                </div>
+              ) : null}
               <DynamicAttractionMap
                 latitude={mapLatitude}
                 longitude={mapLongitude}
                 currentCity={currentCity}
+                nearbyPois={nearbyPois}
+                selectedPoiName={nameLocal ?? ""}
+                highlightedPoi={hoveredPoi}
                 onCoordinatesChange={handleMapCoordinatesChange}
+                onPoiSelect={handlePoiSelect}
                 className="absolute inset-0 h-full w-full"
               />
             </div>
@@ -766,47 +844,94 @@ export function AttractionForm(props: AttractionFormProps) {
           </div>
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 border-t border-gray-200 pt-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.push(cancelHref)}
-            disabled={isSubmitting}
-            className="h-10 px-5"
-          >
-            {isVerifyMode ? "Exit queue" : "Cancel"}
-          </Button>
-          {isVerifyMode ? (
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-3">
+          {mode !== "create" ? (
             <Button
               type="button"
               variant="outline"
-              onClick={handleSkipInQueue}
+              onClick={() => setShowConfirmDelete(true)}
+              disabled={isSubmitting}
+              className="h-10 border-red-200 px-5 text-red-600 hover:bg-red-50 hover:text-red-700"
+              data-testid="delete-attraction-button"
+            >
+              {deleteMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="mr-2 h-4 w-4" />
+              )}
+              Delete
+            </Button>
+          ) : (
+            <span />
+          )}
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push(cancelHref)}
               disabled={isSubmitting}
               className="h-10 px-5"
-              data-testid="skip-in-queue-button"
             >
-              <SkipForward className="mr-2 h-4 w-4" />
-              Skip for now
+              {isVerifyMode ? "Exit queue" : "Cancel"}
             </Button>
-          ) : null}
-          <Button
-            type="submit"
-            disabled={
-              isSubmitting ||
-              (isVerifyMode && (!hasValidLatitude || !hasValidLongitude))
-            }
-            className={
-              isVerifyMode
-                ? "h-10 bg-emerald-600 px-5 hover:bg-emerald-700"
-                : "h-10 bg-orange-500 px-5 hover:bg-orange-600"
-            }
-            data-testid={isVerifyMode ? "verify-and-next-button" : undefined}
-          >
-            {submitIcon}
-            {submitLabel}
-          </Button>
+            {isVerifyMode ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSkipInQueue}
+                disabled={isSubmitting}
+                className="h-10 px-5"
+                data-testid="skip-in-queue-button"
+              >
+                <SkipForward className="mr-2 h-4 w-4" />
+                Skip for now
+              </Button>
+            ) : null}
+            <Button
+              type="submit"
+              disabled={
+                isSubmitting ||
+                (isVerifyMode && (!hasValidLatitude || !hasValidLongitude))
+              }
+              className={
+                isVerifyMode
+                  ? "h-10 bg-emerald-600 px-5 hover:bg-emerald-700"
+                  : "h-10 bg-orange-500 px-5 hover:bg-orange-600"
+              }
+              data-testid={isVerifyMode ? "verify-and-next-button" : undefined}
+            >
+              {submitIcon}
+              {submitLabel}
+            </Button>
+          </div>
         </div>
       </form>
+
+      {mode !== "create" && attraction ? (
+        <AlertDialog open={showConfirmDelete} onOpenChange={setShowConfirmDelete}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this attraction?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete &ldquo;{attraction.name}&rdquo;. This
+                action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleteMutation.isPending}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => void handleDelete()}
+                disabled={deleteMutation.isPending}
+                className="bg-red-600 text-white hover:bg-red-700"
+              >
+                {deleteMutation.isPending ? "Deleting…" : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : null}
     </div>
   );
 }

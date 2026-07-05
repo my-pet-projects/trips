@@ -7,13 +7,18 @@ import React, { useEffect, useRef } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { api } from "~/trpc/react";
+import { normalizePoiName, type NearbyPoi } from "~/lib/geo/nearby-pois";
 import type { City } from "~/types";
 
 interface AttractionMapProps {
   latitude: number;
   longitude: number;
   currentCity?: City;
+  nearbyPois?: NearbyPoi[];
+  selectedPoiName?: string;
+  highlightedPoi?: NearbyPoi | null;
   onCoordinatesChange: (lat: number, lng: number) => void;
+  onPoiSelect?: (poi: NearbyPoi) => void;
   className?: string;
 }
 
@@ -89,22 +94,50 @@ ${pulse ? `<circle class='pulse' cx='${halfOuter}' cy='${halfOuter}' r='${outerT
 const CURRENT_CITY_MARKER_ICON = createDivIcon(BuildingIcon, "blue", 32);
 const NEAREST_CITY_MARKER_ICON = createDivIcon(BuildingIcon, "green", 32);
 const ATTRACTION_MARKER_ICON = createAttractionIcon({});
+const POI_MARKER_ICON = createAttractionIcon({ color: "#6366f1", size: 28, pulse: false });
+const POI_SELECTED_MARKER_ICON = createAttractionIcon({
+  color: "#f97316",
+  size: 28,
+  pulse: false,
+});
+
+const POI_HOVERED_MARKER_ICON = createAttractionIcon({
+  color: "#8b5cf6",
+  size: 36,
+  pulse: true,
+});
+
+function poiMatches(a: NearbyPoi, b: NearbyPoi | null | undefined): boolean {
+  if (!b) return false;
+  return (
+    a.normalizedName === b.normalizedName &&
+    a.latitude === b.latitude &&
+    a.longitude === b.longitude
+  );
+}
 
 export function AttractionMap({
   latitude,
   longitude,
   currentCity,
+  nearbyPois = [],
+  selectedPoiName = "",
+  highlightedPoi = null,
   onCoordinatesChange,
+  onPoiSelect,
   className,
 }: AttractionMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const attractionMarkerRef = useRef<L.Marker | null>(null);
   const cityMarkersRef = useRef<L.Marker[]>([]);
+  const poiMarkersRef = useRef<L.Marker[]>([]);
   const onCoordinatesChangeRef = useRef(onCoordinatesChange);
+  const onPoiSelectRef = useRef(onPoiSelect);
   const prevCoordsRef = useRef({ lat: latitude, lng: longitude });
   const initialCoordsRef = useRef({ lat: latitude, lng: longitude });
   onCoordinatesChangeRef.current = onCoordinatesChange;
+  onPoiSelectRef.current = onPoiSelect;
 
   const {
     data: nearbyCities,
@@ -212,6 +245,47 @@ export function AttractionMap({
       cityMarkersRef.current.push(marker);
     }
   }, [currentCity, cities]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    for (const marker of poiMarkersRef.current) {
+      marker.remove();
+    }
+    poiMarkersRef.current = [];
+
+    const normalizedSelected = normalizePoiName(selectedPoiName);
+
+    for (const poi of nearbyPois) {
+      const isSelected = normalizedSelected === poi.normalizedName;
+      const isHovered = poiMatches(poi, highlightedPoi);
+      const marker = L.marker([poi.latitude, poi.longitude], {
+        icon: isSelected
+          ? POI_SELECTED_MARKER_ICON
+          : isHovered
+            ? POI_HOVERED_MARKER_ICON
+            : POI_MARKER_ICON,
+        zIndexOffset: isSelected || isHovered ? 1000 : 0,
+      }).addTo(map);
+
+      marker.bindTooltip(poi.name);
+      marker.bindPopup(
+        `<strong>${poi.name}</strong><br/>${poi.distanceMeters}m · ${poi.source}`,
+      );
+
+      if (isHovered) {
+        marker.openTooltip();
+      }
+
+      marker.on("click", (event) => {
+        L.DomEvent.stopPropagation(event);
+        onPoiSelectRef.current?.(poi);
+      });
+
+      poiMarkersRef.current.push(marker);
+    }
+  }, [nearbyPois, selectedPoiName, highlightedPoi]);
 
   return (
     <div className={className}>
