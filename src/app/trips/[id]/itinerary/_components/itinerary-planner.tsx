@@ -7,10 +7,12 @@ import { toast } from "sonner";
 import { ItineraryMap } from "~/app/_components/map/itinerary-map";
 import { DayRoutesFetcher } from "~/app/_components/map/route-fetcher";
 import { transformTripDays } from "~/lib/itinerary/transform";
+import { useItineraryDayMaps } from "~/lib/itinerary/use-itinerary-day-maps";
+import { useItineraryRoutes } from "~/lib/itinerary/use-itinerary-routes";
 import { generateAllDaysPdf } from "~/lib/pdf";
 import { getItineraryDayColor } from "~/lib/map/colors";
 import { api } from "~/trpc/react";
-import type { AttractionDetail, BasicAttraction, ItineraryDayData, RouteData, Trip } from "~/types";
+import type { AttractionDetail, ItineraryDayData, Trip } from "~/types";
 import { ItineraryDay } from "./itinerary-day";
 
 type ItineraryPlannerProps = {
@@ -41,76 +43,11 @@ export function ItineraryPlanner({
   );
   const utils = api.useUtils();
 
-  // Route management
-  const [dayRoutes, setDayRoutes] = useState<Map<number, RouteData>>(
-    () => new Map(),
-  );
-  const [loadingRoutes, setLoadingRoutes] = useState<Map<number, boolean>>(
-    () => new Map(),
-  );
+  const { dayRoutes, loadingRoutes, isLoadingRoutes, updateRoute, clearRoute } =
+    useItineraryRoutes();
+  const { allDaysAttractions, dayColors, attractionToDayMap } =
+    useItineraryDayMaps(itineraryDays);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-
-  const isLoadingRoutes = useMemo(
-    () => [...loadingRoutes.values()].some(Boolean),
-    [loadingRoutes],
-  );
-
-  const updateRoute = useCallback(
-    (dayId: number, route: RouteData | null, isLoading: boolean) => {
-      setLoadingRoutes((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(dayId, isLoading);
-        return newMap;
-      });
-
-      setDayRoutes((prev) => {
-        const newMap = new Map(prev);
-        if (route) {
-          newMap.set(dayId, route);
-        } else if (!isLoading) {
-          newMap.delete(dayId);
-        }
-        return newMap;
-      });
-    },
-    [],
-  );
-
-  const clearRoute = useCallback((dayId: number) => {
-    setDayRoutes((prev) => {
-      const newMap = new Map(prev);
-      newMap.delete(dayId);
-      return newMap;
-    });
-    setLoadingRoutes((prev) => {
-      const newMap = new Map(prev);
-      newMap.delete(dayId);
-      return newMap;
-    });
-  }, []);
-
-  // Computed values
-  const allDaysAttractions = useMemo(() => {
-    const map = new Map<number, BasicAttraction[]>();
-    itineraryDays.forEach((day) => map.set(day.id, day.attractions));
-    return map;
-  }, [itineraryDays]);
-
-  const dayColors = useMemo(() => {
-    const map = new Map<number, string>();
-    itineraryDays.forEach((day, index) =>
-      map.set(day.id, getItineraryDayColor(index)),
-    );
-    return map;
-  }, [itineraryDays]);
-
-  const attractionToDayMap = useMemo(() => {
-    const map = new Map<number, ItineraryDayData>();
-    itineraryDays.forEach((day) => {
-      day.attractions.forEach((attraction) => map.set(attraction.id, day));
-    });
-    return map;
-  }, [itineraryDays]);
 
   const hasUnsavedChanges = useMemo(() => {
     const originalDays = originalItineraryRef.current;

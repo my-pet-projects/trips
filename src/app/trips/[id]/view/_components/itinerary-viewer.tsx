@@ -7,8 +7,10 @@ import { useCallback, useMemo, useState } from "react";
 import { ItineraryMap } from "~/app/_components/map/itinerary-map";
 import { DayRoutesFetcher } from "~/app/_components/map/route-fetcher";
 import { transformTripDays } from "~/lib/itinerary/transform";
-import { DEFAULT_DAY_COLOR, getItineraryDayColor } from "~/lib/map/colors";
-import type { AttractionDetail, BasicAttraction, RouteData, Trip } from "~/types";
+import { useItineraryDayMaps } from "~/lib/itinerary/use-itinerary-day-maps";
+import { useItineraryRoutes } from "~/lib/itinerary/use-itinerary-routes";
+import { DEFAULT_DAY_COLOR } from "~/lib/map/colors";
+import type { AttractionDetail, Trip } from "~/types";
 
 type ItineraryViewerProps = {
   trip: Trip;
@@ -28,66 +30,13 @@ export function ItineraryViewer({
     number | null
   >(null);
 
-  // Route management
-  const [dayRoutes, setDayRoutes] = useState<Map<number, RouteData>>(
-    () => new Map(),
-  );
-  const [loadingRoutes, setLoadingRoutes] = useState<Map<number, boolean>>(
-    () => new Map(),
-  );
-
-  const isLoadingRoutes = useMemo(
-    () => [...loadingRoutes.values()].some(Boolean),
-    [loadingRoutes],
-  );
-
-  const updateRoute = useCallback(
-    (
-      dayId: number,
-      route: RouteData | null,
-      isLoading: boolean,
-      error?: Error,
-    ) => {
-      if (error) {
-        console.error("Failed to build route for day", dayId, error);
-      }
-      setLoadingRoutes((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(dayId, isLoading);
-        return newMap;
-      });
-
-      setDayRoutes((prev) => {
-        const newMap = new Map(prev);
-        if (route) {
-          newMap.set(dayId, route);
-        } else if (!isLoading) {
-          newMap.delete(dayId);
-        }
-        return newMap;
-      });
-    },
-    [],
-  );
+  const { dayRoutes, isLoadingRoutes, updateRoute } = useItineraryRoutes();
+  const { allDaysAttractions, dayColors } = useItineraryDayMaps(itineraryDays);
 
   const selectedDay = useMemo(
     () => itineraryDays.find((d) => d.id === selectedDayId),
     [itineraryDays, selectedDayId],
   );
-
-  const allDaysAttractions = useMemo(() => {
-    const map = new Map<number, BasicAttraction[]>();
-    itineraryDays.forEach((day) => map.set(day.id, day.attractions));
-    return map;
-  }, [itineraryDays]);
-
-  const dayColors = useMemo(() => {
-    const map = new Map<number, string>();
-    itineraryDays.forEach((day, index) =>
-      map.set(day.id, getItineraryDayColor(index)),
-    );
-    return map;
-  }, [itineraryDays]);
 
   const dayColor = useMemo(
     () => dayColors.get(selectedDayId ?? 0) ?? DEFAULT_DAY_COLOR,
