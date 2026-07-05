@@ -100,6 +100,7 @@ export const attractions = sqliteTable(
   (table) => [
     index("attractions_city_idx").on(table.cityId),
     index("attractions_coords_idx").on(table.latitude, table.longitude),
+    index("attractions_country_id_idx").on(table.countryCode, table.id),
   ],
 );
 
@@ -252,6 +253,11 @@ export const rawAttractions = sqliteTable(
   (table) => [
     index("raw_attractions_status_idx").on(table.status),
     index("raw_attractions_country_idx").on(table.countryCode),
+    index("raw_attractions_country_status_id_idx").on(
+      table.countryCode,
+      table.status,
+      table.id,
+    ),
     index("raw_attractions_city_idx").on(table.cityId),
     uniqueIndex("raw_attractions_source_url_idx").on(table.sourceUrl),
     index("raw_attractions_attraction_idx").on(table.attractionId),
