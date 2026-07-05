@@ -5,12 +5,9 @@
 
 import { jsPDF } from "jspdf";
 import { DEFAULT_DAY_COLOR } from "~/lib/map/colors";
+import type { BasicAttraction, ItineraryDayData } from "~/types";
 import { loadCyrillicFont } from "./pdf-font";
-import {
-  type BasicAttraction,
-  type ItineraryDayData,
-  PDF_LAYOUT,
-} from "./pdf-types";
+import { PDF_LAYOUT } from "./pdf-types";
 import { fetchMapImage, fetchOverviewMap, type MapMarker } from "./static-map";
 
 const {

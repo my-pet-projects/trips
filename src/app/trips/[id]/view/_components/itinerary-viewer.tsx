@@ -6,33 +6,13 @@ import { useCallback, useMemo, useState } from "react";
 
 import { ItineraryMap } from "~/app/_components/map/itinerary-map";
 import { DayRoutesFetcher } from "~/app/_components/map/route-fetcher";
+import { transformTripDays } from "~/lib/itinerary/transform";
+import { DEFAULT_DAY_COLOR, getItineraryDayColor } from "~/lib/map/colors";
 import type { AttractionDetail, BasicAttraction, RouteData, Trip } from "~/types";
-
-type ItineraryDayData = {
-  id: number;
-  name: string;
-  dayNumber: number;
-  attractions: BasicAttraction[];
-};
 
 type ItineraryViewerProps = {
   trip: Trip;
   tripAttractions: AttractionDetail[];
-};
-
-import { DEFAULT_DAY_COLOR, getItineraryDayColor } from "~/lib/map/colors";
-
-const transformTripDays = (trip: Trip): ItineraryDayData[] => {
-  if (!trip) return [];
-  return trip.itineraryDays.map((day) => ({
-    id: day.id,
-    name: day.name,
-    dayNumber: day.dayNumber,
-    attractions: day.itineraryDayPlaces
-      .slice()
-      .sort((a, b) => a.order - b.order)
-      .map((place) => place.attraction),
-  }));
 };
 
 export function ItineraryViewer({

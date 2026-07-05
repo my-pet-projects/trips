@@ -6,36 +6,16 @@ import { toast } from "sonner";
 
 import { ItineraryMap } from "~/app/_components/map/itinerary-map";
 import { DayRoutesFetcher } from "~/app/_components/map/route-fetcher";
+import { transformTripDays } from "~/lib/itinerary/transform";
 import { generateAllDaysPdf } from "~/lib/pdf";
+import { getItineraryDayColor } from "~/lib/map/colors";
 import { api } from "~/trpc/react";
-import type { AttractionDetail, BasicAttraction, RouteData, Trip } from "~/types";
+import type { AttractionDetail, BasicAttraction, ItineraryDayData, RouteData, Trip } from "~/types";
 import { ItineraryDay } from "./itinerary-day";
-
-type ItineraryDayData = {
-  id: number;
-  name: string;
-  dayNumber: number;
-  attractions: BasicAttraction[];
-};
 
 type ItineraryPlannerProps = {
   trip: Trip;
   tripAttractions: AttractionDetail[];
-};
-
-import { getItineraryDayColor } from "~/lib/map/colors";
-
-const transformTripDays = (trip: Trip): ItineraryDayData[] => {
-  if (!trip) return [];
-  return trip.itineraryDays.map((day) => ({
-    id: day.id,
-    name: day.name,
-    dayNumber: day.dayNumber,
-    attractions: day.itineraryDayPlaces
-      .slice()
-      .sort((a, b) => a.order - b.order)
-      .map((place) => place.attraction),
-  }));
 };
 
 export function ItineraryPlanner({

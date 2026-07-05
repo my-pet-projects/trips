@@ -17,17 +17,10 @@ import { toast } from "sonner";
 import { useCallback, useRef, useState } from "react";
 import { generateDayPdf } from "~/lib/pdf";
 
-import type { BasicAttraction, RouteData } from "~/types";
-
-type ItineraryDay = {
-  id: number;
-  name: string;
-  dayNumber: number;
-  attractions: BasicAttraction[];
-};
+import type { BasicAttraction, ItineraryDayData, RouteData } from "~/types";
 
 type ItineraryDayProps = {
-  day: ItineraryDay;
+  day: ItineraryDayData;
   color: string;
   isSelected: boolean;
   onSelect: () => void;
