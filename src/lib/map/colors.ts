@@ -8,10 +8,13 @@ export type MapColorDef = {
 
 export const HIGHLIGHT_COLORS: Record<AttractionHighlightKey, MapColorDef> = {
   must_see: { hex: "#f59e0b", pill: "bg-amber-400", label: "Must see" },
-  recommended: { hex: "#38bdf8", pill: "bg-sky-400", label: "Recommended" },
+  recommended: { hex: "#14b8a6", pill: "bg-teal-500", label: "Recommended" },
   skip: { hex: "#ef4444", pill: "bg-red-500", label: "Skip" },
-  none: { hex: "#9ca3af", pill: "bg-slate-400", label: "No highlight" },
+  none: { hex: "#ffffff", pill: "border-2 border-slate-400 bg-white", label: "Unrated" },
 };
+
+/** Visible outline for white unrated markers on the map. */
+export const UNRATED_MARKER_BORDER = "#9ca3af";
 
 export const VERIFIED_COLOR: MapColorDef = {
   hex: "#10b981",
@@ -44,7 +47,7 @@ export function getItineraryDayColor(index: number): string {
 export type RawStatusKey = "pending" | "rejected" | "duplicated";
 
 export const RAW_STATUS_COLORS: Record<RawStatusKey, MapColorDef> = {
-  pending: { hex: "#6366f1", pill: "bg-indigo-500", label: "Pending" },
+  pending: { hex: "#9ca3af", pill: "bg-slate-400", label: "Pending review" },
   rejected: { hex: "#ef4444", pill: "bg-red-500", label: "Rejected" },
   duplicated: { hex: "#a855f7", pill: "bg-purple-500", label: "Duplicated" },
 };
