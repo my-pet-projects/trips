@@ -1,25 +1,6 @@
 /**
- * Shared types for PDF generation.
+ * PDF layout constants.
  */
-
-export type BasicAttraction = {
-  id: number;
-  name: string;
-  nameLocal: string | null;
-  description: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  sourceUrl: string | null;
-  countryCode: string;
-  cityId: number;
-};
-
-export type ItineraryDayData = {
-  id: number;
-  name: string;
-  dayNumber: number;
-  attractions: BasicAttraction[];
-};
 
 /** PDF layout constants */
 export const PDF_LAYOUT = {

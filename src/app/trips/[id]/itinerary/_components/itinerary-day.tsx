@@ -5,184 +5,66 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
-  FileDown,
-  GripVertical,
-  Loader2,
   MapPin,
   Route,
   Trash2,
 } from "lucide-react";
-import { toast } from "sonner";
 
-import { useCallback, useRef, useState } from "react";
-import { generateDayPdf } from "~/lib/pdf";
-
-import type { BasicAttraction, RouteData } from "~/types";
-
-type ItineraryDay = {
-  id: number;
-  name: string;
-  dayNumber: number;
-  attractions: BasicAttraction[];
-};
+import { useDayRoute } from "~/lib/itinerary/use-itinerary-route-map";
+import { getItineraryDayColor } from "~/lib/map/colors";
+import type { ItineraryDayData } from "~/types";
+import { DayAttractionList } from "./day-attraction-list";
+import { ItineraryDayPdfButton } from "./itinerary-pdf-export-button";
 
 type ItineraryDayProps = {
-  day: ItineraryDay;
-  color: string;
+  day: ItineraryDayData;
+  index: number;
   isSelected: boolean;
-  onSelect: () => void;
-  onRemove: () => void;
-  onRemoveAttraction: (dayId: number, attractionId: number) => void;
-  onReorderAttractions: (
+  isRemoving: boolean;
+  selectedAttractionId: number | null;
+  onSelectDay: (dayId: number) => void;
+  onSelectAttraction: (attractionId: number) => void;
+  onHoverAttraction: (attractionId: number | null) => void;
+  removeDay: (dayId: number) => void;
+  removeAttraction: (dayId: number, attractionId: number) => void;
+  reorderAttractions: (
     dayId: number,
-    reorderedAttractions: BasicAttraction[],
+    reorderedAttractions: ItineraryDayData["attractions"],
   ) => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-  onAttractionHover: (id: number | null) => void;
-  onAttractionClick: (attractionId: number) => void;
-  selectedAttractionId?: number | null;
-  isDragging?: boolean;
-  isRemoving?: boolean;
-  routeData?: RouteData;
-  isLoadingRoute?: boolean;
+  moveDay: (dayId: number, direction: "up" | "down") => void;
 };
 
 export function ItineraryDay({
   day,
-  color,
+  index,
   isSelected,
-  onSelect,
-  onRemove,
-  onRemoveAttraction,
-  onReorderAttractions,
-  onMoveUp,
-  onMoveDown,
-  onAttractionHover,
-  onAttractionClick,
+  isRemoving,
   selectedAttractionId,
-  isDragging = false,
-  isRemoving = false,
-  routeData,
-  isLoadingRoute = false,
+  onSelectDay,
+  onSelectAttraction,
+  onHoverAttraction,
+  removeDay,
+  removeAttraction,
+  reorderAttractions,
+  moveDay,
 }: ItineraryDayProps) {
+  const color = getItineraryDayColor(index);
+
+  const { routeData, isLoadingRoute, routeError } = useDayRoute(
+    day.id,
+    day.attractions,
+  );
+
   const attractionCount = day.attractions.length;
-  const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  const [removingAttractionId, setRemovingAttractionId] = useState<
-    number | null
-  >(null);
-  const [isReordering, setIsReordering] = useState(false);
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-
-  const handleGeneratePdf = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsGeneratingPdf(true);
-    try {
-      await generateDayPdf(day, undefined, color);
-      toast.success("PDF downloaded", {
-        description: `${day.name} itinerary has been saved.`,
-      });
-    } catch (error) {
-      console.error("PDF generation failed:", error);
-      toast.error("Failed to generate PDF", {
-        description:
-          error instanceof Error ? error.message : "Please try again.",
-      });
-    } finally {
-      setIsGeneratingPdf(false);
-    }
-  };
-
-  const handleRemoveClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onRemove();
-  };
-
-  const handleRemoveAttraction = (
-    e: React.MouseEvent,
-    attractionId: number,
-  ) => {
-    e.stopPropagation();
-    setRemovingAttractionId(attractionId);
-    setTimeout(() => {
-      onRemoveAttraction(day.id, attractionId);
-      setRemovingAttractionId(null);
-    }, 300);
-  };
-
-  const handleAttractionClick = (e: React.MouseEvent, attractionId: number) => {
-    e.stopPropagation();
-    onAttractionClick(attractionId);
-  };
-
-  const handleDragStart = useCallback((e: React.DragEvent, index: number) => {
-    const target = e.target as HTMLElement;
-    if (!target.closest(".attraction-drag-handle")) {
-      e.preventDefault();
-      return;
-    }
-    setDraggedIndex(index);
-    const rowNode = rowRefs.current[index];
-    if (rowNode) {
-      const rect = rowNode.getBoundingClientRect();
-      const offsetX = e.clientX - rect.left;
-      const offsetY = e.clientY - rect.top;
-      e.dataTransfer.setDragImage(rowNode, offsetX, offsetY);
-    }
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", index.toString());
-  }, []);
-
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === index) return;
-    setDragOverIndex(index);
-  };
-
-  const handleDragLeave = () => {
-    setDragOverIndex(null);
-  };
-
-  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === dropIndex) {
-      setDraggedIndex(null);
-      setDragOverIndex(null);
-      return;
-    }
-    setIsReordering(true);
-    const updated = [...day.attractions];
-    const [item] = updated.splice(draggedIndex, 1);
-    if (!item) {
-      setDraggedIndex(null);
-      setDragOverIndex(null);
-      setIsReordering(false);
-      return;
-    }
-    updated.splice(dropIndex, 0, item);
-    onReorderAttractions(day.id, updated);
-    setTimeout(() => {
-      setDraggedIndex(null);
-      setDragOverIndex(null);
-      setIsReordering(false);
-    }, 300);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedIndex(null);
-    setDragOverIndex(null);
-  };
 
   return (
     <div
-      onClick={onSelect}
+      onClick={() => onSelectDay(day.id)}
       className={`group/card w-full cursor-pointer rounded-xl border-2 bg-white p-4 transition-all duration-300 ${
         isSelected
           ? "ring-opacity-20 shadow-lg ring-2"
           : "border-gray-200 shadow-sm hover:border-gray-300 hover:shadow-md"
-      } ${isDragging ? "-translate-y-1 scale-[0.98] opacity-75 shadow-xl" : ""} ${
+      } ${
         isRemoving
           ? "pointer-events-none scale-95 opacity-50 blur-sm grayscale"
           : ""
@@ -196,7 +78,6 @@ export function ItineraryDay({
           : {}
       }
     >
-      {/* Header */}
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <div
@@ -219,7 +100,7 @@ export function ItineraryDay({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                onMoveUp();
+                moveDay(day.id, "up");
               }}
               disabled={day.dayNumber === 1 || isRemoving}
               className="group/btn flex items-center justify-center px-2 py-1.5 text-gray-600 transition-all hover:bg-blue-50 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
@@ -232,7 +113,7 @@ export function ItineraryDay({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                onMoveDown();
+                moveDay(day.id, "down");
               }}
               disabled={isRemoving}
               className="group/btn flex items-center justify-center px-2 py-1.5 text-gray-600 transition-all hover:bg-blue-50 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
@@ -248,24 +129,19 @@ export function ItineraryDay({
             </span>
           )}
           {attractionCount > 0 && (
-            <button
-              type="button"
-              onClick={(e) => void handleGeneratePdf(e)}
-              className="rounded-lg p-1.5 text-gray-400 transition-all hover:bg-sky-50 hover:text-sky-600 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={isRemoving || isGeneratingPdf}
-              title="Download PDF"
-            >
-              {isGeneratingPdf ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <FileDown className="h-4 w-4" />
-              )}
-            </button>
+            <ItineraryDayPdfButton
+              day={day}
+              color={color}
+              disabled={isRemoving}
+            />
           )}
           <button
             type="button"
-            onClick={handleRemoveClick}
-            className="rounded-lg p-1.5 text-gray-400 transition-all hover:bg-red-50 hover:text-red-600 hover:shadow-sm active:scale-95"
+            onClick={(e) => {
+              e.stopPropagation();
+              removeDay(day.id);
+            }}
+            className="rounded-lg p-1.5 text-gray-400 transition-all hover:bg-red-50 hover:text-red-600 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
             disabled={isRemoving}
             title="Remove day"
           >
@@ -274,7 +150,6 @@ export function ItineraryDay({
         </div>
       </div>
 
-      {/* Route Summary */}
       {attractionCount >= 2 && (
         <div className="mb-3 flex items-center gap-3 rounded-lg bg-linear-to-r from-blue-50 to-sky-50 px-3 py-2 text-xs">
           {isLoadingRoute ? (
@@ -298,16 +173,18 @@ export function ItineraryDay({
                 </span>
               </div>
             </>
-          ) : (
-            <div className="flex items-center gap-2 text-amber-600">
-              <AlertCircle className="h-3.5 w-3.5" />
-              <span>Unable to calculate route</span>
+          ) : routeError ? (
+            <div className="flex flex-col gap-0.5 text-amber-600">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                <span className="font-medium">Unable to calculate route</span>
+              </div>
+              <p className="ml-5 text-xs text-amber-700">{routeError}</p>
             </div>
-          )}
+          ) : null}
         </div>
       )}
 
-      {/* Attractions List */}
       {attractionCount === 0 ? (
         <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 py-8 transition-colors group-hover/card:border-gray-300 group-hover/card:bg-gray-100">
           <p className="text-sm text-gray-400 italic">
@@ -315,104 +192,16 @@ export function ItineraryDay({
           </p>
         </div>
       ) : (
-        <div
-          className={`space-y-2 ${isReordering ? "pointer-events-none" : ""}`}
-        >
-          {day.attractions.map((attraction, index) => {
-            const isSelectedAttr = selectedAttractionId === attraction.id;
-            const isDraggingThis = draggedIndex === index;
-            const isDragOver = dragOverIndex === index;
-            const isRemoving = removingAttractionId === attraction.id;
-            const legToNext = routeData?.legs[index];
-
-            return (
-              <div key={attraction.id}>
-                {/* Attraction Card */}
-                <div
-                  ref={(el) => {
-                    rowRefs.current[index] = el;
-                  }}
-                  onDragOver={(e) => handleDragOver(e, index)}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, index)}
-                  className={`group/item flex items-start gap-2 rounded-lg border p-2.5 transition-all duration-300 ${
-                    isSelectedAttr
-                      ? "border-blue-400 bg-blue-50 shadow-md ring-2 ring-blue-200"
-                      : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-white hover:shadow-sm"
-                  } ${
-                    isDraggingThis
-                      ? "scale-[0.98] border-dashed border-blue-400 opacity-50 shadow-xl"
-                      : ""
-                  } ${isDragOver ? "scale-[1.02] border-blue-400 bg-blue-100 shadow-md" : ""} ${
-                    isRemoving ? "scale-90 opacity-0 blur-sm" : ""
-                  }`}
-                  onMouseEnter={() =>
-                    !isDraggingThis && onAttractionHover(attraction.id)
-                  }
-                  onMouseLeave={() => onAttractionHover(null)}
-                  onClick={(e) => handleAttractionClick(e, attraction.id)}
-                >
-                  {/* Drag Handle */}
-                  <button
-                    type="button"
-                    className={`attraction-drag-handle cursor-grab rounded p-1 transition-all hover:bg-gray-200 ${
-                      isDraggingThis ? "cursor-grabbing" : ""
-                    }`}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, index)}
-                    onDragEnd={handleDragEnd}
-                    title="Drag to reorder"
-                  >
-                    <GripVertical className="h-4 w-4 text-gray-400 transition-colors group-hover/item:text-gray-600" />
-                  </button>
-
-                  {/* Order Number */}
-                  <span
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-md ring-2 ring-white transition-transform group-hover/item:scale-110"
-                    style={{ backgroundColor: color }}
-                  >
-                    {index + 1}
-                  </span>
-
-                  {/* Attraction Info */}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-gray-900 transition-colors group-hover/item:text-gray-950">
-                      {attraction.name}
-                    </p>
-                  </div>
-
-                  {/* Remove Button */}
-                  <button
-                    type="button"
-                    onClick={(e) => handleRemoveAttraction(e, attraction.id)}
-                    className="shrink-0 rounded-lg p-1 text-gray-400 opacity-0 transition-all group-hover/item:opacity-100 hover:bg-red-50 hover:text-red-600 hover:shadow-sm active:scale-90"
-                    title="Remove attraction"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-
-                {/* Route connector to next attraction */}
-                {legToNext && index < day.attractions.length - 1 && (
-                  <div className="ml-4 flex items-center gap-2 py-1.5 pl-3 text-xs text-gray-500">
-                    <div className="flex h-6 w-0.5 bg-linear-to-b from-gray-300 to-transparent" />
-                    <div className="flex items-center gap-2 rounded-md bg-gray-100 px-2 py-1">
-                      <Route className="h-3 w-3" />
-                      <span>
-                        {(legToNext.distanceMeters / 1000).toFixed(1)} km
-                      </span>
-                      <span className="text-gray-400">•</span>
-                      <Clock className="h-3 w-3" />
-                      <span>
-                        {Math.round(legToNext.durationSeconds / 60)} min
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <DayAttractionList
+          attractions={day.attractions}
+          color={color}
+          selectedAttractionId={selectedAttractionId}
+          routeLegs={routeData?.legs}
+          onSelectAttraction={onSelectAttraction}
+          onHoverAttraction={onHoverAttraction}
+          onRemoveAttraction={(id) => removeAttraction(day.id, id)}
+          onReorder={(updated) => reorderAttractions(day.id, updated)}
+        />
       )}
     </div>
   );
