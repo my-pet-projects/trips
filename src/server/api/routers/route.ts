@@ -19,12 +19,54 @@ interface OrsResponse {
   }>;
 }
 
-interface OrsErrorResponse {
-  error?: {
+type OrsDirectionsErrorBody = {
+  error?:
+  | string
+  | {
     code: number;
     message: string;
   };
-  message?: string;
+  info?: {
+    engine?: { version?: string; build_date?: string };
+    timestamp?: number;
+  };
+};
+
+function parseOrsDirectionsErrorMessage(
+  body: OrsDirectionsErrorBody,
+  httpStatus: number,
+): string {
+  const { error } = body;
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  if (error?.message) {
+    return error.message;
+  }
+
+  return `Routing request failed (HTTP ${httpStatus})`;
+}
+
+function mapOrsDirectionsHttpStatusToTrpcCode(
+  httpStatus: number,
+): TRPCError["code"] {
+  switch (httpStatus) {
+    case 400:
+    case 413:
+      return "BAD_REQUEST";
+    case 401:
+      return "UNAUTHORIZED";
+    case 403:
+      return "FORBIDDEN";
+    case 404:
+      return "NOT_FOUND";
+    case 429:
+      return "TOO_MANY_REQUESTS";
+    default:
+      return "INTERNAL_SERVER_ERROR";
+  }
 }
 
 type GeoJSON = {
@@ -34,6 +76,8 @@ type GeoJSON = {
 
 const ORS_API_URL =
   "https://api.openrouteservice.org/v2/directions/foot-walking";
+/** @see https://openrouteservice.org/restrictions/ — Directions: Route waypoints max 50 */
+const MAX_ROUTE_WAYPOINTS = 50;
 const ORS_TIMEOUT_MS = 10000;
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1000;
@@ -113,11 +157,20 @@ async function fetchRouteFromORS(
     if (!response.ok) {
       const errorData = (await response
         .json()
-        .catch(() => ({}))) as OrsErrorResponse;
+        .catch(() => ({}))) as OrsDirectionsErrorBody;
 
       log.warn(
-        { status: response.status, errorData, durationMs, retryCount },
-        "OpenRouteService API error response",
+        {
+          status: response.status,
+          orsErrorCode:
+            typeof errorData.error === "object"
+              ? errorData.error?.code
+              : undefined,
+          errorData,
+          durationMs,
+          retryCount,
+        },
+        "OpenRouteService directions API error",
       );
 
       if (response.status === 429 && retryCount < MAX_RETRIES) {
@@ -135,9 +188,8 @@ async function fetchRouteFromORS(
       }
 
       throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: `OpenRouteService API error: ${response.status}`,
-        cause: errorData.error?.message ?? errorData.message ?? "Unknown error",
+        code: mapOrsDirectionsHttpStatusToTrpcCode(response.status),
+        message: parseOrsDirectionsErrorMessage(errorData, response.status),
       });
     }
 
@@ -215,7 +267,10 @@ export const routeRouter = createTRPCRouter({
             }),
           )
           .min(2, "At least two points required")
-          .max(25, "Maximum 25 points allowed")
+          .max(
+            MAX_ROUTE_WAYPOINTS,
+            `Maximum ${MAX_ROUTE_WAYPOINTS} points allowed`,
+          )
           .refine(
             (points) =>
               points.every((p, i) => i === 0 || p.id !== points[i - 1]!.id),

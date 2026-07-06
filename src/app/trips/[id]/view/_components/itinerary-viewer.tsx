@@ -5,109 +5,33 @@ import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 
 import { ItineraryMap } from "~/app/_components/map/itinerary-map";
-import { DayRoutesFetcher } from "~/app/_components/map/route-fetcher";
-import type { AttractionDetail, BasicAttraction, RouteData, Trip } from "~/types";
-
-type ItineraryDayData = {
-  id: number;
-  name: string;
-  dayNumber: number;
-  attractions: BasicAttraction[];
-};
+import { useItineraryDayMaps } from "~/lib/itinerary/use-itinerary-day-maps";
+import { DEFAULT_DAY_COLOR } from "~/lib/map/colors";
+import type { AttractionDetail, Trip } from "~/types";
 
 type ItineraryViewerProps = {
   trip: Trip;
   tripAttractions: AttractionDetail[];
 };
 
-import { DEFAULT_DAY_COLOR, getItineraryDayColor } from "~/lib/map/colors";
-
-const transformTripDays = (trip: Trip): ItineraryDayData[] => {
-  if (!trip) return [];
-  return trip.itineraryDays.map((day) => ({
-    id: day.id,
-    name: day.name,
-    dayNumber: day.dayNumber,
-    attractions: day.itineraryDayPlaces
-      .slice()
-      .sort((a, b) => a.order - b.order)
-      .map((place) => place.attraction),
-  }));
-};
-
 export function ItineraryViewer({
   trip,
   tripAttractions: attractions,
 }: ItineraryViewerProps) {
-  const itineraryDays = useMemo(() => transformTripDays(trip), [trip]);
-
+  const { itineraryDays } = trip;
   const [selectedDayId, setSelectedDayId] = useState<number | null>(
-    itineraryDays[0]?.id ?? null,
+    () => trip.itineraryDays[0]?.id ?? null,
   );
   const [selectedAttractionId, setSelectedAttractionId] = useState<
     number | null
   >(null);
 
-  // Route management
-  const [dayRoutes, setDayRoutes] = useState<Map<number, RouteData>>(
-    () => new Map(),
-  );
-  const [loadingRoutes, setLoadingRoutes] = useState<Map<number, boolean>>(
-    () => new Map(),
-  );
-
-  const isLoadingRoutes = useMemo(
-    () => [...loadingRoutes.values()].some(Boolean),
-    [loadingRoutes],
-  );
-
-  const updateRoute = useCallback(
-    (
-      dayId: number,
-      route: RouteData | null,
-      isLoading: boolean,
-      error?: Error,
-    ) => {
-      if (error) {
-        console.error("Failed to build route for day", dayId, error);
-      }
-      setLoadingRoutes((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(dayId, isLoading);
-        return newMap;
-      });
-
-      setDayRoutes((prev) => {
-        const newMap = new Map(prev);
-        if (route) {
-          newMap.set(dayId, route);
-        } else if (!isLoading) {
-          newMap.delete(dayId);
-        }
-        return newMap;
-      });
-    },
-    [],
-  );
+  const { allDaysAttractions, dayColors } = useItineraryDayMaps(itineraryDays);
 
   const selectedDay = useMemo(
     () => itineraryDays.find((d) => d.id === selectedDayId),
     [itineraryDays, selectedDayId],
   );
-
-  const allDaysAttractions = useMemo(() => {
-    const map = new Map<number, BasicAttraction[]>();
-    itineraryDays.forEach((day) => map.set(day.id, day.attractions));
-    return map;
-  }, [itineraryDays]);
-
-  const dayColors = useMemo(() => {
-    const map = new Map<number, string>();
-    itineraryDays.forEach((day, index) =>
-      map.set(day.id, getItineraryDayColor(index)),
-    );
-    return map;
-  }, [itineraryDays]);
 
   const dayColor = useMemo(
     () => dayColors.get(selectedDayId ?? 0) ?? DEFAULT_DAY_COLOR,
@@ -146,11 +70,7 @@ export function ItineraryViewer({
   }, []);
 
   return (
-    <>
-      {/* Fetch routes for all days */}
-      <DayRoutesFetcher itineraryDays={itineraryDays} onUpdate={updateRoute} />
-
-      <div className="flex h-full flex-col bg-gray-50">
+    <div className="flex h-full flex-col bg-gray-50">
         {/* Header */}
         <div className="border-b border-gray-200 bg-white px-2 py-2 shadow-sm md:px-4 md:py-3">
           <div className="flex items-center justify-between">
@@ -219,11 +139,10 @@ export function ItineraryViewer({
             allDaysAttractions={allDaysAttractions}
             dayColors={dayColors}
             hoveredAttractionId={null}
-            dayRoutes={dayRoutes}
+            itineraryDays={itineraryDays}
             onAttractionSelect={setSelectedAttractionId}
             onAddAttractionToDay={handleAddAttractionToDay}
             enableLocationTracking
-            isLoadingRoutes={isLoadingRoutes}
             tripsImageSource="map-view"
           />
         </div>
@@ -262,6 +181,5 @@ export function ItineraryViewer({
             </div>
           )}
       </div>
-    </>
   );
 }

@@ -32,5 +32,5 @@ export type ExistingAttraction =
 export type RouteData = RouterOutputs["route"]["buildRoute"];
 
 // Itinerary types (derived from Trip)
-export type BasicAttraction =
-  Trip["itineraryDays"][number]["itineraryDayPlaces"][number]["attraction"];
+export type ItineraryDayData = Trip["itineraryDays"][number];
+export type BasicAttraction = ItineraryDayData["attractions"][number];

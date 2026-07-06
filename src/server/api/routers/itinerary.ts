@@ -126,7 +126,16 @@ export const itineraryRouter = createTRPCRouter({
 
       try {
         await ctx.db.transaction(async (tx) => {
-          // Update all day metadata
+          // Unique on (tripId, dayNumber) — renumber in two phases to avoid
+          // conflicts when swapping positions (e.g. day 2 → 1 while day 1 exists).
+          const tempOffset = 10_000;
+          for (const day of days) {
+            await tx
+              .update(schema.itineraryDays)
+              .set({ dayNumber: day.dayNumber + tempOffset })
+              .where(eq(schema.itineraryDays.id, day.id));
+          }
+
           for (const day of days) {
             await tx
               .update(schema.itineraryDays)

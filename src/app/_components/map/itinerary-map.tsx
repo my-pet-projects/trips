@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback } from "react";
 
+import { useItineraryRouteMap } from "~/lib/itinerary/use-itinerary-route-map";
 import { MapDynamicLoading } from "~/lib/map/map-loading";
 import type { MarkerMeta } from "~/lib/map/marker-meta";
 import {
@@ -13,7 +14,7 @@ import type {
   AttractionDetail,
   AttractionSummary,
   BasicAttraction,
-  RouteData,
+  ItineraryDayData,
 } from "~/types";
 
 import { AttractionMapShell } from "./attraction-map-shell";
@@ -36,7 +37,7 @@ type ItineraryMapProps = {
   allDaysAttractions: Map<number, BasicAttraction[]>;
   dayColors: Map<number, string>;
   hoveredAttractionId: number | null;
-  dayRoutes: Map<number, RouteData>;
+  itineraryDays: ItineraryDayData[];
   onAttractionSelect: (attractionId: number | null) => void;
   onAddAttractionToDay?: (attraction: AttractionDetail) => void;
   onHighlightChange?: (
@@ -46,7 +47,6 @@ type ItineraryMapProps = {
   onDeleteAttraction?: (attractionId: number) => void;
   enableLocationTracking?: boolean;
   enableClustering?: boolean;
-  isLoadingRoutes: boolean;
   className?: string;
   markerMeta?: Map<number, MarkerMeta>;
   tripsImageSource: TripsImageSource;
@@ -61,18 +61,19 @@ export function ItineraryMap({
   allDaysAttractions,
   dayColors,
   hoveredAttractionId,
-  dayRoutes,
+  itineraryDays,
   onAttractionSelect,
   onAddAttractionToDay,
   onHighlightChange,
   onDeleteAttraction,
   enableLocationTracking = false,
   enableClustering = false,
-  isLoadingRoutes,
   className,
   markerMeta,
   tripsImageSource,
 }: ItineraryMapProps) {
+  const { dayRoutes, isLoadingRoutes } = useItineraryRouteMap(itineraryDays);
+
   const { attractionToDayMap, selectedDayAttractionOrders, resolveAttractionStatus } =
     useItineraryMapDerivedState(allDaysAttractions, selectedDayAttractions, selectedDayId);
 
