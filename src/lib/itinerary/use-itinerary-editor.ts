@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { getTrpcErrorMessage } from "~/lib/trpc-error-message";
@@ -60,36 +60,31 @@ function serializeItineraryUpdatePayload(
   );
 }
 
-type UseItineraryEditorOptions = {
-  onDayAdded?: (dayId: number) => void;
-  onDayAddFailed?: (
-    tempId: number,
-    remainingDays: ItineraryDayData[],
-  ) => void;
-  onDayRemoved?: (
-    dayId: number,
-    remainingDays: ItineraryDayData[],
-  ) => void;
-  onDaysReset?: (days: ItineraryDayData[]) => void;
-};
-
-export function useItineraryEditor(
-  trip: Trip,
-  {
-    onDayAdded,
-    onDayAddFailed,
-    onDayRemoved,
-    onDaysReset,
-  }: UseItineraryEditorOptions = {},
-) {
+export function useItineraryEditor(trip: Trip) {
   const tripId = trip.id;
   const utils = api.useUtils();
 
   const [itineraryDays, setItineraryDays] = useState<ItineraryDayData[]>(() =>
     transformTripDays(trip),
   );
+  const [selectedDayId, setSelectedDayId] = useState<number | null>(
+    () => transformTripDays(trip)[0]?.id ?? null,
+  );
   const [dayBeingRemoved, setDayBeingRemoved] = useState<number | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  const dayIdsKey = useMemo(
+    () => itineraryDays.map((day) => day.id).join(","),
+    [itineraryDays],
+  );
+
+  useEffect(() => {
+    setSelectedDayId((prev) =>
+      prev !== null && itineraryDays.some((day) => day.id === prev)
+        ? prev
+        : (itineraryDays[0]?.id ?? null),
+    );
+  }, [dayIdsKey, itineraryDays]);
 
   const lastSavedSnapshot = useRef(serializeItineraryDays(itineraryDays));
   const skipNextSave = useRef(true);
@@ -104,7 +99,13 @@ export function useItineraryEditor(
       void utils.trip.invalidate();
     },
     onError: (err) => {
-      setSaveError(getTrpcErrorMessage(err));
+      const message = getTrpcErrorMessage(err);
+      setSaveError((prev) => {
+        if (!prev) {
+          toast.error("Could not save changes", { description: message });
+        }
+        return message;
+      });
     },
   });
 
@@ -122,7 +123,7 @@ export function useItineraryEditor(
           attractions: [],
         },
       ]);
-      onDayAdded?.(tempId);
+      setSelectedDayId(tempId);
       return { tempId };
     },
     onSuccess: (newDay, _, context) => {
@@ -131,17 +132,15 @@ export function useItineraryEditor(
           day.id === context?.tempId ? { ...day, id: newDay.id } : day,
         ),
       );
-      onDayAdded?.(newDay.id);
+      setSelectedDayId(newDay.id);
       toast.success("Day added successfully");
       void utils.trip.invalidate();
     },
     onError: (err, _, context) => {
       if (context?.tempId) {
-        setItineraryDays((prev) => {
-          const remaining = prev.filter((day) => day.id !== context.tempId);
-          onDayAddFailed?.(context.tempId, remaining);
-          return remaining;
-        });
+        setItineraryDays((prev) =>
+          prev.filter((day) => day.id !== context.tempId),
+        );
       }
       toast.error("Failed to add day", {
         description: getTrpcErrorMessage(err),
@@ -153,9 +152,7 @@ export function useItineraryEditor(
     onSuccess: (_, variables) => {
       setItineraryDays((prevDays) => {
         const filtered = prevDays.filter((d) => d.id !== variables.dayId);
-        const reordered = filtered.map((d, i) => ({ ...d, dayNumber: i + 1 }));
-        onDayRemoved?.(variables.dayId, reordered);
-        return reordered;
+        return filtered.map((d, i) => ({ ...d, dayNumber: i + 1 }));
       });
 
       toast.success("Day removed");
@@ -177,8 +174,7 @@ export function useItineraryEditor(
     setItineraryDays(serverDays);
     skipNextSave.current = true;
     lastSavedSnapshot.current = serializeItineraryDays(serverDays);
-    onDaysReset?.(serverDays);
-  }, [tripId, trip, onDaysReset]);
+  }, [tripId, trip]);
 
   useEffect(() => {
     if (skipNextSave.current) {
@@ -214,18 +210,14 @@ export function useItineraryEditor(
   const removeDay = useCallback(
     (dayId: number) => {
       if (dayId < 0) {
-        setItineraryDays((prev) => {
-          const remaining = prev.filter((d) => d.id !== dayId);
-          onDayAddFailed?.(dayId, remaining);
-          return remaining;
-        });
+        setItineraryDays((prev) => prev.filter((d) => d.id !== dayId));
         return;
       }
 
       setDayBeingRemoved(dayId);
       deleteDay.mutate({ dayId });
     },
-    [deleteDay, onDayAddFailed],
+    [deleteDay],
   );
 
   const retrySave = useCallback(() => {
@@ -236,8 +228,8 @@ export function useItineraryEditor(
   }, [itineraryDays, tripId, updateDays]);
 
   const addAttractionToDay = useCallback(
-    (selectedDayId: number | null, attraction: AttractionDetail): boolean => {
-      if (!selectedDayId) {
+    (dayId: number | null, attraction: AttractionDetail): boolean => {
+      if (!dayId) {
         toast.error("No day selected", {
           description: "Please select a day to add attractions.",
         });
@@ -256,7 +248,7 @@ export function useItineraryEditor(
 
       setItineraryDays((prev) =>
         prev.map((d) =>
-          d.id === selectedDayId
+          d.id === dayId
             ? { ...d, attractions: [...d.attractions, attraction] }
             : d,
         ),
@@ -315,6 +307,8 @@ export function useItineraryEditor(
 
   return {
     itineraryDays,
+    selectedDayId,
+    setSelectedDayId,
     isSaving: updateDays.isPending,
     isAddingDay: createDay.isPending,
     dayBeingRemoved,
