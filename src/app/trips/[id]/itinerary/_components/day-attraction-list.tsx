@@ -1,7 +1,7 @@
 "use client";
 
 import { Clock, GripVertical, Route, Trash2 } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { ItineraryDayData, RouteData } from "~/types";
 
@@ -27,6 +27,7 @@ export function DayAttractionList({
   onReorder,
 }: DayAttractionListProps) {
   const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const removeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [removingAttractionId, setRemovingAttractionId] = useState<
@@ -34,10 +35,22 @@ export function DayAttractionList({
   >(null);
   const [isReordering, setIsReordering] = useState(false);
 
+  useEffect(() => {
+    return () => {
+      if (removeTimeoutRef.current) {
+        clearTimeout(removeTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleRemove = (e: React.MouseEvent, attractionId: number) => {
     e.stopPropagation();
+    if (removeTimeoutRef.current) {
+      clearTimeout(removeTimeoutRef.current);
+    }
     setRemovingAttractionId(attractionId);
-    setTimeout(() => {
+    removeTimeoutRef.current = setTimeout(() => {
+      removeTimeoutRef.current = null;
       onRemoveAttraction(attractionId);
       setRemovingAttractionId(null);
     }, 300);

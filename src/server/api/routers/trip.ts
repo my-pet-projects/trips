@@ -146,7 +146,17 @@ export const tripRouter = createTRPCRouter({
         });
       }
 
-      return trip;
+      return {
+        ...trip,
+        itineraryDays: trip.itineraryDays.map(
+          ({ id, name, dayNumber, itineraryDayPlaces }) => ({
+            id,
+            name,
+            dayNumber,
+            attractions: itineraryDayPlaces.map((place) => place.attraction),
+          }),
+        ),
+      };
     }),
 
   create: protectedProcedure

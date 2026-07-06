@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 
 import { ItineraryMap } from "~/app/_components/map/itinerary-map";
-import { transformTripDays } from "~/lib/itinerary/transform";
 import { useItineraryDayMaps } from "~/lib/itinerary/use-itinerary-day-maps";
 import { DEFAULT_DAY_COLOR } from "~/lib/map/colors";
 import type { AttractionDetail, Trip } from "~/types";
@@ -19,9 +18,9 @@ export function ItineraryViewer({
   trip,
   tripAttractions: attractions,
 }: ItineraryViewerProps) {
-  const itineraryDays = useMemo(() => transformTripDays(trip), [trip]);
+  const { itineraryDays } = trip;
   const [selectedDayId, setSelectedDayId] = useState<number | null>(
-    () => itineraryDays[0]?.id ?? null,
+    () => trip.itineraryDays[0]?.id ?? null,
   );
   const [selectedAttractionId, setSelectedAttractionId] = useState<
     number | null

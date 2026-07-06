@@ -28,42 +28,51 @@ function shouldFetchDayRoute(
 }
 
 export function useItineraryRouteMap(days: ItineraryDayData[]) {
+  const dayRouteInputs = useMemo(
+    () =>
+      days.map((day) => {
+        const { points } = getRouteQueryInput(day.attractions);
+        return {
+          dayId: day.id,
+          points,
+          enabled: shouldFetchDayRoute(day.id, points),
+        };
+      }),
+    [days],
+  );
+
   const queryResults = api.useQueries((t) =>
-    days.map((day) => {
-      const { points } = getRouteQueryInput(day.attractions);
-      return t.route.buildRoute(
+    dayRouteInputs.map(({ points, enabled }) =>
+      t.route.buildRoute(
         { points },
         {
-          enabled: shouldFetchDayRoute(day.id, points),
+          enabled,
           refetchOnWindowFocus: false,
           refetchOnMount: false,
           retry: 1,
         },
-      );
-    }),
+      ),
+    ),
   );
 
   const dayRoutes = useMemo(() => {
     const map = new Map<number, RouteData>();
-    days.forEach((day, i) => {
+    dayRouteInputs.forEach(({ dayId }, i) => {
       const data = queryResults[i]?.data;
       if (data) {
-        map.set(day.id, data);
+        map.set(dayId, data);
       }
     });
     return map;
-  }, [days, queryResults]);
+  }, [dayRouteInputs, queryResults]);
 
   const isLoadingRoutes = useMemo(
     () =>
-      days.some((day, i) => {
-        const { points } = getRouteQueryInput(day.attractions);
-        return (
-          shouldFetchDayRoute(day.id, points) &&
-          (queryResults[i]?.isFetching ?? false)
-        );
-      }),
-    [days, queryResults],
+      dayRouteInputs.some(
+        (input, i) =>
+          input.enabled && (queryResults[i]?.isFetching ?? false),
+      ),
+    [dayRouteInputs, queryResults],
   );
 
   return { dayRoutes, isLoadingRoutes };

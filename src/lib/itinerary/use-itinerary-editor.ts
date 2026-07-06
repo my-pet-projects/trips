@@ -5,8 +5,6 @@ import { getTrpcErrorMessage } from "~/lib/trpc-error-message";
 import { api } from "~/trpc/react";
 import type { AttractionDetail, ItineraryDayData, Trip } from "~/types";
 
-import { transformTripDays } from "./transform";
-
 const AUTO_SAVE_DELAY_MS = 500;
 
 function toItineraryUpdateInput(tripId: number, days: ItineraryDayData[]) {
@@ -64,11 +62,11 @@ export function useItineraryEditor(trip: Trip) {
   const tripId = trip.id;
   const utils = api.useUtils();
 
-  const [itineraryDays, setItineraryDays] = useState<ItineraryDayData[]>(() =>
-    transformTripDays(trip),
+  const [itineraryDays, setItineraryDays] = useState<ItineraryDayData[]>(
+    () => trip.itineraryDays,
   );
   const [selectedDayId, setSelectedDayId] = useState<number | null>(
-    () => transformTripDays(trip)[0]?.id ?? null,
+    () => trip.itineraryDays[0]?.id ?? null,
   );
   const [dayBeingRemoved, setDayBeingRemoved] = useState<number | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -89,6 +87,10 @@ export function useItineraryEditor(trip: Trip) {
   const lastSavedSnapshot = useRef(serializeItineraryDays(itineraryDays));
   const skipNextSave = useRef(true);
   const prevTripIdRef = useRef(tripId);
+  const cancelledTempIds = useRef(new Set<number>());
+  const silentDeleteIds = useRef(new Set<number>());
+  const itineraryDaysRef = useRef(itineraryDays);
+  itineraryDaysRef.current = itineraryDays;
 
   const updateDays = api.itinerary.updateItineraryDays.useMutation({
     onSuccess: (_, variables) => {
@@ -109,6 +111,27 @@ export function useItineraryEditor(trip: Trip) {
     },
   });
 
+  const deleteDay = api.itinerary.deleteItineraryDay.useMutation({
+    onSuccess: (_, variables) => {
+      setItineraryDays((prevDays) => {
+        const filtered = prevDays.filter((d) => d.id !== variables.dayId);
+        return filtered.map((d, i) => ({ ...d, dayNumber: i + 1 }));
+      });
+
+      const isSilent = silentDeleteIds.current.delete(variables.dayId);
+      if (!isSilent) {
+        toast.success("Day removed");
+      }
+      void utils.trip.invalidate();
+    },
+    onError: (err) => {
+      toast.error("Failed to remove day", {
+        description: getTrpcErrorMessage(err),
+      });
+    },
+    onSettled: () => setDayBeingRemoved(null),
+  });
+
   const createDay = api.itinerary.createItineraryDay.useMutation({
     onMutate: async (newDayData) => {
       await utils.trip.getWithItinerary.cancel();
@@ -127,9 +150,23 @@ export function useItineraryEditor(trip: Trip) {
       return { tempId };
     },
     onSuccess: (newDay, _, context) => {
+      const tempId = context?.tempId;
+      if (tempId === undefined) return;
+
+      const wasCancelled = cancelledTempIds.current.delete(tempId);
+      const tempStillPresent = itineraryDaysRef.current.some(
+        (day) => day.id === tempId,
+      );
+
+      if (wasCancelled || !tempStillPresent) {
+        silentDeleteIds.current.add(newDay.id);
+        deleteDay.mutate({ dayId: newDay.id });
+        return;
+      }
+
       setItineraryDays((prev) =>
         prev.map((day) =>
-          day.id === context?.tempId ? { ...day, id: newDay.id } : day,
+          day.id === tempId ? { ...day, id: newDay.id } : day,
         ),
       );
       setSelectedDayId(newDay.id);
@@ -138,6 +175,7 @@ export function useItineraryEditor(trip: Trip) {
     },
     onError: (err, _, context) => {
       if (context?.tempId) {
+        cancelledTempIds.current.delete(context.tempId);
         setItineraryDays((prev) =>
           prev.filter((day) => day.id !== context.tempId),
         );
@@ -148,29 +186,11 @@ export function useItineraryEditor(trip: Trip) {
     },
   });
 
-  const deleteDay = api.itinerary.deleteItineraryDay.useMutation({
-    onSuccess: (_, variables) => {
-      setItineraryDays((prevDays) => {
-        const filtered = prevDays.filter((d) => d.id !== variables.dayId);
-        return filtered.map((d, i) => ({ ...d, dayNumber: i + 1 }));
-      });
-
-      toast.success("Day removed");
-      void utils.trip.invalidate();
-    },
-    onError: (err) => {
-      toast.error("Failed to remove day", {
-        description: getTrpcErrorMessage(err),
-      });
-    },
-    onSettled: () => setDayBeingRemoved(null),
-  });
-
   useEffect(() => {
     if (prevTripIdRef.current === tripId) return;
     prevTripIdRef.current = tripId;
 
-    const serverDays = transformTripDays(trip);
+    const serverDays = trip.itineraryDays;
     setItineraryDays(serverDays);
     skipNextSave.current = true;
     lastSavedSnapshot.current = serializeItineraryDays(serverDays);
@@ -199,6 +219,8 @@ export function useItineraryEditor(trip: Trip) {
   }, [itineraryDays, tripId, updateDays]);
 
   const addDay = useCallback(() => {
+    if (createDay.isPending) return;
+
     const newDayNumber = itineraryDays.length + 1;
     createDay.mutate({
       tripId,
@@ -210,6 +232,7 @@ export function useItineraryEditor(trip: Trip) {
   const removeDay = useCallback(
     (dayId: number) => {
       if (dayId < 0) {
+        cancelledTempIds.current.add(dayId);
         setItineraryDays((prev) => prev.filter((d) => d.id !== dayId));
         return;
       }
