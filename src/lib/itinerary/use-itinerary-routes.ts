@@ -9,6 +9,9 @@ export function useItineraryRoutes() {
   const [loadingRoutes, setLoadingRoutes] = useState<Map<number, boolean>>(
     () => new Map(),
   );
+  const [routeErrors, setRouteErrors] = useState<Map<number, string>>(
+    () => new Map(),
+  );
 
   const isLoadingRoutes = useMemo(
     () => [...loadingRoutes.values()].some(Boolean),
@@ -20,11 +23,17 @@ export function useItineraryRoutes() {
       dayId: number,
       route: RouteData | null,
       isLoading: boolean,
-      error?: Error,
+      errorMessage?: string,
     ) => {
-      if (error) {
-        console.error("Failed to build route for day", dayId, error);
-      }
+      setRouteErrors((prev) => {
+        const newMap = new Map(prev);
+        if (errorMessage) {
+          newMap.set(dayId, errorMessage);
+        } else {
+          newMap.delete(dayId);
+        }
+        return newMap;
+      });
 
       setLoadingRoutes((prev) => {
         const newMap = new Map(prev);
@@ -56,11 +65,17 @@ export function useItineraryRoutes() {
       newMap.delete(dayId);
       return newMap;
     });
+    setRouteErrors((prev) => {
+      const newMap = new Map(prev);
+      newMap.delete(dayId);
+      return newMap;
+    });
   }, []);
 
   return {
     dayRoutes,
     loadingRoutes,
+    routeErrors,
     isLoadingRoutes,
     updateRoute,
     clearRoute,

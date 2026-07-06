@@ -36,6 +36,7 @@ type ItineraryDayProps = {
   isRemoving?: boolean;
   routeData?: RouteData;
   isLoadingRoute?: boolean;
+  routeError?: string;
 };
 
 export function ItineraryDay({
@@ -55,6 +56,7 @@ export function ItineraryDay({
   isRemoving = false,
   routeData,
   isLoadingRoute = false,
+  routeError,
 }: ItineraryDayProps) {
   const attractionCount = day.attractions.length;
   const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -227,7 +229,7 @@ export function ItineraryDay({
           <button
             type="button"
             onClick={handleRemoveClick}
-            className="rounded-lg p-1.5 text-gray-400 transition-all hover:bg-red-50 hover:text-red-600 hover:shadow-sm active:scale-95"
+            className="rounded-lg p-1.5 text-gray-400 transition-all hover:bg-red-50 hover:text-red-600 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
             disabled={isRemoving}
             title="Remove day"
           >
@@ -260,12 +262,15 @@ export function ItineraryDay({
                 </span>
               </div>
             </>
-          ) : (
-            <div className="flex items-center gap-2 text-amber-600">
-              <AlertCircle className="h-3.5 w-3.5" />
-              <span>Unable to calculate route</span>
+          ) : routeError ? (
+            <div className="flex flex-col gap-0.5 text-amber-600">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                <span className="font-medium">Unable to calculate route</span>
+              </div>
+              <p className="ml-5 text-xs text-amber-700">{routeError}</p>
             </div>
-          )}
+          ) : null}
         </div>
       )}
 

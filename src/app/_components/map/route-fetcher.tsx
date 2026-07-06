@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 
+import { getTrpcErrorMessage } from "~/lib/trpc-error-message";
 import { api } from "~/trpc/react";
 import type { BasicAttraction, RouteData } from "~/types";
 
@@ -12,7 +13,7 @@ export function useDayRouteFetch(
     dayId: number,
     route: RouteData | null,
     isLoading: boolean,
-    error?: Error,
+    errorMessage?: string,
   ) => void,
 ) {
   const validAttractions = attractions.filter(
@@ -47,7 +48,7 @@ export function useDayRouteFetch(
         dayId,
         route ?? null,
         isFetching,
-        error ? new Error(error.message) : undefined,
+        error ? getTrpcErrorMessage(error) : undefined,
       );
     } else {
       onUpdate(dayId, null, false);
@@ -66,7 +67,7 @@ function DayRouteFetcherItem({
     dayId: number,
     route: RouteData | null,
     isLoading: boolean,
-    error?: Error,
+    errorMessage?: string,
   ) => void;
 }) {
   useDayRouteFetch(dayId, attractions, onUpdate);
@@ -85,7 +86,7 @@ export function DayRoutesFetcher({
     dayId: number,
     route: RouteData | null,
     isLoading: boolean,
-    error?: Error,
+    errorMessage?: string,
   ) => void;
 }) {
   return (
