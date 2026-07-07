@@ -10,6 +10,14 @@ export const MARKER_TOOLTIP_OPTIONS: L.TooltipOptions = {
   sticky: true,
 };
 
+export function getMarkerTooltipText(content: unknown): string | null {
+  if (content == null || content === false) return null;
+  if (typeof content === "function") return null;
+  if (typeof content === "string") return content.trim();
+  if (content instanceof HTMLElement) return content.textContent?.trim() ?? "";
+  return null;
+}
+
 export function bindMarkerTooltip(marker: L.Marker, label: string) {
   const text = label.trim();
   marker.unbindTooltip();

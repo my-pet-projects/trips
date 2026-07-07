@@ -31,6 +31,7 @@ interface CountryComboboxBaseProps {
   isLoading: boolean;
   error?: boolean;
   showLabel?: boolean;
+  inputAriaLabel?: string;
   placeholder?: string;
   disabled?: boolean;
   compact?: boolean;
@@ -87,6 +88,7 @@ const CountryComboboxSingle: React.FC<CountryComboboxSingleProps> = ({
   disabled,
   error = false,
   showLabel = true,
+  inputAriaLabel,
   placeholder,
   compact,
   value,
@@ -114,6 +116,9 @@ const CountryComboboxSingle: React.FC<CountryComboboxSingleProps> = ({
       >
         <ComboboxInput
           id="country-select-single"
+          {...(!showLabel && {
+            "aria-label": inputAriaLabel ?? "Country",
+          })}
           showClear
           startAdornment={
             value ? (
@@ -181,6 +186,7 @@ const CountryComboboxMulti: React.FC<CountryComboboxMultiProps> = ({
   disabled,
   error = false,
   showLabel = true,
+  inputAriaLabel,
   placeholder,
   value,
   onChange,
@@ -219,7 +225,9 @@ const CountryComboboxMulti: React.FC<CountryComboboxMultiProps> = ({
           </ComboboxValue>
           <ComboboxChipsInput
             id="country-select-multi"
-            aria-label="Countries"
+            {...(!showLabel && {
+              "aria-label": inputAriaLabel ?? "Countries",
+            })}
             placeholder={
               placeholder ??
               (error ? "Error loading countries" : "Select countries...")

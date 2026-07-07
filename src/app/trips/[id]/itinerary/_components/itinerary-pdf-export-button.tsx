@@ -46,6 +46,7 @@ export function ItineraryAllDaysPdfButton({
           <Button
             type="button"
             variant="outline"
+            aria-label={isGenerating ? "Generating PDF" : "Download all days as PDF"}
             onClick={handleClick}
             disabled={disabled || isGenerating}
           />
@@ -96,6 +97,7 @@ export function ItineraryDayPdfButton({
             variant="ghost"
             size="icon-sm"
             className="text-gray-400 hover:bg-sky-50 hover:text-sky-600"
+            aria-label={isGenerating ? "Generating PDF" : "Download PDF"}
             onClick={handleClick}
             disabled={disabled || isGenerating}
           />

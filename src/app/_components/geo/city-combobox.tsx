@@ -110,6 +110,7 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
       >
         <ComboboxInput
           id="city-select"
+          {...(!showLabel && { "aria-label": "City" })}
           showClear
           className="h-12 text-base"
           placeholder={

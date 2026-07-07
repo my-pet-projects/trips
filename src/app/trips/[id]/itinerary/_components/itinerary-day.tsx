@@ -165,6 +165,7 @@ export function ItineraryDay({
           <Tooltip>
             <TooltipTrigger
               type="button"
+              aria-label="Remove day"
               onClick={(e) => {
                 e.stopPropagation();
                 removeDay(day.id);

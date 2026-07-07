@@ -199,7 +199,9 @@ test.describe("Attractions Navigation Flow", () => {
       .catch(() => false);
     if (hasPage2) {
       await page2Button.click();
-      await page.waitForTimeout(1000);
+      await expect
+        .poll(() => page.url(), { timeout: 10000 })
+        .toContain("page=2");
     }
 
     await clickEditOnFirstRow(page);

@@ -279,6 +279,7 @@ export function TripForm({ mode, trip }: TripFormProps) {
                   Destinations <span className="text-red-500">*</span>
                 </>
               }
+              htmlFor="country-select-multi"
               error={
                 countriesError
                   ? "Failed to load countries. Please refresh the page and try again."

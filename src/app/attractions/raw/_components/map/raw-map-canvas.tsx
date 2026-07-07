@@ -17,7 +17,10 @@ import {
 } from "~/lib/map/marker-icons/pin";
 import { useFitBounds } from "~/lib/map/use-fit-bounds";
 import { useMapClickDeselect } from "~/lib/map/use-map-click-deselect";
-import { bindMarkerTooltip } from "~/lib/map/marker-tooltip";
+import {
+  bindMarkerTooltip,
+  getMarkerTooltipText,
+} from "~/lib/map/marker-tooltip";
 
 import { useRawTriageContext } from "../raw-triage-context";
 import type { ExistingMapAttraction, HighlightIconKey, RawMapAttraction } from "../types";
@@ -26,9 +29,9 @@ import { toHighlightIconKey } from "../types";
 export type PinTaggedMarker = L.Marker & { markerStatus: string };
 
 function syncMarkerTooltip(marker: L.Marker, label: string) {
-  const tooltip = marker.getTooltip();
-  const current = tooltip?.getContent();
-  if (typeof current === "string" && current === label) return;
+  const trimmed = label.trim();
+  const current = getMarkerTooltipText(marker.getTooltip()?.getContent());
+  if (current === trimmed) return;
   bindMarkerTooltip(marker, label);
 }
 

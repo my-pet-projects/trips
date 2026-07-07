@@ -19,11 +19,9 @@ export function LoadingPage({ title, message }: LoadingPageProps) {
       <Navbar title={title} subtitle="Loading..." />
 
       <main className="container mx-auto px-4 py-6">
-        {message && (
-          <p className="sr-only" role="status">
-            {message}
-          </p>
-        )}
+        <p className="sr-only" role="status">
+          {message ?? `Loading ${title}...`}
+        </p>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, index) => (
             <Card key={index} className="border border-gray-200 bg-white shadow-sm ring-0">

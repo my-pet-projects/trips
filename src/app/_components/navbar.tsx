@@ -54,7 +54,11 @@ function NavSectionLink({
           : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
       )}
     >
-      <Link href={href} onClick={onClick}>
+      <Link
+        href={href}
+        onClick={onClick}
+        aria-current={active ? "page" : undefined}
+      >
         {children}
       </Link>
     </Button>
@@ -254,6 +258,8 @@ export function Navbar({
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden"
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-nav-menu"
             >
               {mobileMenuOpen ? (
                 <X className="h-5 w-5" />
@@ -265,7 +271,7 @@ export function Navbar({
         </div>
 
         {mobileMenuOpen && (
-          <div className="mt-4 border-t pt-4 md:hidden">
+          <div id="mobile-nav-menu" className="mt-4 border-t pt-4 md:hidden">
             <div className="flex flex-col gap-2">
               <NavSectionLink
                 href="/trips"

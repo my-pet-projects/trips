@@ -607,10 +607,16 @@ export function AttractionForm(props: AttractionFormProps) {
                   />
                   <Tooltip>
                     <TooltipTrigger
-                      type="button"
-                      onClick={handleParseSourceUrl}
-                      disabled={parseSiteMutation.isPending}
-                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+                      render={
+                        <Button
+                          type="button"
+                          size="icon"
+                          className="h-10 w-10 shrink-0"
+                          aria-label="Parse site for data"
+                          onClick={handleParseSourceUrl}
+                          disabled={parseSiteMutation.isPending}
+                        />
+                      }
                     >
                       {parseSiteMutation.isPending ? (
                         <Spinner />
@@ -683,6 +689,7 @@ export function AttractionForm(props: AttractionFormProps) {
                     <Tooltip>
                       <TooltipTrigger
                         type="button"
+                        aria-label="Paste latitude from clipboard"
                         onClick={() => handlePasteCoordinates("latitude")}
                         className="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600"
                       >
@@ -713,6 +720,7 @@ export function AttractionForm(props: AttractionFormProps) {
                     <Tooltip>
                       <TooltipTrigger
                         type="button"
+                        aria-label="Paste longitude from clipboard"
                         onClick={() => handlePasteCoordinates("longitude")}
                         className="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600"
                       >
@@ -727,10 +735,15 @@ export function AttractionForm(props: AttractionFormProps) {
               <div className="flex gap-2">
                 <Tooltip>
                   <TooltipTrigger
-                    type="button"
-                    onClick={() => openMap("osm")}
-                    disabled={!hasValidLatitude || !hasValidLongitude}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+                    render={
+                      <Button
+                        type="button"
+                        size="icon"
+                        aria-label="Open in OpenStreetMap"
+                        onClick={() => openMap("osm")}
+                        disabled={!hasValidLatitude || !hasValidLongitude}
+                      />
+                    }
                   >
                     <MapIcon className="h-4 w-4" />
                   </TooltipTrigger>
@@ -738,10 +751,15 @@ export function AttractionForm(props: AttractionFormProps) {
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger
-                    type="button"
-                    onClick={() => openMap("google")}
-                    disabled={!hasValidLatitude || !hasValidLongitude}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+                    render={
+                      <Button
+                        type="button"
+                        size="icon"
+                        aria-label="Open in Google Maps"
+                        onClick={() => openMap("google")}
+                        disabled={!hasValidLatitude || !hasValidLongitude}
+                      />
+                    }
                   >
                     <MapPin className="h-4 w-4" />
                   </TooltipTrigger>
@@ -750,11 +768,16 @@ export function AttractionForm(props: AttractionFormProps) {
                 {isVerifyMode ? (
                   <Tooltip>
                     <TooltipTrigger
-                      type="button"
-                      onClick={handleSearchImages}
-                      disabled={!hasValidLatitude || !hasValidLongitude}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
-                      data-testid="search-images-button"
+                      render={
+                        <Button
+                          type="button"
+                          size="icon"
+                          aria-label="Search images in side panel"
+                          onClick={handleSearchImages}
+                          disabled={!hasValidLatitude || !hasValidLongitude}
+                          data-testid="search-images-button"
+                        />
+                      }
                     >
                       <Images className="h-4 w-4" />
                     </TooltipTrigger>

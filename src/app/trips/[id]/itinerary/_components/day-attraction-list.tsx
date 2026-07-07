@@ -158,6 +158,7 @@ export function DayAttractionList({
               <Tooltip>
                 <TooltipTrigger
                   type="button"
+                  aria-label="Drag to reorder"
                   className={`attraction-drag-handle cursor-grab rounded p-1 transition-all hover:bg-gray-200 ${
                     isDragging ? "cursor-grabbing" : ""
                   }`}
@@ -186,6 +187,7 @@ export function DayAttractionList({
               <Tooltip>
                 <TooltipTrigger
                   type="button"
+                  aria-label="Remove attraction"
                   onClick={(e) => handleRemove(e, attraction.id)}
                   className="shrink-0 rounded-lg p-1 text-gray-400 opacity-0 transition-all group-hover/item:opacity-100 hover:bg-red-50 hover:text-red-600 hover:shadow-sm active:scale-90"
                 >
