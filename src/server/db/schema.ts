@@ -57,8 +57,42 @@ export const tripDestinations = sqliteTable(
   ],
 );
 
+export const tripOvernightStops = sqliteTable(
+  "trip_overnight_stops",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    tripId: integer("trip_id")
+      .notNull()
+      .references(() => trips.id, { onDelete: "cascade" }),
+    name: text("name", { length: 256 }).notNull(),
+    address: text("address").notNull(),
+    latitude: real("latitude").notNull(),
+    longitude: real("longitude").notNull(),
+    checkInDate: integer("check_in_date", { mode: "timestamp" }).notNull(),
+    checkOutDate: integer("check_out_date", { mode: "timestamp" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .default(sql`(unixepoch())`)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).$onUpdate(
+      () => new Date(),
+    ),
+  },
+  (table) => [
+    index("trip_overnight_stops_trip_idx").on(table.tripId),
+    index("trip_overnight_stops_check_in_idx").on(
+      table.tripId,
+      table.checkInDate,
+    ),
+    check(
+      "trip_overnight_stops_check_out_after_check_in",
+      sql`${table.checkOutDate} > ${table.checkInDate}`,
+    ),
+  ],
+);
+
 export const tripsRelations = relations(trips, ({ many }) => ({
   destinations: many(tripDestinations),
+  overnightStops: many(tripOvernightStops),
   itineraryDays: many(itineraryDays),
 }));
 
@@ -67,6 +101,16 @@ export const tripDestinationsRelations = relations(
   ({ one }) => ({
     trip: one(trips, {
       fields: [tripDestinations.tripId],
+      references: [trips.id],
+    }),
+  }),
+);
+
+export const tripOvernightStopsRelations = relations(
+  tripOvernightStops,
+  ({ one }) => ({
+    trip: one(trips, {
+      fields: [tripOvernightStops.tripId],
       references: [trips.id],
     }),
   }),
