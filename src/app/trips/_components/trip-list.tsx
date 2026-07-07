@@ -7,7 +7,6 @@ import {
   Clock,
   Eye,
   History,
-  Loader2,
   MapPin,
   MoreVertical,
   Pencil,
@@ -30,12 +29,41 @@ import {
   AlertDialogTitle,
 } from "~/app/_components/ui/alert-dialog";
 import { Button } from "~/app/_components/ui/button";
+import { Badge, badgeVariants } from "~/app/_components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+} from "~/app/_components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/app/_components/ui/dialog";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "~/app/_components/ui/empty";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/app/_components/ui/dropdown-menu";
+import { Skeleton } from "~/app/_components/ui/skeleton";
+import { Spinner } from "~/app/_components/ui/spinner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/app/_components/ui/tooltip";
 import { getFlagEmoji } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import type { TripListItem } from "~/types";
@@ -130,19 +158,18 @@ function TripCard({
   const status = getTripStatus(parsedStartDate, parsedEndDate);
   const dateRange = formatDateRange(parsedStartDate, parsedEndDate);
   const duration = getDurationDays(parsedStartDate, parsedEndDate);
+  const hiddenDestinations = destinations.slice(3);
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-gray-300">
+    <Card className="group relative overflow-hidden rounded-2xl border-0 bg-white shadow-sm ring-1 ring-gray-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-gray-300">
       <Link href={`/trips/${id}/edit`} className="block cursor-pointer">
-        {/* Header */}
-        <div className={`px-5 pt-4 pb-3 ${status.headerGradient}`}>
+        <CardHeader className={`border-b-0 pb-3 ${status.headerGradient}`}>
           <h3 className="line-clamp-2 pr-8 text-lg font-semibold text-gray-900 transition-colors group-hover:text-gray-700">
             {name}
           </h3>
-        </div>
+        </CardHeader>
 
-        <div className="space-y-3 px-5 pt-2 pb-4">
-          {/* Date & duration */}
+        <CardContent className="space-y-3 pt-2">
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Calendar className="h-4 w-4 shrink-0 text-gray-400" />
             {dateRange ? (
@@ -157,31 +184,16 @@ function TripCard({
             )}
           </div>
 
-          {/* Countries list */}
           {destinations.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
               {destinations.slice(0, 3).map((dest) => (
-                <div
-                  key={dest.id}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700"
-                >
+                <Badge key={dest.id} variant="muted" className="gap-1.5 px-2.5 py-1">
                   <span className="text-sm">
                     {getFlagEmoji(dest.country.cca2)}
                   </span>
                   {dest.country.name}
-                </div>
+                </Badge>
               ))}
-              {destinations.length > 3 && (
-                <div
-                  className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500"
-                  title={destinations
-                    .slice(3)
-                    .map((d) => d.country.name)
-                    .join(", ")}
-                >
-                  +{destinations.length - 3} more
-                </div>
-              )}
             </div>
           ) : (
             <div className="flex items-center gap-2 text-sm text-gray-400">
@@ -189,8 +201,48 @@ function TripCard({
               <span>Plan your destinations</span>
             </div>
           )}
-        </div>
+        </CardContent>
       </Link>
+
+      {hiddenDestinations.length > 0 && (
+        <div className="px-6 pb-4">
+          <Dialog>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <DialogTrigger
+                    className={badgeVariants({
+                      variant: "muted",
+                      className: "cursor-pointer px-2.5 py-1 text-gray-500",
+                    })}
+                  />
+                }
+              >
+                +{hiddenDestinations.length} more
+              </TooltipTrigger>
+              <TooltipContent>View all destinations</TooltipContent>
+            </Tooltip>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>All destinations</DialogTitle>
+                <DialogDescription>
+                  Countries included in {name}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-wrap gap-2">
+                {destinations.map((dest) => (
+                  <Badge key={dest.id} variant="muted" className="gap-1.5 px-2.5 py-1">
+                    <span className="text-sm">
+                      {getFlagEmoji(dest.country.cca2)}
+                    </span>
+                    {dest.country.name}
+                  </Badge>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
 
       {/* Actions Menu */}
       <div className="absolute top-3 right-3 z-10">
@@ -242,43 +294,49 @@ function TripCard({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </div>
+    </Card>
   );
 }
 
 function EmptyState() {
   return (
-    <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-8 shadow-sm">
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <MapPin className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-4 text-lg font-semibold text-gray-900">
-            No trips yet
-          </h3>
-          <p className="mt-2 text-sm text-gray-500">
-            Start your adventure by creating your first trip.
-          </p>
-          <Button asChild className="mt-6 bg-sky-500 hover:bg-sky-600">
-            <Link href="/trips/new">
-              <Plus className="mr-2 h-4 w-4" />
-              Create Trip
-            </Link>
-          </Button>
-        </div>
-      </div>
-    </div>
+    <Empty className="border-gray-300 bg-gray-50 shadow-sm">
+      <EmptyHeader>
+        <EmptyMedia>
+          <MapPin className="size-12 text-gray-400" />
+        </EmptyMedia>
+        <EmptyTitle>No trips yet</EmptyTitle>
+        <EmptyDescription>
+          Start your adventure by creating your first trip.
+        </EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
+        <Button asChild className="bg-sky-500 hover:bg-sky-600">
+          <Link href="/trips/new">
+            <Plus className="mr-2 h-4 w-4" />
+            Create Trip
+          </Link>
+        </Button>
+      </EmptyContent>
+    </Empty>
   );
 }
 
 function LoadingState() {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <Loader2 className="mx-auto h-12 w-12 animate-spin text-gray-400" />
-          <p className="mt-4 text-gray-600">Loading trips...</p>
-        </div>
-      </div>
+    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <Card key={index} className="border border-gray-200 bg-white shadow-sm ring-0">
+          <CardContent className="space-y-4 pt-6">
+            <Skeleton className="h-6 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+            <div className="flex gap-2">
+              <Skeleton className="h-6 w-16 rounded-full" />
+              <Skeleton className="h-6 w-20 rounded-full" />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
@@ -291,23 +349,25 @@ function ErrorState({
   onRetry: () => void;
 }) {
   return (
-    <div className="rounded-lg border border-red-200 bg-red-50 p-8 shadow-sm">
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
-          <h3 className="mt-4 text-lg font-semibold text-gray-900">
-            Failed to load trips
-          </h3>
-          <p className="mt-2 text-sm text-gray-600">{getErrorMessage(error)}</p>
-          <Button
-            onClick={onRetry}
-            className="mt-6 bg-sky-500 hover:bg-sky-600"
-          >
-            Try Again
-          </Button>
+    <Card className="border-red-200 bg-red-50 ring-0">
+      <CardContent className="py-12">
+        <div className="flex items-center justify-center">
+          <div className="text-center">
+            <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
+            <h3 className="mt-4 text-lg font-semibold text-gray-900">
+              Failed to load trips
+            </h3>
+            <p className="mt-2 text-sm text-gray-600">{getErrorMessage(error)}</p>
+            <Button
+              onClick={onRetry}
+              className="mt-6 bg-sky-500 hover:bg-sky-600"
+            >
+              Try Again
+            </Button>
+          </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -403,9 +463,7 @@ export function TripsList() {
                 <h2 className="text-xl font-semibold text-gray-900">
                   Active Trips
                 </h2>
-                <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
-                  {activeTrips.length}
-                </span>
+                <Badge variant="success">{activeTrips.length}</Badge>
               </div>
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {activeTrips.map((trip) => (
@@ -429,9 +487,7 @@ export function TripsList() {
                 <h2 className="text-xl font-semibold text-gray-900">
                   Upcoming Trips
                 </h2>
-                <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-                  {upcomingTrips.length}
-                </span>
+                <Badge variant="info">{upcomingTrips.length}</Badge>
               </div>
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {upcomingTrips.map((trip) => (
@@ -455,9 +511,7 @@ export function TripsList() {
                 <h2 className="text-xl font-semibold text-gray-900">
                   Past Trips
                 </h2>
-                <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
-                  {pastTrips.length}
-                </span>
+                <Badge variant="muted">{pastTrips.length}</Badge>
               </div>
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {pastTrips.map((trip) => (
@@ -494,7 +548,7 @@ export function TripsList() {
             >
               {deleteMutation.isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Spinner className="mr-2" />
                   Deleting...
                 </>
               ) : (

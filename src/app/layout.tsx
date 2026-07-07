@@ -6,6 +6,7 @@ import { Geist } from "next/font/google";
 
 import { TRPCReactProvider } from "~/trpc/react";
 import { Toaster } from "./_components/ui/sonner";
+import { TooltipProvider } from "./_components/ui/tooltip";
 
 export const metadata: Metadata = {
   title: "Trip Manager",
@@ -25,8 +26,10 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" className={`${geist.variable}`}>
         <body suppressHydrationWarning>
-          <TRPCReactProvider>{children}</TRPCReactProvider>
-          <Toaster />
+          <TooltipProvider>
+            <TRPCReactProvider>{children}</TRPCReactProvider>
+            <Toaster />
+          </TooltipProvider>
         </body>
       </html>
     </ClerkProvider>

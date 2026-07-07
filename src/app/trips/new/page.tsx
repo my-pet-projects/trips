@@ -15,7 +15,6 @@ export default function CreateTripPage() {
         backHref="/trips"
       />
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <TripForm mode="create" />
       </main>

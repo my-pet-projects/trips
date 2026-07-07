@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Navbar } from "~/app/_components/navbar";
+import { buttonVariants } from "~/app/_components/ui/button";
 import { TripForm } from "~/app/trips/_components/trip-form";
+import { cn } from "~/lib/utils";
 import { api } from "~/trpc/server";
 
 export const metadata = {
@@ -40,16 +42,16 @@ export default async function EditTripPage({ params }: EditTripPageProps) {
           <>
             <Link
               href={`/trips/${tripId}/itinerary`}
-              className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+              className={cn(buttonVariants({ variant: "outline" }))}
             >
-              <Calendar className="mr-2 h-4 w-4" />
+              <Calendar className="h-4 w-4" />
               Itinerary
             </Link>
             <Link
               href={`/trips/${tripId}/view`}
-              className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+              className={cn(buttonVariants({ variant: "outline" }))}
             >
-              <Eye className="mr-2 h-4 w-4" />
+              <Eye className="h-4 w-4" />
               View
             </Link>
           </>

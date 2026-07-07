@@ -15,6 +15,7 @@ import {
   getCircleMarkerColor,
   type MarkerMeta,
 } from "~/lib/map/marker-meta";
+import { bindMarkerTooltip } from "~/lib/map/marker-tooltip";
 import { useMarkerClusterGroup } from "~/lib/map/use-marker-cluster-group";
 import { useSyncedMarkers } from "~/lib/map/use-synced-markers";
 
@@ -137,10 +138,11 @@ export const useLeafletMarkers = ({
           orderNumber: isInSelectedDay ? orderNumber : undefined,
           isVerified: meta?.isVerified && !isInAnyDay,
         }),
-        title: attraction.name,
         zIndexOffset: 0,
         pane: "markerPane",
       });
+
+      bindMarkerTooltip(marker, attraction.name);
 
       if (meta) {
         (marker as CircleTaggedMarker)._metaTag = meta.tag;

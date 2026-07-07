@@ -2,6 +2,10 @@
 
 import type { ReactNode } from "react";
 
+import { Toggle, ToggleGroup } from "~/app/_components/ui/toggle-group";
+import { Badge } from "~/app/_components/ui/badge";
+import { cn } from "~/lib/utils";
+
 export interface MapFilterPill {
   key: string;
   label?: string;
@@ -29,34 +33,57 @@ function FilterPills({
   disabled?: boolean;
 }) {
   return (
-    <>
+    <ToggleGroup
+      multiple
+      disabled={disabled}
+      value={Array.from(visible)}
+      onValueChange={(values) => {
+        const nextVisible = new Set(values);
+        for (const { key } of filters) {
+          if (visible.has(key) !== nextVisible.has(key)) {
+            onToggle(key);
+          }
+        }
+      }}
+      className="gap-1"
+    >
       {filters.map(({ key, label, color, count }) => (
-        <button
-          type="button"
+        <Toggle
           key={key}
+          value={key}
           data-testid={`map-filter-${key}`}
-          disabled={disabled}
-          onClick={() => onToggle(key)}
-          className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1 text-xs font-medium transition-opacity ${
-            compact ? "gap-1 px-2.5 py-1.5 font-semibold" : ""
-          } ${disabled ? "pointer-events-none opacity-25" : visible.has(key) ? "opacity-100" : compact ? "opacity-30" : "opacity-40"}`}
+          className={cn(
+            "flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg border-0 bg-transparent px-2 py-1 text-xs font-medium shadow-none transition-opacity hover:bg-transparent",
+            compact ? "gap-1 px-2 py-1 font-semibold" : "gap-1.5 px-2.5",
+            disabled
+              ? "pointer-events-none opacity-25"
+              : visible.has(key)
+                ? "opacity-100"
+                : compact
+                  ? "opacity-30"
+                  : "opacity-40",
+            "data-pressed:border-0 data-pressed:bg-transparent data-pressed:text-inherit",
+          )}
         >
           <span className={`h-2.5 w-2.5 rounded-full ${color}`} />
           {label}
-          <span
-            className={`rounded-full bg-gray-100 px-1.5 py-0.5 text-gray-600 ${
-              compact ? "bg-transparent px-0 py-0" : ""
-            }`}
+          <Badge
+            variant="muted"
+            className={cn(
+              "px-1.5 py-0 text-[10px] font-semibold",
+              compact && "bg-transparent px-0 py-0 text-inherit",
+            )}
           >
             {count}
-          </span>
-        </button>
+          </Badge>
+        </Toggle>
       ))}
-    </>
+    </ToggleGroup>
   );
 }
 
 export type FilterGroup = {
+  id: string;
   filters: MapFilterPill[];
   visible: Set<string>;
   onToggle: (key: string) => void;
@@ -68,18 +95,15 @@ type MapFilterBarProps = {
   desktopSummary?: ReactNode;
   groups: FilterGroup[];
   mobileTop?: ReactNode;
+  compactDesktop?: boolean;
 };
 
 function renderGroups(groups: FilterGroup[], compact: boolean) {
   return groups.map((group, index) => (
-    <span key={index} className="contents">
+    <span key={group.id} className="contents">
       {index > 0 && <Divider compact={compact} />}
       <FilterPills
-        filters={
-          compact
-            ? group.filters.map(({ key, color, count }) => ({ key, color, count }))
-            : group.filters
-        }
+        filters={group.filters}
         visible={group.visible}
         onToggle={group.onToggle}
         disabled={group.disabled}
@@ -94,15 +118,25 @@ export function MapFilterBar({
   desktopSummary,
   groups,
   mobileTop,
+  compactDesktop = false,
 }: MapFilterBarProps) {
   return (
     <>
-      <div className="absolute top-3 left-1/2 z-1000 hidden md:flex w-[calc(100%-1.5rem)] max-w-fit -translate-x-1/2 items-center gap-2 rounded-xl border border-gray-200 bg-white/95 px-4 py-2 shadow-md backdrop-blur-sm" data-testid="map-filter-bar-desktop">
-        {desktopLeading}
-        {desktopLeading && (desktopSummary ?? groups.length > 0) && <Divider />}
-        {desktopSummary}
-        {desktopSummary && groups.length > 0 && <Divider />}
-        <div className="flex items-center gap-2">{renderGroups(groups, false)}</div>
+      <div
+        className="absolute top-3 inset-x-3 z-1000 hidden justify-center md:flex"
+        data-testid="map-filter-bar-desktop"
+      >
+        <div className="flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto rounded-xl border border-gray-200 bg-white/95 px-3 py-1.5 shadow-md backdrop-blur-sm">
+          {desktopLeading}
+          {desktopLeading && (desktopSummary ?? groups.length > 0) && (
+            <Divider compact={compactDesktop} />
+          )}
+          {desktopSummary}
+          {desktopSummary && groups.length > 0 && <Divider compact={compactDesktop} />}
+          <div className="flex flex-nowrap items-center gap-1.5">
+            {renderGroups(groups, compactDesktop)}
+          </div>
+        </div>
       </div>
 
       {mobileTop && (
@@ -110,7 +144,7 @@ export function MapFilterBar({
       )}
 
       <div className="absolute bottom-6 left-3 right-3 z-1000 md:hidden">
-        <div className="flex items-center justify-center gap-1.5 rounded-2xl border border-gray-200 bg-white/95 px-3 py-2 shadow-md backdrop-blur-sm">
+        <div className="flex items-center justify-center gap-1.5 overflow-x-auto rounded-2xl border border-gray-200 bg-white/95 px-3 py-2 shadow-md backdrop-blur-sm">
           {renderGroups(groups, true)}
         </div>
       </div>

@@ -20,7 +20,12 @@ export function TriageToolbar({ countryCode }: { countryCode?: string }) {
 
   const statusPills = STATUS_FILTER_PILLS.map(({ key, label, color }) => ({
     key,
-    label,
+    label:
+      key === "pending"
+        ? "Pending"
+        : key === "rejected"
+          ? "Rejected"
+          : "Duped",
     color,
     count: counts[key] ?? 0,
   }));
@@ -34,7 +39,7 @@ export function TriageToolbar({ countryCode }: { countryCode?: string }) {
 
   const desktopLeading = useMemo(
     () => (
-      <div className="w-52 shrink-0">
+      <div className="w-44 shrink-0">
         <RawCountrySelector selected={countryCode} compact />
       </div>
     ),
@@ -55,11 +60,13 @@ export function TriageToolbar({ countryCode }: { countryCode?: string }) {
       desktopLeading={desktopLeading}
       groups={[
         {
+          id: "status",
           filters: statusPills,
           visible: visibleStatuses,
           onToggle: (key) => toggleStatus(key as (typeof STATUS_FILTER_PILLS)[number]["key"]),
         },
         {
+          id: "highlight",
           filters: highlightPills,
           visible: visibleHighlights,
           onToggle: (key) =>

@@ -13,6 +13,15 @@ import {
 import { useDayRoute } from "~/lib/itinerary/use-itinerary-route-map";
 import { getItineraryDayColor } from "~/lib/map/colors";
 import type { ItineraryDayData } from "~/types";
+import { Badge } from "~/app/_components/ui/badge";
+import { Button } from "~/app/_components/ui/button";
+import { Separator } from "~/app/_components/ui/separator";
+import { Spinner } from "~/app/_components/ui/spinner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/app/_components/ui/tooltip";
 import { DayAttractionList } from "./day-attraction-list";
 import { ItineraryDayPdfButton } from "./itinerary-pdf-export-button";
 
@@ -96,37 +105,55 @@ export function ItineraryDay({
 
         <div className="flex shrink-0 items-center gap-2">
           <div className="flex overflow-hidden rounded-lg border border-gray-300 bg-linear-to-b from-white to-gray-50 shadow-sm">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                moveDay(day.id, "up");
-              }}
-              disabled={day.dayNumber === 1 || isRemoving}
-              className="group/btn flex items-center justify-center px-2 py-1.5 text-gray-600 transition-all hover:bg-blue-50 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
-              title="Move day up"
-            >
-              <ChevronUp className="h-4 w-4 transition-transform" />
-            </button>
-            <div className="h-full w-px bg-gray-300" />
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                moveDay(day.id, "down");
-              }}
-              disabled={isRemoving}
-              className="group/btn flex items-center justify-center px-2 py-1.5 text-gray-600 transition-all hover:bg-blue-50 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
-              title="Move day down"
-            >
-              <ChevronDown className="h-4 w-4 transition-transform" />
-            </button>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="px-2 py-1.5 text-gray-600 hover:bg-blue-50 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      moveDay(day.id, "up");
+                    }}
+                    disabled={day.dayNumber === 1 || isRemoving}
+                    aria-label="Move day up"
+                  />
+                }
+              >
+                <ChevronUp className="h-4 w-4 transition-transform" />
+              </TooltipTrigger>
+              <TooltipContent>Move day up</TooltipContent>
+            </Tooltip>
+            <Separator orientation="vertical" className="h-auto" />
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="px-2 py-1.5 text-gray-600 hover:bg-blue-50 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      moveDay(day.id, "down");
+                    }}
+                    disabled={isRemoving}
+                    aria-label="Move day down"
+                  />
+                }
+              >
+                <ChevronDown className="h-4 w-4 transition-transform" />
+              </TooltipTrigger>
+              <TooltipContent>Move day down</TooltipContent>
+            </Tooltip>
           </div>
           {attractionCount > 0 && (
-            <span className="flex items-center gap-1 rounded-full bg-linear-to-br from-gray-100 to-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-gray-300/50">
+            <Badge variant="muted" className="gap-1 px-2.5 py-1 font-semibold shadow-sm ring-1 ring-gray-300/50">
               <MapPin className="h-3 w-3" />
               {attractionCount}
-            </span>
+            </Badge>
           )}
           {attractionCount > 0 && (
             <ItineraryDayPdfButton
@@ -135,18 +162,21 @@ export function ItineraryDay({
               disabled={isRemoving}
             />
           )}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              removeDay(day.id);
-            }}
-            className="rounded-lg p-1.5 text-gray-400 transition-all hover:bg-red-50 hover:text-red-600 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
-            disabled={isRemoving}
-            title="Remove day"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+          <Tooltip>
+            <TooltipTrigger
+              type="button"
+              aria-label="Remove day"
+              onClick={(e) => {
+                e.stopPropagation();
+                removeDay(day.id);
+              }}
+              disabled={isRemoving}
+              className="rounded-lg p-1.5 text-gray-400 transition-all hover:bg-red-50 hover:text-red-600 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Trash2 className="h-4 w-4" />
+            </TooltipTrigger>
+            <TooltipContent>Remove day</TooltipContent>
+          </Tooltip>
         </div>
       </div>
 
@@ -154,7 +184,7 @@ export function ItineraryDay({
         <div className="mb-3 flex items-center gap-3 rounded-lg bg-linear-to-r from-blue-50 to-sky-50 px-3 py-2 text-xs">
           {isLoadingRoute ? (
             <>
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-sky-300 border-t-sky-600" />
+              <Spinner className="h-4 w-4 text-sky-600" />
               <span className="text-gray-600">Calculating route...</span>
             </>
           ) : routeData ? (

@@ -3,6 +3,16 @@
 import { AlertCircle, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
+
+import { Button } from "./ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
 import { Navbar } from "./navbar";
 
 type ErrorPageProps = {
@@ -23,49 +33,54 @@ export function ErrorPage({ error, reset, title, subtitle }: ErrorPageProps) {
 
       <main className="container mx-auto px-4 py-6">
         <div className="mx-auto max-w-2xl">
-          <div className="rounded-lg border border-red-200 bg-red-50 p-8">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-                <AlertCircle className="h-6 w-6 text-red-600" />
+          <Card className="border-red-200 bg-red-50 ring-0">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                  <AlertCircle className="h-6 w-6 text-red-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-red-900">
+                    Error Loading {title}
+                  </CardTitle>
+                  <CardDescription className="text-red-700">
+                    We encountered a problem while loading this page
+                  </CardDescription>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-semibold text-red-900">
-                  Error Loading {title}
-                </h2>
-                <p className="text-sm text-red-700">
-                  We encountered a problem while loading this page
+            </CardHeader>
+
+            <CardContent>
+              <div className="rounded border border-red-300 bg-white p-4">
+                <p className="font-mono text-sm text-red-800">
+                  {error.message || "An unexpected error occurred"}
                 </p>
+                {error.digest && (
+                  <p className="mt-2 text-xs text-red-600">
+                    Error ID: {error.digest}
+                  </p>
+                )}
               </div>
-            </div>
+            </CardContent>
 
-            <div className="mb-6 rounded border border-red-300 bg-white p-4">
-              <p className="font-mono text-sm text-red-800">
-                {error.message || "An unexpected error occurred"}
-              </p>
-              {error.digest && (
-                <p className="mt-2 text-xs text-red-600">
-                  Error ID: {error.digest}
-                </p>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <button
+            <CardFooter className="flex-col gap-3 border-red-200 bg-transparent sm:flex-row">
+              <Button
                 type="button"
                 onClick={reset}
-                className="flex h-11 items-center justify-center gap-2 rounded-lg bg-red-600 px-6 font-medium text-white transition-colors hover:bg-red-700"
+                className="h-11 w-full bg-red-600 hover:bg-red-700 sm:w-auto"
               >
                 <RefreshCw className="h-4 w-4" />
                 Try Again
-              </button>
-              <Link
-                href="/"
-                className="flex h-11 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-6 font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="h-11 w-full bg-white sm:w-auto"
               >
-                Go Home
-              </Link>
-            </div>
-          </div>
+                <Link href="/">Go Home</Link>
+              </Button>
+            </CardFooter>
+          </Card>
         </div>
       </main>
     </div>
