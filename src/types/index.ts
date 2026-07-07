@@ -21,6 +21,7 @@ export type AttractionHighlight = AttractionSummary["highlight"];
 export type Trip = RouterOutputs["trip"]["getWithItinerary"];
 export type TripById = RouterOutputs["trip"]["getTripById"];
 export type TripListItem = RouterOutputs["trip"]["listTrips"][number];
+export type OvernightStop = TripById["overnightStops"][number];
 
 // Raw attraction types
 export type RawAttraction =

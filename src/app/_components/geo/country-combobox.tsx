@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Select, {
   components,
   type GroupBase,
@@ -45,6 +45,16 @@ interface CountryComboboxMultiProps extends CountryComboboxBaseProps {
 type CountryComboboxProps =
   | CountryComboboxSingleProps
   | CountryComboboxMultiProps;
+
+function useIsMounted() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  return mounted;
+}
 
 interface SelectClassNamesArgs {
   isFocused: boolean;
@@ -149,6 +159,8 @@ const CountryComboboxSingle: React.FC<CountryComboboxSingleProps> = ({
   value,
   onChange,
 }) => {
+  const mounted = useIsMounted();
+
   const selectedOption = value
     ? {
         value: value.cca2,
@@ -193,6 +205,10 @@ const CountryComboboxSingle: React.FC<CountryComboboxSingleProps> = ({
     }),
     [compact],
   );
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <div className="w-full" data-testid="country-select-container">
@@ -245,6 +261,8 @@ const CountryComboboxMulti: React.FC<CountryComboboxMultiProps> = ({
   value,
   onChange,
 }) => {
+  const mounted = useIsMounted();
+
   const selectedOptions: readonly CountrySelectOption[] = value.map(
     (country) => ({
       value: country.cca2,
@@ -270,6 +288,10 @@ const CountryComboboxMulti: React.FC<CountryComboboxMultiProps> = ({
     }),
     [],
   );
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <div className="w-full">

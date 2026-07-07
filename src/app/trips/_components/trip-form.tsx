@@ -1,20 +1,25 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { TRPCClientError } from "@trpc/client";
 import { Calendar, Loader2, Plus, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 
 import { CountryCombobox } from "~/app/_components/geo/country-combobox";
 import { Button } from "~/app/_components/ui/button";
 import { Input } from "~/app/_components/ui/input";
 import { Label } from "~/app/_components/ui/label";
+import {
+  applyTrpcZodErrorsToForm,
+  getTrpcFormErrorDescription,
+} from "~/lib/trpc-error-message";
+import { tripFormSchema, type TripFormData } from "~/server/api/schemas/trip";
 import { api } from "~/trpc/react";
 import type { Country, TripById } from "~/types";
+
+import { OvernightStopsSection } from "./overnight-stops-section";
 
 type TripFormProps =
   | {
@@ -25,39 +30,6 @@ type TripFormProps =
       mode: "edit";
       trip: TripById;
     };
-
-const tripSchema = z
-  .object({
-    name: z.string().min(1, "Trip name is required").max(256),
-    startDate: z.string().min(1, "Start date is required"),
-    endDate: z.string().min(1, "End date is required"),
-    destinations: z
-      .array(z.object({ countryCode: z.string() }))
-      .min(1, "At least one destination is required"),
-  })
-  .refine(
-    (data) => {
-      const start = new Date(data.startDate);
-      const end = new Date(data.endDate);
-      return !isNaN(start.getTime()) && !isNaN(end.getTime()) && start <= end;
-    },
-    {
-      message: "End date must be after or equal to start date",
-      path: ["endDate"],
-    },
-  );
-
-type TripFormData = z.infer<typeof tripSchema>;
-
-const getErrorMessage = (error: unknown): string => {
-  if (error instanceof TRPCClientError) {
-    return error.message;
-  }
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return "An unexpected error occurred";
-};
 
 const formatDateForInput = (date: Date | string | null | undefined): string => {
   if (!date) return "";
@@ -70,7 +42,7 @@ export function TripForm({ mode, trip }: TripFormProps) {
   const router = useRouter();
   const utils = api.useUtils();
 
-  const { data: countries, isLoading: isLoadingCountries } =
+  const { data: countries, isLoading: isLoadingCountries, error: countriesError } =
     api.geo.getCountries.useQuery();
 
   const countryOptions = useMemo(
@@ -86,27 +58,31 @@ export function TripForm({ mode, trip }: TripFormProps) {
   const isEditMode = mode === "edit";
 
   const form = useForm<TripFormData>({
-    resolver: zodResolver(tripSchema),
+    resolver: zodResolver(tripFormSchema),
     defaultValues: {
       name: "",
       startDate: "",
       endDate: "",
       destinations: [],
+      overnightStops: [],
     },
   });
 
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
     setValue,
+    setError,
     watch,
     reset,
   } = form;
 
   const selectedDestinations = watch("destinations");
+  const tripStartDate = watch("startDate");
+  const tripEndDate = watch("endDate");
 
-  // Initialize form with trip data in edit mode
   useEffect(() => {
     if (isEditMode && trip) {
       reset({
@@ -115,6 +91,14 @@ export function TripForm({ mode, trip }: TripFormProps) {
         endDate: formatDateForInput(trip.endDate),
         destinations: trip.destinations.map((d) => ({
           countryCode: d.countryCode,
+        })),
+        overnightStops: trip.overnightStops.map((stop) => ({
+          name: stop.name,
+          address: stop.address,
+          latitude: stop.latitude,
+          longitude: stop.longitude,
+          checkInDate: formatDateForInput(stop.checkInDate),
+          checkOutDate: formatDateForInput(stop.checkOutDate),
         })),
       });
     }
@@ -127,6 +111,16 @@ export function TripForm({ mode, trip }: TripFormProps) {
     );
   }, [countries, selectedDestinations]);
 
+  const handleMutationError = useCallback(
+    (title: string, err: unknown) => {
+      const fieldsMapped = applyTrpcZodErrorsToForm(err, setError);
+      toast.error(title, {
+        description: getTrpcFormErrorDescription(err, fieldsMapped),
+      });
+    },
+    [setError],
+  );
+
   const createMutation = api.trip.create.useMutation({
     onSuccess: (data) => {
       toast.success("Trip created!", {
@@ -136,9 +130,7 @@ export function TripForm({ mode, trip }: TripFormProps) {
       router.push(`/trips/${data.id}/edit`);
     },
     onError: (err) => {
-      toast.error("Failed to create trip", {
-        description: getErrorMessage(err),
-      });
+      handleMutationError("Failed to create trip", err);
     },
   });
 
@@ -150,15 +142,13 @@ export function TripForm({ mode, trip }: TripFormProps) {
       void utils.trip.invalidate();
     },
     onError: (err) => {
-      toast.error("Failed to update trip", {
-        description: getErrorMessage(err),
-      });
+      handleMutationError("Failed to update trip", err);
     },
   });
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
-  const onSubmit = async (data: TripFormData) => {
+  const onSubmit = (data: TripFormData) => {
     const payload = {
       name: data.name,
       startDate: new Date(data.startDate),
@@ -167,13 +157,22 @@ export function TripForm({ mode, trip }: TripFormProps) {
     };
 
     if (isEditMode && trip) {
-      await updateMutation.mutateAsync({
+      updateMutation.mutate({
         id: trip.id,
         ...payload,
+        overnightStops: data.overnightStops.map((stop) => ({
+          name: stop.name,
+          address: stop.address,
+          latitude: stop.latitude,
+          longitude: stop.longitude,
+          checkInDate: new Date(stop.checkInDate),
+          checkOutDate: new Date(stop.checkOutDate),
+        })),
       });
-    } else {
-      await createMutation.mutateAsync(payload);
+      return;
     }
+
+    createMutation.mutate(payload);
   };
 
   const handleCountryChange = (countries: Country[]) => {
@@ -191,7 +190,6 @@ export function TripForm({ mode, trip }: TripFormProps) {
         className="space-y-6"
         autoComplete="off"
       >
-        {/* Basic Information Card */}
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div className="mb-6 flex items-center gap-3 border-b pb-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100">
@@ -208,7 +206,6 @@ export function TripForm({ mode, trip }: TripFormProps) {
           </div>
 
           <div className="space-y-5">
-            {/* Name */}
             <div>
               <Label htmlFor="name">
                 Trip Name <span className="text-red-500">*</span>
@@ -227,9 +224,7 @@ export function TripForm({ mode, trip }: TripFormProps) {
               )}
             </div>
 
-            {/* Dates */}
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              {/* Start Date */}
               <div>
                 <Label htmlFor="startDate">
                   Start Date <span className="text-red-500">*</span>
@@ -248,7 +243,6 @@ export function TripForm({ mode, trip }: TripFormProps) {
                 )}
               </div>
 
-              {/* End Date */}
               <div>
                 <Label htmlFor="endDate">
                   End Date <span className="text-red-500">*</span>
@@ -268,11 +262,16 @@ export function TripForm({ mode, trip }: TripFormProps) {
               </div>
             </div>
 
-            {/* Destinations */}
             <div>
               <Label className="mb-1.5 block">
                 Destinations <span className="text-red-500">*</span>
               </Label>
+              {countriesError && (
+                <p className="mb-2 text-sm text-red-600">
+                  Failed to load countries. Please refresh the page and try
+                  again.
+                </p>
+              )}
               <CountryCombobox
                 options={countryOptions}
                 isLoading={isLoadingCountries || isSubmitting}
@@ -281,11 +280,13 @@ export function TripForm({ mode, trip }: TripFormProps) {
                 multiple={true}
                 showLabel={false}
                 placeholder={
-                  isLoadingCountries
-                    ? "Loading countries..."
-                    : "Select countries..."
+                  countriesError
+                    ? "Countries unavailable"
+                    : isLoadingCountries
+                      ? "Loading countries..."
+                      : "Select countries..."
                 }
-                disabled={isSubmitting}
+                disabled={isSubmitting || !!countriesError}
               />
               {errors.destinations && (
                 <p className="mt-1 text-sm text-red-600">
@@ -296,7 +297,17 @@ export function TripForm({ mode, trip }: TripFormProps) {
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {isEditMode && (
+          <OvernightStopsSection
+            control={control}
+            register={register}
+            errors={errors}
+            tripStartDate={tripStartDate}
+            tripEndDate={tripEndDate}
+            disabled={isSubmitting}
+          />
+        )}
+
         <div className="flex items-center justify-end gap-3 pt-2">
           <Button
             type="button"
@@ -309,7 +320,7 @@ export function TripForm({ mode, trip }: TripFormProps) {
           </Button>
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !!countriesError}
             className="h-12 bg-orange-500 px-6 hover:bg-orange-600"
           >
             {isSubmitting ? (

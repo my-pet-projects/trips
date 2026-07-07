@@ -2,47 +2,17 @@ import { TRPCError } from "@trpc/server";
 import { eq, inArray } from "drizzle-orm";
 import z from "zod";
 
-import { createLogger } from "~/lib/logger";
+import { createLogger, errMsg } from "~/lib/logger";
 import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
+import { tripCreateSchema, tripUpdateSchema } from "~/server/api/schemas/trip";
 import * as geoSchema from "~/server/db/geo-schema";
 import * as schema from "~/server/db/schema";
 
 const log = createLogger("trip");
-
-const tripCoreSchema = z.object({
-  name: z.string().min(1, "Name is required").max(256),
-  startDate: z.date(),
-  endDate: z.date(),
-  destinations: z
-    .array(
-      z.object({
-        countryCode: z.string().length(2),
-      }),
-    )
-    .min(1, "At least one destination is required"),
-});
-
-const tripCreateSchema = tripCoreSchema.refine(
-  (data) => data.startDate <= data.endDate,
-  {
-    message: "End date must be after or equal to start date",
-    path: ["endDate"],
-  },
-);
-
-const tripUpdateSchema = z
-  .object({
-    id: z.number(),
-  })
-  .merge(tripCoreSchema)
-  .refine((data) => data.startDate <= data.endDate, {
-    message: "End date must be after or equal to start date",
-    path: ["endDate"],
-  });
 
 export const tripRouter = createTRPCRouter({
   listTrips: publicProcedure.query(async ({ ctx }) => {
@@ -105,6 +75,9 @@ export const tripRouter = createTRPCRouter({
         where: eq(schema.trips.id, input.id),
         with: {
           destinations: true,
+          overnightStops: {
+            orderBy: (stop, { asc }) => [asc(stop.checkInDate)],
+          },
         },
       });
 
@@ -164,37 +137,48 @@ export const tripRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { destinations, ...tripData } = input;
 
-      // Insert trip
-      const tripResult = await ctx.db
-        .insert(schema.trips)
-        .values(tripData)
-        .returning();
+      try {
+        return await ctx.db.transaction(async (tx) => {
+          const tripResult = await tx
+            .insert(schema.trips)
+            .values(tripData)
+            .returning();
 
-      const trip = tripResult[0];
-      if (!trip) {
+          const trip = tripResult[0];
+          if (!trip) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to create trip",
+            });
+          }
+
+          if (destinations.length > 0) {
+            await tx.insert(schema.tripDestinations).values(
+              destinations.map((dest) => ({
+                tripId: trip.id,
+                countryCode: dest.countryCode,
+              })),
+            );
+          }
+
+          return trip;
+        });
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+
+        log.error({ error: errMsg(error) }, "Failed to create trip");
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to create trip",
+          cause: error,
         });
       }
-
-      // Insert destinations
-      if (destinations.length > 0) {
-        await ctx.db.insert(schema.tripDestinations).values(
-          destinations.map((dest) => ({
-            tripId: trip.id,
-            countryCode: dest.countryCode,
-          })),
-        );
-      }
-
-      return trip;
     }),
 
   update: protectedProcedure
     .input(tripUpdateSchema)
     .mutation(async ({ ctx, input }) => {
-      const { id, destinations, ...updateData } = input;
+      const { id, destinations, overnightStops, ...updateData } = input;
 
       const existing = await ctx.db.query.trips.findFirst({
         where: eq(schema.trips.id, id),
@@ -207,37 +191,69 @@ export const tripRouter = createTRPCRouter({
         });
       }
 
-      const tripResult = await ctx.db
-        .update(schema.trips)
-        .set(updateData)
-        .where(eq(schema.trips.id, id))
-        .returning();
+      try {
+        return await ctx.db.transaction(async (tx) => {
+          const tripResult = await tx
+            .update(schema.trips)
+            .set(updateData)
+            .where(eq(schema.trips.id, id))
+            .returning();
 
-      const trip = tripResult[0];
-      if (!trip) {
-        log.error({ id }, "Failed to update trip - no result returned");
+          const trip = tripResult[0];
+          if (!trip) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to update trip",
+            });
+          }
+
+          await tx
+            .delete(schema.tripDestinations)
+            .where(eq(schema.tripDestinations.tripId, id));
+
+          if (destinations.length > 0) {
+            await tx.insert(schema.tripDestinations).values(
+              destinations.map((dest) => ({
+                tripId: id,
+                countryCode: dest.countryCode,
+              })),
+            );
+          }
+
+          await tx
+            .delete(schema.tripOvernightStops)
+            .where(eq(schema.tripOvernightStops.tripId, id));
+
+          if (overnightStops.length > 0) {
+            const sortedStops = [...overnightStops].sort(
+              (a, b) => a.checkInDate.getTime() - b.checkInDate.getTime(),
+            );
+
+            await tx.insert(schema.tripOvernightStops).values(
+              sortedStops.map((stop) => ({
+                tripId: id,
+                name: stop.name,
+                address: stop.address,
+                latitude: stop.latitude,
+                longitude: stop.longitude,
+                checkInDate: stop.checkInDate,
+                checkOutDate: stop.checkOutDate,
+              })),
+            );
+          }
+
+          return trip;
+        });
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+
+        log.error({ id, error: errMsg(error) }, "Failed to update trip");
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to update trip",
+          cause: error,
         });
       }
-
-      // Delete existing destinations
-      await ctx.db
-        .delete(schema.tripDestinations)
-        .where(eq(schema.tripDestinations.tripId, id));
-
-      // Insert new destinations
-      if (destinations.length > 0) {
-        await ctx.db.insert(schema.tripDestinations).values(
-          destinations.map((dest) => ({
-            tripId: id,
-            countryCode: dest.countryCode,
-          })),
-        );
-      }
-
-      return trip;
     }),
 
   deleteTrip: protectedProcedure
