@@ -40,11 +40,13 @@ export function BrowseToolbar() {
       }
       groups={[
         {
+          id: "verified",
           filters: [verifiedPill],
           visible: showVerifiedOnly ? new Set(["verified"]) : new Set(),
           onToggle: () => toggleVerifiedOnly(),
         },
         {
+          id: "highlight",
           filters: highlightPills,
           visible: visibleHighlights,
           onToggle: (key) => toggleHighlight(key as AttractionHighlightKey),

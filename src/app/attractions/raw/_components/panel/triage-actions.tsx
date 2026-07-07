@@ -1,5 +1,11 @@
 "use client";
 
+import { Copy, X } from "lucide-react";
+
+import { HIGHLIGHT_OPTIONS } from "~/app/_components/highlight-toggle-group";
+import { Button } from "~/app/_components/ui/button";
+import { HIGHLIGHT_COLORS, RAW_STATUS_COLORS } from "~/lib/map/colors";
+import { cn } from "~/lib/utils";
 import type { ApproveHighlight } from "../types";
 
 interface TriageActionsProps {
@@ -10,6 +16,14 @@ interface TriageActionsProps {
   onDuplicated: (id: number) => void;
 }
 
+const APPROVE_HIGHLIGHTS = HIGHLIGHT_OPTIONS.filter(
+  (option): option is (typeof HIGHLIGHT_OPTIONS)[number] & {
+    value: "must_see" | "recommended";
+  } => option.value === "must_see" || option.value === "recommended",
+);
+
+const actionButtonClass = "h-auto py-2 text-xs font-semibold";
+
 export function TriageActions({
   attractionId,
   isMutating,
@@ -19,46 +33,48 @@ export function TriageActions({
 }: TriageActionsProps) {
   return (
     <div className="grid grid-cols-2 gap-2">
-      <button
-        type="button"
-        disabled={isMutating}
-        onClick={() => onApprove(attractionId, "must_see")}
-        className="rounded-lg bg-cyan-500 px-2 py-2 text-xs font-semibold text-white hover:bg-cyan-600 disabled:opacity-50"
-      >
-        ★ Must see
-      </button>
-      <button
-        type="button"
-        disabled={isMutating}
-        onClick={() => onApprove(attractionId, "recommended")}
-        className="rounded-lg bg-emerald-500 px-2 py-2 text-xs font-semibold text-white hover:bg-emerald-600 disabled:opacity-50"
-      >
-        👍 Recommended
-      </button>
-      <button
+      {APPROVE_HIGHLIGHTS.map(({ value, label, icon: Icon }) => (
+        <Button
+          key={value}
+          type="button"
+          disabled={isMutating}
+          onClick={() => onApprove(attractionId, value)}
+          className={cn(actionButtonClass, HIGHLIGHT_COLORS[value].button)}
+        >
+          <Icon className="h-3.5 w-3.5" />
+          {label}
+        </Button>
+      ))}
+      <Button
         type="button"
         disabled={isMutating}
         onClick={() => onApprove(attractionId)}
-        className="rounded-lg bg-green-500 px-2 py-2 text-xs font-semibold text-white hover:bg-green-600 disabled:opacity-50"
+        className={cn(actionButtonClass, HIGHLIGHT_COLORS.none.button)}
       >
-        ✓ Approve
-      </button>
-      <button
+        Approve
+      </Button>
+      <Button
         type="button"
         disabled={isMutating}
         onClick={() => onDuplicated(attractionId)}
-        className="rounded-lg bg-purple-500 px-2 py-2 text-xs font-semibold text-white hover:bg-purple-600 disabled:opacity-50"
+        className={cn(actionButtonClass, RAW_STATUS_COLORS.duplicated.button)}
       >
-        ⊕ Duplicate
-      </button>
-      <button
+        <Copy className="h-3.5 w-3.5" />
+        Duplicate
+      </Button>
+      <Button
         type="button"
         disabled={isMutating}
         onClick={() => onReject(attractionId)}
-        className="col-span-2 rounded-lg bg-red-500 px-2 py-2 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50"
+        className={cn(
+          actionButtonClass,
+          "col-span-2",
+          RAW_STATUS_COLORS.rejected.button,
+        )}
       >
-        ✕ Reject
-      </button>
+        <X className="h-3.5 w-3.5" />
+        Reject
+      </Button>
     </div>
   );
 }

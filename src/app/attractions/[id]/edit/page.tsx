@@ -5,8 +5,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Navbar } from "~/app/_components/navbar";
+import { buttonVariants } from "~/app/_components/ui/button";
 import { AttractionForm, type AttractionFormMode } from "~/app/attractions/_components/forms/attraction-form";
-import { validateReturnTo } from "~/lib/utils";
+import { cn, validateReturnTo } from "~/lib/utils";
 import { api } from "~/trpc/server";
 
 type EditAttractionPageProps = {
@@ -123,9 +124,9 @@ export default async function EditAttractionPage({
           mode === "edit" ? (
             <Link
               href={`/attractions/new?isNew=true&country=${attraction.countryCode}&city=${attraction.city.name}`}
-              className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+              className={cn(buttonVariants({ variant: "outline" }))}
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="h-4 w-4" />
               New Attraction in Same Location
             </Link>
           ) : undefined

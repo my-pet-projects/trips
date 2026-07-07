@@ -1,16 +1,29 @@
 "use client";
 
-import { Bed, Plus, Trash2 } from "lucide-react";
+import { Bed, ChevronDown, Plus, Trash2 } from "lucide-react";
 import {
   type Control,
   type FieldErrors,
   type UseFormRegister,
   useFieldArray,
+  useWatch,
 } from "react-hook-form";
 
 import { Button } from "~/app/_components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/app/_components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "~/app/_components/ui/collapsible";
+import { FormError, FormField } from "~/app/_components/ui/field";
 import { Input } from "~/app/_components/ui/input";
-import { Label } from "~/app/_components/ui/label";
 import {
   requiredNumberInput,
   type OvernightStopFormData,
@@ -51,208 +64,223 @@ export function OvernightStopsSection({
     name: "overnightStops",
   });
 
-  return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-      <div className="mb-6 flex items-center justify-between gap-3 border-b pb-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
-            <Bed className="h-5 w-5 text-indigo-600" />
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">
-              Overnight Stops
-            </h2>
-            <p className="text-sm text-gray-500">
-              Hotels and lodging for your trip
-            </p>
-          </div>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={disabled || !tripStartDate || !tripEndDate}
-          onClick={() =>
-            append(emptyOvernightStop(tripStartDate, tripEndDate))
-          }
-          className="shrink-0"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Add stop
-        </Button>
-      </div>
+  const overnightStops = useWatch({ control, name: "overnightStops" });
 
+  return (
+    <Card className="border border-gray-200 bg-white shadow-sm ring-0">
+      <CardHeader className="border-b pb-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
+              <Bed className="h-5 w-5 text-indigo-600" />
+            </div>
+            <div>
+              <CardTitle className="text-xl text-gray-900">
+                Overnight Stops
+              </CardTitle>
+              <CardDescription>
+                Hotels and lodging for your trip
+              </CardDescription>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={disabled || !tripStartDate || !tripEndDate}
+            onClick={() =>
+              append(emptyOvernightStop(tripStartDate, tripEndDate))
+            }
+            className="shrink-0"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add stop
+          </Button>
+        </div>
+      </CardHeader>
+
+      <CardContent className="pt-6">
       {fields.length === 0 ? (
         <p className="text-sm text-gray-500">
           No overnight stops yet. Add a hotel to record where you are staying.
         </p>
       ) : (
-        <div className="space-y-6">
-          {errors.overnightStops?.root && (
-            <p className="text-sm text-red-600">
-              {errors.overnightStops.root.message}
-            </p>
+        <div className="space-y-4">
+          {errors.overnightStops?.root?.message && (
+            <FormError>{errors.overnightStops.root.message}</FormError>
           )}
-          {errors.overnightStops?.message && (
-            <p className="text-sm text-red-600">
-              {errors.overnightStops.message}
-            </p>
+          {typeof errors.overnightStops?.message === "string" && (
+            <FormError>{errors.overnightStops.message}</FormError>
           )}
           {fields.map((field, index) => {
             const stopErrors = errors.overnightStops?.[index];
+            const stopName = overnightStops?.[index]?.name?.trim();
 
             return (
-              <div
+              <Collapsible
                 key={field.id}
-                className="rounded-lg border border-gray-100 bg-gray-50/50 p-4"
+                defaultOpen
+                className="rounded-lg border border-gray-100 bg-gray-50/50"
               >
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <h3 className="text-sm font-medium text-gray-900">
-                    Stop {index + 1}
-                  </h3>
+                <div className="flex items-center justify-between gap-3 px-4 py-3">
+                  <CollapsibleTrigger className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                    <ChevronDown className="h-4 w-4 shrink-0 text-gray-400 transition-transform data-open:rotate-180" />
+                    <h3 className="truncate text-sm font-medium text-gray-900">
+                      Stop {index + 1}
+                      {stopName ? (
+                        <span className="font-normal text-gray-500">
+                          {" "}
+                          — {stopName}
+                        </span>
+                      ) : null}
+                    </h3>
+                  </CollapsibleTrigger>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     disabled={disabled}
                     onClick={() => remove(index)}
-                    className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                    className="shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Remove
                   </Button>
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor={`overnightStops.${index}.name`}>
-                      Hotel name <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id={`overnightStops.${index}.name`}
-                      {...register(`overnightStops.${index}.name`)}
-                      className="mt-1.5 h-11"
-                      placeholder="e.g., Hotel Roma"
-                      disabled={disabled}
-                    />
-                    {stopErrors?.name && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {stopErrors.name.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor={`overnightStops.${index}.address`}>
-                      Address <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id={`overnightStops.${index}.address`}
-                      {...register(`overnightStops.${index}.address`)}
-                      className="mt-1.5 h-11"
-                      placeholder="Street, city, country"
-                      disabled={disabled}
-                    />
-                    {stopErrors?.address && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {stopErrors.address.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                      <Label htmlFor={`overnightStops.${index}.checkInDate`}>
-                        Check-in <span className="text-red-500">*</span>
-                      </Label>
+                <CollapsibleContent className="px-4 pb-4">
+                  <div className="space-y-4 border-t border-gray-100 pt-4">
+                    <FormField
+                      label={
+                        <>
+                          Hotel name <span className="text-red-500">*</span>
+                        </>
+                      }
+                      htmlFor={`overnightStops.${index}.name`}
+                      error={stopErrors?.name?.message}
+                    >
                       <Input
-                        id={`overnightStops.${index}.checkInDate`}
-                        type="date"
-                        min={tripStartDate || undefined}
-                        max={tripEndDate || undefined}
-                        {...register(`overnightStops.${index}.checkInDate`)}
-                        className="mt-1.5 h-11"
+                        id={`overnightStops.${index}.name`}
+                        {...register(`overnightStops.${index}.name`)}
+                        className="h-11"
+                        placeholder="e.g., Hotel Roma"
                         disabled={disabled}
                       />
-                      {stopErrors?.checkInDate && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {stopErrors.checkInDate.message}
-                        </p>
-                      )}
-                    </div>
+                    </FormField>
 
-                    <div>
-                      <Label htmlFor={`overnightStops.${index}.checkOutDate`}>
-                        Check-out <span className="text-red-500">*</span>
-                      </Label>
+                    <FormField
+                      label={
+                        <>
+                          Address <span className="text-red-500">*</span>
+                        </>
+                      }
+                      htmlFor={`overnightStops.${index}.address`}
+                      error={stopErrors?.address?.message}
+                    >
                       <Input
-                        id={`overnightStops.${index}.checkOutDate`}
-                        type="date"
-                        min={tripStartDate || undefined}
-                        max={tripEndDate || undefined}
-                        {...register(`overnightStops.${index}.checkOutDate`)}
-                        className="mt-1.5 h-11"
+                        id={`overnightStops.${index}.address`}
+                        {...register(`overnightStops.${index}.address`)}
+                        className="h-11"
+                        placeholder="Street, city, country"
                         disabled={disabled}
                       />
-                      {stopErrors?.checkOutDate && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {stopErrors.checkOutDate.message}
-                        </p>
-                      )}
+                    </FormField>
+
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <FormField
+                        label={
+                          <>
+                            Check-in <span className="text-red-500">*</span>
+                          </>
+                        }
+                        htmlFor={`overnightStops.${index}.checkInDate`}
+                        error={stopErrors?.checkInDate?.message}
+                      >
+                        <Input
+                          id={`overnightStops.${index}.checkInDate`}
+                          type="date"
+                          min={tripStartDate || undefined}
+                          max={tripEndDate || undefined}
+                          {...register(`overnightStops.${index}.checkInDate`)}
+                          className="h-11"
+                          disabled={disabled}
+                        />
+                      </FormField>
+
+                      <FormField
+                        label={
+                          <>
+                            Check-out <span className="text-red-500">*</span>
+                          </>
+                        }
+                        htmlFor={`overnightStops.${index}.checkOutDate`}
+                        error={stopErrors?.checkOutDate?.message}
+                      >
+                        <Input
+                          id={`overnightStops.${index}.checkOutDate`}
+                          type="date"
+                          min={tripStartDate || undefined}
+                          max={tripEndDate || undefined}
+                          {...register(`overnightStops.${index}.checkOutDate`)}
+                          className="h-11"
+                          disabled={disabled}
+                        />
+                      </FormField>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <FormField
+                        label={
+                          <>
+                            Latitude <span className="text-red-500">*</span>
+                          </>
+                        }
+                        htmlFor={`overnightStops.${index}.latitude`}
+                        error={stopErrors?.latitude?.message}
+                      >
+                        <Input
+                          id={`overnightStops.${index}.latitude`}
+                          type="number"
+                          step="any"
+                          {...register(`overnightStops.${index}.latitude`, {
+                            setValueAs: requiredNumberInput,
+                          })}
+                          className="h-11 font-mono text-sm"
+                          placeholder="41.902782"
+                          disabled={disabled}
+                        />
+                      </FormField>
+
+                      <FormField
+                        label={
+                          <>
+                            Longitude <span className="text-red-500">*</span>
+                          </>
+                        }
+                        htmlFor={`overnightStops.${index}.longitude`}
+                        error={stopErrors?.longitude?.message}
+                      >
+                        <Input
+                          id={`overnightStops.${index}.longitude`}
+                          type="number"
+                          step="any"
+                          {...register(`overnightStops.${index}.longitude`, {
+                            setValueAs: requiredNumberInput,
+                          })}
+                          className="h-11 font-mono text-sm"
+                          placeholder="12.496366"
+                          disabled={disabled}
+                        />
+                      </FormField>
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                      <Label htmlFor={`overnightStops.${index}.latitude`}>
-                        Latitude <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id={`overnightStops.${index}.latitude`}
-                        type="number"
-                        step="any"
-                        {...register(`overnightStops.${index}.latitude`, {
-                          setValueAs: requiredNumberInput,
-                        })}
-                        className="mt-1.5 h-11 font-mono text-sm"
-                        placeholder="41.902782"
-                        disabled={disabled}
-                      />
-                      {stopErrors?.latitude && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {stopErrors.latitude.message}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <Label htmlFor={`overnightStops.${index}.longitude`}>
-                        Longitude <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id={`overnightStops.${index}.longitude`}
-                        type="number"
-                        step="any"
-                        {...register(`overnightStops.${index}.longitude`, {
-                          setValueAs: requiredNumberInput,
-                        })}
-                        className="mt-1.5 h-11 font-mono text-sm"
-                        placeholder="12.496366"
-                        disabled={disabled}
-                      />
-                      {stopErrors?.longitude && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {stopErrors.longitude.message}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
+                </CollapsibleContent>
+              </Collapsible>
             );
           })}
         </div>
       )}
-    </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -5,7 +5,6 @@ import {
   AlertCircle,
   CheckCircle2,
   Globe,
-  Loader2,
   MapPin,
   Plus,
   XCircle,
@@ -17,7 +16,22 @@ import { z } from "zod";
 
 import { CountryCitySelector } from "~/app/_components/geo/country-city-selector";
 import { Button } from "~/app/_components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/app/_components/ui/card";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "~/app/_components/ui/empty";
 import { Label } from "~/app/_components/ui/label";
+import { Spinner } from "~/app/_components/ui/spinner";
 import { api } from "~/trpc/react";
 import type { City, Country } from "~/types";
 
@@ -252,20 +266,21 @@ export function AttractionParseForm() {
         autoComplete="off"
       >
         {/* Location Card */}
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="mb-6 flex items-center gap-3 border-b pb-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
-              <Globe className="h-5 w-5 text-orange-600" />
+        <Card className="border border-gray-200 bg-white shadow-sm ring-0">
+          <CardHeader className="border-b pb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
+                <Globe className="h-5 w-5 text-orange-600" />
+              </div>
+              <div>
+                <CardTitle className="text-xl text-gray-900">Location</CardTitle>
+                <CardDescription>
+                  Geographic information for new attractions
+                </CardDescription>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">Location</h2>
-              <p className="text-sm text-gray-500">
-                Geographic information for new attractions
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-5">
+          </CardHeader>
+          <CardContent className="space-y-5 pt-6">
             <div>
               <Label className="mb-1.5 block text-sm font-medium text-gray-700">
                 Country & City <span className="text-red-500">*</span>
@@ -287,25 +302,26 @@ export function AttractionParseForm() {
                 </p>
               )}
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* URLs to scrape Card */}
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="mb-6 flex items-center gap-3 border-b pb-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100">
-              <MapPin className="h-5 w-5 text-sky-600" />
+        <Card className="border border-gray-200 bg-white shadow-sm ring-0">
+          <CardHeader className="border-b pb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100">
+                <MapPin className="h-5 w-5 text-sky-600" />
+              </div>
+              <div>
+                <CardTitle className="text-xl text-gray-900">
+                  URLs to scrape
+                </CardTitle>
+                <CardDescription>
+                  Provide one attraction URL per line
+                </CardDescription>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">
-                URLs to scrape
-              </h2>
-              <p className="text-sm text-gray-500">
-                Provide one attraction URL per line
-              </p>
-            </div>
-          </div>
-          <div className="space-y-5">
+          </CardHeader>
+          <CardContent className="space-y-5 pt-6">
             <div>
               <textarea
                 value={urlRaw}
@@ -325,6 +341,19 @@ export function AttractionParseForm() {
                   {urlListError}
                 </p>
               )}
+              {urls.length === 0 && !urlListError && !urlRaw.trim() && (
+                <Empty className="border-dashed border-gray-200 bg-gray-50 py-8">
+                  <EmptyHeader>
+                    <EmptyMedia>
+                      <Plus className="size-8 text-gray-400" />
+                    </EmptyMedia>
+                    <EmptyTitle className="text-base">No URLs yet</EmptyTitle>
+                    <EmptyDescription>
+                      Paste one attraction URL per line to start scraping.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              )}
               {urls.length > 0 && !urlListError && (
                 <div className="mt-3 rounded-md bg-green-50 p-3">
                   <p className="text-sm font-medium text-green-800">
@@ -334,16 +363,16 @@ export function AttractionParseForm() {
                 </div>
               )}
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Processing Results */}
         {showResults && urlStatuses.length > 0 && (
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-center justify-between border-b pb-4">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Processing Results
-              </h2>
+          <Card className="border border-gray-200 bg-white shadow-sm ring-0">
+            <CardHeader className="border-b pb-4">
+              <div className="flex items-center justify-between gap-4">
+                <CardTitle className="text-xl text-gray-900">
+                  Processing Results
+                </CardTitle>
               <div className="flex gap-4 text-sm">
                 {successCount > 0 && (
                   <span className="flex items-center gap-1 text-green-600">
@@ -359,13 +388,14 @@ export function AttractionParseForm() {
                 )}
                 {processingCount > 0 && (
                   <span className="flex items-center gap-1 text-blue-600">
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Spinner className="h-4 w-4 text-blue-600" />
                     {processingCount} processing
                   </span>
                 )}
               </div>
-            </div>
-            <div className="max-h-96 space-y-2 overflow-y-auto">
+              </div>
+            </CardHeader>
+            <CardContent className="max-h-96 space-y-2 overflow-y-auto pt-6">
               {urlStatuses.map((status, idx) => (
                 <div
                   key={idx}
@@ -389,7 +419,7 @@ export function AttractionParseForm() {
                     )}
                     {(status.status === "parsing" ||
                       status.status === "creating") && (
-                      <Loader2 className="mt-0.5 h-5 w-5 shrink-0 animate-spin text-blue-600" />
+                      <Spinner className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
                     )}
                     {status.status === "pending" && (
                       <div className="mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 border-gray-300" />
@@ -415,8 +445,8 @@ export function AttractionParseForm() {
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Action Buttons */}
@@ -447,7 +477,7 @@ export function AttractionParseForm() {
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Spinner className="mr-2 h-4 w-4" />
                 Processing...
               </>
             ) : (

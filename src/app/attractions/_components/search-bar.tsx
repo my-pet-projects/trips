@@ -12,6 +12,7 @@ import {
 
 import { CountryCitySelector } from "~/app/_components/geo/country-city-selector";
 import { Input } from "~/app/_components/ui/input";
+import { Spinner } from "~/app/_components/ui/spinner";
 import type { City, Country } from "~/types";
 
 type SearchBarProps = {
@@ -118,7 +119,7 @@ export function SearchBar({
               className="absolute top-1/2 right-4 z-10 -translate-y-1/2"
               role="status"
             >
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
+              <Spinner className="size-5 text-orange-500" />
               <span className="sr-only">Searching...</span>
             </div>
           )}
