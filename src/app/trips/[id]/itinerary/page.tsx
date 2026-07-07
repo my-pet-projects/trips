@@ -1,10 +1,8 @@
-import { Pencil } from "lucide-react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { MapPageLayout } from "~/app/_components/map-page-layout";
 import { Navbar } from "~/app/_components/navbar";
-import { buttonVariants } from "~/app/_components/ui/button";
-import { cn } from "~/lib/utils";
+import { TripModeNav } from "~/app/trips/_components/trip-mode-nav";
 import { api } from "~/trpc/server";
 import { ItineraryPlanner } from "./_components/itinerary-planner";
 
@@ -27,35 +25,22 @@ export default async function ItineraryPage({ params }: ItineraryPageProps) {
     notFound();
   }
 
-  const trip = await api.trip.getWithItinerary({ id: tripId });
-  if (!trip) {
-    notFound();
-  }
-
-  const attractions = await api.attraction.getAttractionsByCountries({
-    countryCodes: trip.destinations.map((d) => d.countryCode),
+  const { trip, attractions } = await api.trip.getItineraryViewData({
+    id: tripId,
   });
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-linear-to-br from-sky-50 via-white to-orange-50">
-      <Navbar
-        title={trip.name}
-        subtitle="Plan your itinerary"
-        backHref="/trips"
-        actions={
-          <Link
-            href={`/trips/${tripId}/edit`}
-            className={cn(buttonVariants({ variant: "outline" }))}
-          >
-            <Pencil className="h-4 w-4" />
-            Edit Trip
-          </Link>
-        }
-      />
-
-      <main className="container mx-auto min-h-0 flex-1 overflow-y-auto px-4 py-6">
-        <ItineraryPlanner trip={trip} tripAttractions={attractions} />
-      </main>
-    </div>
+    <MapPageLayout
+      navbar={
+        <Navbar
+          title={trip.name}
+          subtitle="Plan your itinerary"
+          backHref="/trips"
+          actions={<TripModeNav tripId={tripId} />}
+        />
+      }
+    >
+      <ItineraryPlanner trip={trip} tripAttractions={attractions} />
+    </MapPageLayout>
   );
 }

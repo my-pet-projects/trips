@@ -120,7 +120,7 @@ export function AttractionDetailPanel({
       ref={panelRef}
       data-testid="map-detail-panel"
       className={cn(
-        "absolute inset-x-[2.5%] bottom-0 z-1000 flex max-h-[70%] flex-col overflow-hidden rounded-t-2xl border border-b-0 border-gray-200 bg-white shadow-2xl transition-transform duration-300 ease-out sm:inset-x-[16.67%]",
+        "absolute inset-x-[2.5%] bottom-0 z-1000 flex h-1/2 max-h-1/2 flex-col overflow-hidden rounded-t-2xl border border-b-0 border-gray-200 bg-white shadow-2xl transition-transform duration-300 ease-out",
         isVisible ? "translate-y-0" : "translate-y-full",
       )}
     >
