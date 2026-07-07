@@ -9,7 +9,7 @@ import { cn } from "~/lib/utils";
 
 export type HighlightValue = AttractionHighlight | null;
 
-const HIGHLIGHT_OPTIONS: {
+export const HIGHLIGHT_OPTIONS: {
   value: AttractionHighlight;
   label: string;
   icon: LucideIcon;

@@ -4,6 +4,21 @@ import { type Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { Navbar } from "~/app/_components/navbar";
+import { Button } from "~/app/_components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "~/app/_components/ui/card";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "~/app/_components/ui/empty";
 import { HydrateClient, api } from "~/trpc/server";
 
 import { VerifyCountryPanel } from "./_components/verify-country-panel";
@@ -61,32 +76,51 @@ export default async function VerifyAttractionsPage({ searchParams }: PageProps)
         />
 
         <main className="container mx-auto max-w-3xl px-4 py-8">
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <VerifyCountryPanel
-              countries={countries}
-              selectedCountryCode={country}
-            />
-          </div>
+          <Card className="border border-gray-200 bg-white shadow-sm ring-0">
+            <CardHeader>
+              <CardTitle>Select a country</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <VerifyCountryPanel
+                countries={countries}
+                selectedCountryCode={country}
+              />
+            </CardContent>
+          </Card>
 
           {!country ? (
-            <p className="mt-8 text-center text-sm text-gray-500">
-              Select a country to start verifying.
-            </p>
+            <Empty className="mt-8 border-gray-200 bg-white/70">
+              <EmptyHeader>
+                <EmptyMedia>
+                  <CheckCircle2 className="size-10 text-emerald-500" />
+                </EmptyMedia>
+                <EmptyTitle>Select a country to start</EmptyTitle>
+                <EmptyDescription>
+                  Choose a country above to review unverified attractions.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : allVerified ? (
-            <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-8 text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
-                <CheckCircle2 className="h-8 w-8 text-emerald-600" />
-              </div>
-              <h2 className="text-xl font-semibold text-emerald-900">
-                All attractions verified
-              </h2>
-              <Link
-                href={`/attractions?country=${encodeURIComponent(country)}`}
-                className="mt-6 inline-flex items-center rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100"
-              >
-                Back to attractions
-              </Link>
-            </div>
+            <Empty className="mt-6 border-emerald-200 bg-emerald-50">
+              <EmptyHeader>
+                <EmptyMedia>
+                  <CheckCircle2 className="size-10 text-emerald-600" />
+                </EmptyMedia>
+                <EmptyTitle className="text-emerald-900">
+                  All attractions verified
+                </EmptyTitle>
+                <EmptyDescription className="text-emerald-800">
+                  Every attraction in this country has been reviewed.
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button variant="outline" className="border-emerald-200 text-emerald-700" asChild>
+                  <Link href={`/attractions?country=${encodeURIComponent(country)}`}>
+                    Back to attractions
+                  </Link>
+                </Button>
+              </EmptyContent>
+            </Empty>
           ) : null}
         </main>
       </div>

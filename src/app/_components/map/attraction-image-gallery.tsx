@@ -1,11 +1,15 @@
 import { BookOpen, ChevronDown, ExternalLink } from "lucide-react";
 import React, { useEffect, useRef } from "react";
 
+import { Badge } from "~/app/_components/ui/badge";
+import { Button } from "~/app/_components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "~/app/_components/ui/collapsible";
+import { Skeleton } from "~/app/_components/ui/skeleton";
+import { Spinner } from "~/app/_components/ui/spinner";
 import { api } from "~/trpc/react";
 import type { AttractionDetail } from "~/types";
 
@@ -47,9 +51,16 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-4">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-sky-500" />
-        <span className="ml-2 text-sm text-gray-500">Loading images...</span>
+      <div className="space-y-3 py-4">
+        <div className="flex items-center gap-2">
+          <Spinner className="text-sky-500" />
+          <span className="text-sm text-gray-500">Loading images...</span>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <Skeleton className="aspect-square rounded-lg" />
+          <Skeleton className="aspect-square rounded-lg" />
+          <Skeleton className="aspect-square rounded-lg" />
+        </div>
       </div>
     );
   }
@@ -58,13 +69,15 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
     return (
       <div className="mb-4 rounded-lg bg-red-50 p-3 text-center">
         <p className="text-sm text-red-600">Failed to load images</p>
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
+          className="mt-2 border-red-200 bg-red-100 text-red-700 hover:bg-red-200"
           onClick={() => void refetch()}
-          className="mt-2 rounded-md bg-red-100 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200"
         >
           Try Again
-        </button>
+        </Button>
       </div>
     );
   }
@@ -91,7 +104,7 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
               >
                 {!loadedImages.current.has(url) && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-200 border-t-sky-500" />
+                    <Spinner className="size-4 text-sky-500" />
                   </div>
                 )}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -133,9 +146,9 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
             <div className="flex items-center gap-2">
               <BookOpen className="h-4 w-4 text-gray-400" />
               <span>Wikipedia</span>
-              <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-500">
+              <Badge variant="muted" className="px-1.5 py-0.5">
                 {articles.length}
-              </span>
+              </Badge>
             </div>
             <ChevronDown className="h-4 w-4 text-gray-400 transition-transform data-open:rotate-180" />
           </CollapsibleTrigger>

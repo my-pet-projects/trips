@@ -4,13 +4,37 @@ export type MapColorDef = {
   hex: string;
   pill: string;
   label: string;
+  /** Filled action button classes matching this marker color */
+  button: string;
 };
 
 export const HIGHLIGHT_COLORS: Record<AttractionHighlightKey, MapColorDef> = {
-  must_see: { hex: "#f59e0b", pill: "bg-amber-400", label: "Must see" },
-  recommended: { hex: "#14b8a6", pill: "bg-teal-500", label: "Recommended" },
-  skip: { hex: "#ef4444", pill: "bg-red-500", label: "Skip" },
-  none: { hex: "#ffffff", pill: "border-2 border-slate-400 bg-white", label: "Unrated" },
+  must_see: {
+    hex: "#f59e0b",
+    pill: "bg-amber-400",
+    label: "Must see",
+    button:
+      "border-amber-500 bg-amber-500 text-white hover:border-amber-600 hover:bg-amber-600",
+  },
+  recommended: {
+    hex: "#14b8a6",
+    pill: "bg-teal-500",
+    label: "Recommended",
+    button: "border-teal-500 bg-teal-500 text-white hover:border-teal-600 hover:bg-teal-600",
+  },
+  skip: {
+    hex: "#ef4444",
+    pill: "bg-red-500",
+    label: "Skip",
+    button: "border-red-500 bg-red-500 text-white hover:border-red-600 hover:bg-red-600",
+  },
+  none: {
+    hex: "#ffffff",
+    pill: "border-2 border-slate-400 bg-white",
+    label: "Unrated",
+    button:
+      "border-2 border-slate-400 bg-white text-gray-700 hover:border-slate-500 hover:bg-gray-50",
+  },
 };
 
 /** Visible outline for white unrated markers on the map. */
@@ -20,6 +44,8 @@ export const VERIFIED_COLOR: MapColorDef = {
   hex: "#10b981",
   pill: "bg-emerald-500",
   label: "Verified",
+  button:
+    "border-emerald-500 bg-emerald-500 text-white hover:border-emerald-600 hover:bg-emerald-600",
 };
 
 /** Default itinerary day / PDF map marker color when no day color is set. */
@@ -47,9 +73,26 @@ export function getItineraryDayColor(index: number): string {
 export type RawStatusKey = "pending" | "rejected" | "duplicated";
 
 export const RAW_STATUS_COLORS: Record<RawStatusKey, MapColorDef> = {
-  pending: { hex: "#9ca3af", pill: "bg-slate-400", label: "Pending review" },
-  rejected: { hex: "#ef4444", pill: "bg-red-500", label: "Rejected" },
-  duplicated: { hex: "#a855f7", pill: "bg-purple-500", label: "Duplicated" },
+  pending: {
+    hex: "#9ca3af",
+    pill: "bg-slate-400",
+    label: "Pending review",
+    button:
+      "border-slate-400 bg-slate-400 text-white hover:border-slate-500 hover:bg-slate-500",
+  },
+  rejected: {
+    hex: "#ef4444",
+    pill: "bg-red-500",
+    label: "Rejected",
+    button: "border-red-500 bg-red-500 text-white hover:border-red-600 hover:bg-red-600",
+  },
+  duplicated: {
+    hex: "#a855f7",
+    pill: "bg-purple-500",
+    label: "Duplicated",
+    button:
+      "border-purple-500 bg-purple-500 text-white hover:border-purple-600 hover:bg-purple-600",
+  },
 };
 
 export const HIGHLIGHT_FILTER_PILLS = (

@@ -1,6 +1,6 @@
 "use client";
 
-import { Edit, Loader2, Trash2 } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -16,6 +16,12 @@ import {
   AlertDialogTitle,
 } from "~/app/_components/ui/alert-dialog";
 import { Button } from "~/app/_components/ui/button";
+import { Spinner } from "~/app/_components/ui/spinner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/app/_components/ui/tooltip";
 import { api } from "~/trpc/react";
 
 type AttractionTableActionsProps = {
@@ -59,34 +65,52 @@ export function AttractionTableActions({
   return (
     <>
       <div className="flex items-center justify-end gap-1">
-        <a
-          href={getEditUrl()}
-          className="group relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-sky-600 opacity-0 transition-all group-hover:opacity-100 hover:bg-sky-50 hover:text-sky-700"
-          title="Edit attraction"
-          onClick={(e) => {
-            e.preventDefault();
-            router.push(getEditUrl());
-          }}
-        >
-          <Edit className="h-4 w-4" />
-        </a>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-red-600 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-700"
-          title="Delete attraction"
-          onClick={() => setShowConfirmDelete(true)}
-          disabled={deleteAttractionMutation.isPending}
-        >
-          {deleteAttractionMutation.isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Trash2 className="h-4 w-4" />
-          )}
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-sky-600 opacity-0 group-hover:opacity-100 hover:bg-sky-50 hover:text-sky-700"
+                asChild
+              />
+            }
+          >
+            <a
+              href={getEditUrl()}
+              onClick={(e) => {
+                e.preventDefault();
+                router.push(getEditUrl());
+              }}
+            >
+              <Edit className="h-4 w-4" />
+              <span className="sr-only">Edit attraction</span>
+            </a>
+          </TooltipTrigger>
+          <TooltipContent>Edit attraction</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-red-600 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-700"
+                onClick={() => setShowConfirmDelete(true)}
+                disabled={deleteAttractionMutation.isPending}
+              />
+            }
+          >
+            {deleteAttractionMutation.isPending ? (
+              <Spinner className="h-4 w-4" />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
+          </TooltipTrigger>
+          <TooltipContent>Delete attraction</TooltipContent>
+        </Tooltip>
       </div>
 
-      {/* Confirmation Dialog */}
       <AlertDialog open={showConfirmDelete} onOpenChange={setShowConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -104,9 +128,7 @@ export function AttractionTableActions({
               disabled={deleteAttractionMutation.isPending}
               className="bg-red-600 text-white hover:bg-red-700"
             >
-              {deleteAttractionMutation.isPending
-                ? "Deleting..."
-                : "Delete"}{" "}
+              {deleteAttractionMutation.isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

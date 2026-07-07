@@ -1,9 +1,23 @@
 "use client";
 
-import { AlertCircle, Loader2, Plus } from "lucide-react";
+import { AlertCircle, Plus } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 
 import { ItineraryMap } from "~/app/_components/map/itinerary-map";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "~/app/_components/ui/alert";
+import { Button } from "~/app/_components/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "~/app/_components/ui/empty";
+import { Spinner } from "~/app/_components/ui/spinner";
 import { useItineraryDayMaps } from "~/lib/itinerary/use-itinerary-day-maps";
 import { useItineraryEditor } from "~/lib/itinerary/use-itinerary-editor";
 import type { AttractionDetail, Trip } from "~/types";
@@ -78,7 +92,7 @@ export function ItineraryPlanner({
             </h2>
             {isSaving && (
               <span className="inline-flex items-center gap-1.5 text-sm text-gray-500">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Spinner className="h-3.5 w-3.5" />
                 Saving...
               </span>
             )}
@@ -90,47 +104,58 @@ export function ItineraryPlanner({
               dayColors={dayColors}
               disabled={itineraryDays.every((d) => d.attractions.length === 0)}
             />
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={addDay}
               disabled={isAddingDay}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Plus className="h-4 w-4" />
               {isAddingDay ? "Adding..." : "Add Day"}
-            </button>
+            </Button>
           </div>
         </div>
 
         {saveError && (
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>Could not save changes: {saveError}</span>
+          <Alert
+            variant="destructive"
+            className="flex items-center justify-between gap-3 border-red-200 bg-red-50 px-4 py-3 [&>svg]:text-red-600"
+          >
+            <div className="flex min-w-0 items-start gap-2">
+              <AlertCircle />
+              <div>
+                <AlertTitle className="text-red-900">Could not save changes</AlertTitle>
+                <AlertDescription className="text-red-800">{saveError}</AlertDescription>
+              </div>
             </div>
-            <button
+            <Button
               type="button"
+              variant="destructive"
+              size="sm"
               onClick={retrySave}
               disabled={isSaving}
-              className="shrink-0 rounded-md bg-red-100 px-3 py-1.5 font-medium text-red-800 transition-colors hover:bg-red-200 disabled:opacity-50"
+              className="shrink-0 bg-red-100 text-red-800 hover:bg-red-200"
             >
               {isSaving ? "Saving..." : "Retry"}
-            </button>
-          </div>
+            </Button>
+          </Alert>
         )}
 
         {itineraryDays.length === 0 ? (
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center">
-            <p className="mb-4 text-gray-600">No days in your itinerary yet.</p>
-            <button
-              type="button"
-              onClick={addDay}
-              className="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-700"
-            >
-              <Plus className="h-4 w-4" />
-              Add First Day
-            </button>
-          </div>
+          <Empty className="border-gray-200 bg-gray-50">
+            <EmptyHeader>
+              <EmptyTitle>No days in your itinerary yet</EmptyTitle>
+              <EmptyDescription>
+                Add your first day to start planning attractions on the map.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button type="button" onClick={addDay}>
+                <Plus className="h-4 w-4" />
+                Add First Day
+              </Button>
+            </EmptyContent>
+          </Empty>
         ) : (
           <div className="space-y-3">
             {itineraryDays.map((day, index) => (

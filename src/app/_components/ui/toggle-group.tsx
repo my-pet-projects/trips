@@ -27,7 +27,7 @@ function Toggle<Value extends string>({
     <TogglePrimitive
       data-slot="toggle"
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white font-medium text-gray-600 transition-colors hover:bg-gray-50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 data-pressed:border-gray-300 data-pressed:bg-gray-100 data-pressed:text-gray-900",
+        "inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white font-medium text-gray-600 transition-colors hover:bg-gray-50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 data-pressed:border-gray-300 data-pressed:bg-gray-100 data-pressed:text-gray-900",
         className,
       )}
       {...props}

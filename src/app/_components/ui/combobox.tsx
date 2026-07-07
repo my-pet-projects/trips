@@ -26,13 +26,13 @@ function ComboboxInput({
   return (
     <ComboboxPrimitive.InputGroup
       className={cn(
-        "flex w-full items-center gap-1 rounded-lg border border-input bg-white px-2 transition-colors outline-none has-disabled:bg-input/50 has-focus:border-ring has-focus:ring-3 has-focus:ring-ring/50 has-aria-invalid:border-destructive has-aria-invalid:ring-3 has-aria-invalid:ring-destructive/20",
+        "flex w-full items-center gap-1 overflow-visible rounded-lg border border-input bg-white px-2 transition-colors outline-none has-disabled:bg-input/50 has-focus:border-ring has-focus:ring-3 has-focus:ring-ring/50 has-aria-invalid:border-destructive has-aria-invalid:ring-3 has-aria-invalid:ring-destructive/20",
         className,
       )}
     >
       {startAdornment}
       <ComboboxPrimitive.Input
-        className="min-w-0 flex-1 bg-transparent px-2 py-2 text-base outline-none placeholder:text-gray-400 disabled:cursor-not-allowed"
+        className="min-w-0 flex-1 bg-transparent px-2 py-1.5 text-base leading-normal outline-none placeholder:text-gray-400 disabled:cursor-not-allowed"
         {...props}
       />
       {showClear && (

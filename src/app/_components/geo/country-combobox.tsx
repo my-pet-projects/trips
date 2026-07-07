@@ -133,7 +133,9 @@ const CountryComboboxSingle: React.FC<CountryComboboxSingleProps> = ({
             (error ? "Error loading countries" : "Select a country...")
           }
           className={cn(
-            compact ? "h-8 min-h-0 text-xs" : "h-12 text-base",
+            compact
+              ? "h-9 [&_input]:min-w-0 [&_input]:flex-1 [&_input]:py-1 [&_input]:text-xs [&_input]:leading-5"
+              : "h-12 [&_input]:text-base",
             error && "border-red-500",
           )}
           autoComplete="nope"

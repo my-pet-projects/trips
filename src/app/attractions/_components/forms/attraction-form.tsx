@@ -7,7 +7,6 @@ import {
   Clipboard,
   Globe,
   Images,
-  Loader2,
   Map as MapIcon,
   MapPin,
   Plus,
@@ -35,9 +34,24 @@ import {
   AlertDialogTitle,
 } from "~/app/_components/ui/alert-dialog";
 import { Button } from "~/app/_components/ui/button";
+import { Badge } from "~/app/_components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/app/_components/ui/card";
+import { FormField } from "~/app/_components/ui/field";
 import { Input } from "~/app/_components/ui/input";
-import { Label } from "~/app/_components/ui/label";
+import { Separator } from "~/app/_components/ui/separator";
+import { Spinner } from "~/app/_components/ui/spinner";
 import { Textarea } from "~/app/_components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/app/_components/ui/tooltip";
 import {
   notifyTripsImageExtension,
 } from "~/lib/trips-image-extension";
@@ -124,7 +138,7 @@ const DynamicAttractionMap = dynamic(
     loading: () => (
       <div className="flex h-full min-h-48 w-full items-center justify-center rounded-lg border border-gray-200 bg-gray-50">
         <div className="text-center">
-          <Loader2 className="mx-auto h-8 w-8 animate-spin text-gray-400" />
+          <Spinner className="mx-auto size-8 text-gray-400" />
           <p className="mt-2 text-sm text-gray-600">Loading map...</p>
         </div>
       </div>
@@ -462,7 +476,7 @@ export function AttractionForm(props: AttractionFormProps) {
   const currentCity = mode !== "create" ? attraction?.city : undefined;
 
   const submitIcon = isSubmitting ? (
-    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+    <Spinner className="mr-2" />
   ) : mode === "verify" ? (
     <CheckCircle className="mr-2 h-4 w-4" />
   ) : mode === "create" ? (
@@ -490,56 +504,55 @@ export function AttractionForm(props: AttractionFormProps) {
       >
         <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto lg:flex-row lg:items-stretch lg:gap-4 lg:overflow-hidden">
           {/* Details column */}
-          <div className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm lg:min-h-0 lg:flex-1 lg:w-1/2 lg:p-6">
-            <div className="shrink-0 flex items-center gap-3 border-b border-gray-200 pb-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-100">
-                <MapPin className="h-5 w-5 text-sky-600" />
+          <Card className="border border-gray-200 bg-white shadow-sm ring-0 lg:min-h-0 lg:flex-1 lg:w-1/2">
+            <CardHeader className="shrink-0 border-b border-gray-200 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-100">
+                  <MapPin className="h-5 w-5 text-sky-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-gray-900">
+                    Basic Information
+                  </CardTitle>
+                  <CardDescription>
+                    Core details about the attraction
+                  </CardDescription>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Basic Information
-                </h2>
-                <p className="text-sm text-gray-500">
-                  Core details about the attraction
-                </p>
-              </div>
-            </div>
+            </CardHeader>
 
+            <CardContent className="flex flex-col gap-3 pt-6 lg:flex-1">
             <div className="grid shrink-0 gap-3 lg:grid-cols-2">
-              <div>
-                <Label htmlFor="name" className="text-sm font-medium text-gray-700">
-                  Name <span className="text-red-500">*</span>
-                </Label>
+              <FormField
+                label={
+                  <>
+                    Name <span className="text-red-500">*</span>
+                  </>
+                }
+                htmlFor="name"
+                error={form.formState.errors.name?.message}
+              >
                 <Input
                   id="name"
                   autoComplete="nope"
                   {...form.register("name")}
-                  className="mt-1 h-10"
+                  className="h-10"
                   placeholder="Enter attraction name"
                 />
-                {form.formState.errors.name && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {form.formState.errors.name.message}
-                  </p>
-                )}
-              </div>
+              </FormField>
 
-              <div>
-                <Label htmlFor="nameLocal" className="text-sm font-medium text-gray-700">
-                  Local Name
-                </Label>
+              <FormField
+                label="Local Name"
+                htmlFor="nameLocal"
+                error={form.formState.errors.nameLocal?.message}
+              >
                 <Input
                   id="nameLocal"
                   autoComplete="nope"
                   {...form.register("nameLocal")}
-                  className="mt-1 h-10"
+                  className="h-10"
                   placeholder="Local name (optional)"
                 />
-                {form.formState.errors.nameLocal && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {form.formState.errors.nameLocal.message}
-                  </p>
-                )}
                 <NearbyPoiSuggestions
                   latitude={currentLatitude}
                   longitude={currentLongitude}
@@ -550,25 +563,22 @@ export function AttractionForm(props: AttractionFormProps) {
                   onPoisChange={setNearbyPois}
                   onPoisError={setPoiLoadError}
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="flex min-h-0 flex-col lg:flex-1">
-              <Label htmlFor="description" className="text-sm font-medium text-gray-700">
-                Description
-              </Label>
+            <FormField
+              label="Description"
+              htmlFor="description"
+              error={form.formState.errors.description?.message}
+              className="flex min-h-0 flex-1 flex-col lg:flex-1"
+            >
               <Textarea
                 id="description"
                 {...form.register("description")}
-                className="mt-1 min-h-16 flex-1 resize-none lg:min-h-0"
+                className="min-h-16 flex-1 resize-none lg:min-h-0"
                 placeholder="Enter a description"
               />
-              {form.formState.errors.description && (
-                <p className="mt-1 shrink-0 text-sm text-red-600">
-                  {form.formState.errors.description.message}
-                </p>
-              )}
-            </div>
+            </FormField>
 
             <div className="flex shrink-0 flex-col gap-3 lg:mt-auto lg:pt-1">
               <HighlightPicker
@@ -579,11 +589,12 @@ export function AttractionForm(props: AttractionFormProps) {
                 }
               />
 
-              <div>
-                <Label htmlFor="sourceUrl" className="text-sm font-medium text-gray-700">
-                  Source URL
-                </Label>
-                <div className="mt-1 flex items-center gap-2">
+              <FormField
+                label="Source URL"
+                htmlFor="sourceUrl"
+                error={form.formState.errors.sourceUrl?.message}
+              >
+                <div className="flex items-center gap-2">
                   <Input
                     id="sourceUrl"
                     autoComplete="nope"
@@ -594,68 +605,70 @@ export function AttractionForm(props: AttractionFormProps) {
                     className="h-10 font-mono text-sm"
                     placeholder="https://example.com"
                   />
-                  <Button
-                    type="button"
-                    onClick={handleParseSourceUrl}
-                    disabled={parseSiteMutation.isPending}
-                    title="Parse site for data"
-                    variant="outline"
-                    className="h-10 w-10 shrink-0 p-0"
-                  >
-                    {parseSiteMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Scan className="h-4 w-4" />
-                    )}
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger
+                      type="button"
+                      onClick={handleParseSourceUrl}
+                      disabled={parseSiteMutation.isPending}
+                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+                    >
+                      {parseSiteMutation.isPending ? (
+                        <Spinner />
+                      ) : (
+                        <Scan className="h-4 w-4" />
+                      )}
+                    </TooltipTrigger>
+                    <TooltipContent>Parse site for data</TooltipContent>
+                  </Tooltip>
                 </div>
-                {form.formState.errors.sourceUrl && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {form.formState.errors.sourceUrl.message}
-                  </p>
-                )}
-              </div>
+              </FormField>
             </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Location column */}
-          <div className="flex min-h-48 flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm lg:min-h-0 lg:flex-1 lg:w-1/2 lg:overflow-hidden lg:p-6">
-            <div className="flex items-center gap-3 border-b border-gray-200 pb-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-100">
-                <Globe className="h-5 w-5 text-orange-600" />
+          <Card className="flex min-h-48 flex-col gap-3 border border-gray-200 bg-white shadow-sm ring-0 lg:min-h-0 lg:flex-1 lg:w-1/2 lg:overflow-hidden">
+            <CardHeader className="border-b border-gray-200 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-100">
+                  <Globe className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-gray-900">Location</CardTitle>
+                  <CardDescription>Geographic information</CardDescription>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">Location</h2>
-                <p className="text-sm text-gray-500">Geographic information</p>
-              </div>
-            </div>
+            </CardHeader>
 
-            <div className="relative z-10 shrink-0">
-              <Label className="mb-1 block text-sm font-medium text-gray-700">
-                Country & City <span className="text-red-500">*</span>
-              </Label>
+            <CardContent className="flex flex-col gap-3 pt-6 lg:min-h-0 lg:flex-1">
+            <FormField
+              label={
+                <>
+                  Country & City <span className="text-red-500">*</span>
+                </>
+              }
+              error={
+                form.formState.errors.countryCode?.message ??
+                form.formState.errors.cityId?.message
+              }
+              className="relative z-10 shrink-0"
+            >
               <CountryCitySelector
                 initialCountry={initialCountry}
                 initialCity={initialCity}
                 onChange={handleLocationChange}
                 showLabels={false}
               />
-              {(form.formState.errors.countryCode ??
-                form.formState.errors.cityId) && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {form.formState.errors.countryCode?.message ??
-                      form.formState.errors.cityId?.message}
-                  </p>
-                )}
-            </div>
+            </FormField>
 
             <div className="flex flex-wrap items-end gap-2">
               <div className="grid min-w-0 flex-1 grid-cols-2 gap-2">
-                <div>
-                  <Label htmlFor="latitude" className="text-xs">
-                    Latitude
-                  </Label>
-                  <div className="relative mt-1">
+                <FormField
+                  label="Latitude"
+                  htmlFor="latitude"
+                  error={form.formState.errors.latitude?.message}
+                >
+                  <div className="relative">
                     <Input
                       id="latitude"
                       autoComplete="nope"
@@ -667,27 +680,25 @@ export function AttractionForm(props: AttractionFormProps) {
                       className="h-10 pr-9 font-mono text-sm"
                       placeholder="40.712776"
                     />
-                    <button
-                      type="button"
-                      onClick={() => handlePasteCoordinates("latitude")}
-                      title="Paste from clipboard"
-                      className="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600"
-                    >
-                      <Clipboard className="h-4 w-4" />
-                    </button>
+                    <Tooltip>
+                      <TooltipTrigger
+                        type="button"
+                        onClick={() => handlePasteCoordinates("latitude")}
+                        className="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600"
+                      >
+                        <Clipboard className="h-4 w-4" />
+                      </TooltipTrigger>
+                      <TooltipContent>Paste from clipboard</TooltipContent>
+                    </Tooltip>
                   </div>
-                  {form.formState.errors.latitude && (
-                    <p className="mt-1 text-xs text-red-600">
-                      {form.formState.errors.latitude.message}
-                    </p>
-                  )}
-                </div>
+                </FormField>
 
-                <div>
-                  <Label htmlFor="longitude" className="text-xs">
-                    Longitude
-                  </Label>
-                  <div className="relative mt-1">
+                <FormField
+                  label="Longitude"
+                  htmlFor="longitude"
+                  error={form.formState.errors.longitude?.message}
+                >
+                  <div className="relative">
                     <Input
                       id="longitude"
                       autoComplete="nope"
@@ -699,59 +710,56 @@ export function AttractionForm(props: AttractionFormProps) {
                       className="h-10 pr-9 font-mono text-sm"
                       placeholder="-74.005974"
                     />
-                    <button
-                      type="button"
-                      onClick={() => handlePasteCoordinates("longitude")}
-                      title="Paste from clipboard"
-                      className="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600"
-                    >
-                      <Clipboard className="h-4 w-4" />
-                    </button>
+                    <Tooltip>
+                      <TooltipTrigger
+                        type="button"
+                        onClick={() => handlePasteCoordinates("longitude")}
+                        className="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600"
+                      >
+                        <Clipboard className="h-4 w-4" />
+                      </TooltipTrigger>
+                      <TooltipContent>Paste from clipboard</TooltipContent>
+                    </Tooltip>
                   </div>
-                  {form.formState.errors.longitude && (
-                    <p className="mt-1 text-xs text-red-600">
-                      {form.formState.errors.longitude.message}
-                    </p>
-                  )}
-                </div>
+                </FormField>
               </div>
 
               <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => openMap("osm")}
-                  title="Open in OpenStreetMap"
-                  disabled={!hasValidLatitude || !hasValidLongitude}
-                  className="h-10 w-10"
-                >
-                  <MapIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => openMap("google")}
-                  title="Open in Google Maps"
-                  disabled={!hasValidLatitude || !hasValidLongitude}
-                  className="h-10 w-10"
-                >
-                  <MapPin className="h-4 w-4" />
-                </Button>
-                {isVerifyMode ? (
-                  <Button
+                <Tooltip>
+                  <TooltipTrigger
                     type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={handleSearchImages}
-                    title="Search images in side panel"
+                    onClick={() => openMap("osm")}
                     disabled={!hasValidLatitude || !hasValidLongitude}
-                    className="h-10 w-10"
-                    data-testid="search-images-button"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
                   >
-                    <Images className="h-4 w-4" />
-                  </Button>
+                    <MapIcon className="h-4 w-4" />
+                  </TooltipTrigger>
+                  <TooltipContent>Open in OpenStreetMap</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger
+                    type="button"
+                    onClick={() => openMap("google")}
+                    disabled={!hasValidLatitude || !hasValidLongitude}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    <MapPin className="h-4 w-4" />
+                  </TooltipTrigger>
+                  <TooltipContent>Open in Google Maps</TooltipContent>
+                </Tooltip>
+                {isVerifyMode ? (
+                  <Tooltip>
+                    <TooltipTrigger
+                      type="button"
+                      onClick={handleSearchImages}
+                      disabled={!hasValidLatitude || !hasValidLongitude}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+                      data-testid="search-images-button"
+                    >
+                      <Images className="h-4 w-4" />
+                    </TooltipTrigger>
+                    <TooltipContent>Search images in side panel</TooltipContent>
+                  </Tooltip>
                 ) : null}
               </div>
             </div>
@@ -797,15 +805,15 @@ export function AttractionForm(props: AttractionFormProps) {
 
               <div className="flex flex-wrap items-center gap-2">
                 {isVerified ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
+                  <Badge variant="success" className="gap-1 px-2.5 py-1">
                     <CheckCircle className="h-3.5 w-3.5" />
                     Verified
-                  </span>
+                  </Badge>
                 ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-medium text-yellow-700">
+                  <Badge variant="warning" className="gap-1 px-2.5 py-1">
                     <AlertTriangle className="h-3.5 w-3.5" />
                     Not verified
-                  </span>
+                  </Badge>
                 )}
 
                 {!isVerifyMode ? (
@@ -841,10 +849,13 @@ export function AttractionForm(props: AttractionFormProps) {
                 Coordinates are required before verification.
               </p>
             ) : null}
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-3">
+        <Separator />
+
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 pt-1">
           {mode !== "create" ? (
             <Button
               type="button"
@@ -855,7 +866,7 @@ export function AttractionForm(props: AttractionFormProps) {
               data-testid="delete-attraction-button"
             >
               {deleteMutation.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Spinner className="mr-2" />
               ) : (
                 <Trash2 className="mr-2 h-4 w-4" />
               )}
@@ -926,7 +937,14 @@ export function AttractionForm(props: AttractionFormProps) {
                 disabled={deleteMutation.isPending}
                 className="bg-red-600 text-white hover:bg-red-700"
               >
-                {deleteMutation.isPending ? "Deleting…" : "Delete"}
+                {deleteMutation.isPending ? (
+                  <>
+                    <Spinner className="mr-2" />
+                    Deleting…
+                  </>
+                ) : (
+                  "Delete"
+                )}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

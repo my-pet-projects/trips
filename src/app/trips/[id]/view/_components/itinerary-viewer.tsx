@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 
 import { ItineraryMap } from "~/app/_components/map/itinerary-map";
+import { Badge } from "~/app/_components/ui/badge";
+import { Button } from "~/app/_components/ui/button";
 import { useItineraryDayMaps } from "~/lib/itinerary/use-itinerary-day-maps";
 import { DEFAULT_DAY_COLOR } from "~/lib/map/colors";
 import type { AttractionDetail, Trip } from "~/types";
@@ -83,16 +85,18 @@ export function ItineraryViewer({
               <ArrowLeft className="h-4 w-4" />
             </Link>
 
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               data-testid="itinerary-prev-day"
               onClick={handlePrevDay}
               disabled={!canGoPrevDay}
-              className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 md:p-2"
+              className="text-gray-600 md:size-10"
               aria-label="Previous day"
             >
               <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
-            </button>
+            </Button>
 
             <div className="flex min-w-0 items-center gap-1.5 md:gap-2">
               <div
@@ -102,21 +106,23 @@ export function ItineraryViewer({
               <h1 className="truncate text-sm font-bold text-gray-900 md:text-lg">
                 {selectedDay?.name}
               </h1>
-              <span className="shrink-0 rounded-full bg-gray-100 px-1.5 py-0.5 text-xs font-semibold text-gray-600 md:px-2">
+              <Badge variant="muted" className="shrink-0 px-1.5 py-0.5 font-semibold md:px-2">
                 {selectedDay?.attractions.length ?? 0} stops
-              </span>
+              </Badge>
             </div>
 
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               data-testid="itinerary-next-day"
               onClick={handleNextDay}
               disabled={!canGoNextDay}
-              className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 md:p-2"
+              className="text-gray-600 md:size-10"
               aria-label="Next day"
             >
               <ChevronRight className="h-5 w-5 md:h-6 md:w-6" />
-            </button>
+            </Button>
 
             {/* Mobile: edit button */}
             <Link
@@ -157,11 +163,12 @@ export function ItineraryViewer({
               </h2>
               <div className="max-h-48 space-y-2 overflow-y-auto">
                 {selectedDay.attractions.map((attraction, index) => (
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
                     key={attraction.id}
                     onClick={() => setSelectedAttractionId(attraction.id)}
-                    className="flex w-full items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 text-left transition-colors hover:bg-gray-100 active:bg-gray-200"
+                    className="h-auto w-full justify-start gap-3 rounded-lg border-gray-200 bg-gray-50 p-3 text-left hover:bg-gray-100 active:bg-gray-200"
                   >
                     <div
                       className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow"
@@ -175,7 +182,7 @@ export function ItineraryViewer({
                       </p>
                     </div>
                     <ChevronRight className="h-5 w-5 shrink-0 text-gray-400" />
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>

@@ -17,7 +17,10 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode, useState } from "react";
+
+import { cn } from "~/lib/utils";
 import { AuthButton } from "./auth-button";
+import { Button } from "./ui/button";
 
 type NavbarProps = {
   title: string;
@@ -26,6 +29,77 @@ type NavbarProps = {
   backHref?: string;
   actions?: ReactNode;
 };
+
+function NavSectionLink({
+  href,
+  active,
+  activeClassName,
+  onClick,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  activeClassName: string;
+  onClick?: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <Button
+      asChild
+      variant="ghost"
+      className={cn(
+        "h-9 px-3",
+        active
+          ? activeClassName
+          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+      )}
+    >
+      <Link href={href} onClick={onClick}>
+        {children}
+      </Link>
+    </Button>
+  );
+}
+
+function NavCtaLink({
+  href,
+  onClick,
+  className,
+  children,
+}: {
+  href: string;
+  onClick?: () => void;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <Button asChild className={className}>
+      <Link href={href} onClick={onClick}>
+        {children}
+      </Link>
+    </Button>
+  );
+}
+
+function NavOutlineLink({
+  href,
+  onClick,
+  className,
+  children,
+}: {
+  href: string;
+  onClick?: () => void;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <Button asChild variant="outline" className={className}>
+      <Link href={href} onClick={onClick}>
+        {children}
+      </Link>
+    </Button>
+  );
+}
 
 export function Navbar({
   title,
@@ -43,7 +117,6 @@ export function Navbar({
   const isTripsRoot = pathname === "/trips";
   const isAttractionsRoot = pathname === "/attractions";
 
-  // Default icons based on section
   const defaultIcon = isTripsSection ? (
     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100">
       <Calendar className="h-6 w-6 text-sky-600" />
@@ -56,10 +129,6 @@ export function Navbar({
     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500 text-white">
       <MapPin className="h-6 w-6" />
     </div>
-  ) : isRawAttractionsSection ? (
-    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100">
-      <Database className="h-6 w-6 text-violet-600" />
-    </div>
   ) : (
     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-linear-to-br from-sky-500 to-orange-500 text-white">
       <Compass className="h-6 w-6" />
@@ -68,20 +137,27 @@ export function Navbar({
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
+  const attractionOutlineClass =
+    "border-orange-500 bg-orange-50 text-orange-700 hover:bg-orange-100 hover:text-orange-800";
+
   return (
     <header className="sticky top-0 z-10 border-b bg-white/80 backdrop-blur-sm">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          {/* Left side: back, logo */}
           <div className="flex items-center gap-3">
             {backHref && (
-              <Link
-                href={backHref}
+              <Button
+                asChild
+                variant="outline"
+                size="icon"
+                className="size-10"
                 data-testid="navbar-back-button"
-                className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-50"
               >
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
+                <Link href={backHref}>
+                  <ArrowLeft className="h-5 w-5" />
+                  <span className="sr-only">Back</span>
+                </Link>
+              </Button>
             )}
             <Link
               href="/"
@@ -96,196 +172,176 @@ export function Navbar({
               </div>
             </Link>
 
-            {/* Section tabs - desktop */}
             <div className="ml-6 hidden items-center gap-2 md:flex">
-              <Link
+              <NavSectionLink
                 href="/trips"
-                className={`inline-flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  isTripsSection
-                    ? "bg-sky-50 text-sky-700"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                }`}
+                active={isTripsSection}
+                activeClassName="bg-sky-50 text-sky-700 hover:bg-sky-100 hover:text-sky-800"
               >
-                <Plane className="mr-2 h-4 w-4" />
+                <Plane className="h-4 w-4" />
                 Trips
-              </Link>
-              <Link
+              </NavSectionLink>
+              <NavSectionLink
                 href="/attractions"
-                className={`inline-flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  isAttractionsSection
-                    ? "bg-orange-50 text-orange-700"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                }`}
+                active={isAttractionsSection}
+                activeClassName="bg-orange-50 text-orange-700 hover:bg-orange-100 hover:text-orange-800"
               >
-                <Building className="mr-2 h-4 w-4" />
+                <Building className="h-4 w-4" />
                 Attractions
-              </Link>
+              </NavSectionLink>
             </div>
           </div>
 
-          {/* Right side - desktop */}
           <nav className="hidden items-center gap-3 md:flex">
-            {/* New item buttons - only on root pages */}
             {isTripsRoot && (
-              <Link
+              <NavCtaLink
                 href="/trips/new"
-                className="inline-flex items-center justify-center rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-700 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:outline-none"
+                className="bg-sky-600 text-white hover:bg-sky-700"
               >
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="h-4 w-4" />
                 New Trip
-              </Link>
+              </NavCtaLink>
             )}
             {isAttractionsRoot && (
               <>
-                <Link
+                <NavCtaLink
                   href="/attractions/new"
-                  className="inline-flex items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-none"
+                  className="bg-orange-500 text-white hover:bg-orange-600"
                 >
-                  <Plus className="mr-2 h-4 w-4" />
+                  <Plus className="h-4 w-4" />
                   New Attraction
-                </Link>
-                <Link
+                </NavCtaLink>
+                <NavOutlineLink
                   href="/attractions/parse"
-                  className="inline-flex items-center justify-center rounded-lg border border-orange-500 bg-orange-50 px-4 py-2 text-sm font-medium text-orange-700 transition-colors hover:bg-orange-100 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-none"
+                  className={attractionOutlineClass}
                 >
-                  <CopyPlus className="mr-2 h-4 w-4" />
+                  <CopyPlus className="h-4 w-4" />
                   Parse Attractions
-                </Link>
-                <Link
+                </NavOutlineLink>
+                <NavOutlineLink
                   href="/attractions/map"
-                  className="inline-flex items-center justify-center rounded-lg border border-orange-500 bg-orange-50 px-4 py-2 text-sm font-medium text-orange-700 transition-colors hover:bg-orange-100 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-none"
+                  className={attractionOutlineClass}
                 >
-                  <MapPin className="mr-2 h-4 w-4" />
+                  <MapPin className="h-4 w-4" />
                   View Map
-                </Link>
-                <Link
+                </NavOutlineLink>
+                <NavOutlineLink
                   href="/attractions/raw"
-                  className="inline-flex items-center justify-center rounded-lg border border-violet-500 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-700 transition-colors hover:bg-violet-100 focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:outline-none"
+                  className="border-violet-500 bg-violet-50 text-violet-700 hover:bg-violet-100 hover:text-violet-800"
                 >
-                  <Database className="mr-2 h-4 w-4" />
+                  <Database className="h-4 w-4" />
                   Raw
-                </Link>
-                <Link
+                </NavOutlineLink>
+                <NavOutlineLink
                   href="/attractions/verify"
-                  className="inline-flex items-center justify-center rounded-lg border border-emerald-500 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:outline-none"
+                  className="border-emerald-500 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
                 >
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  <CheckCircle2 className="h-4 w-4" />
                   Verify
-                </Link>
+                </NavOutlineLink>
               </>
             )}
 
-            {/* Custom actions */}
             {actions}
-
-            {/* Auth button */}
             <AuthButton />
           </nav>
 
-          {/* Mobile: auth + hamburger */}
           <div className="flex items-center gap-3 md:hidden">
             <AuthButton />
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="icon"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-50"
+              className="md:hidden"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             >
               {mobileMenuOpen ? (
                 <X className="h-5 w-5" />
               ) : (
                 <Menu className="h-5 w-5" />
               )}
-            </button>
+            </Button>
           </div>
         </div>
 
-        {/* Mobile menu */}
         {mobileMenuOpen && (
           <div className="mt-4 border-t pt-4 md:hidden">
             <div className="flex flex-col gap-2">
-              {/* Section links */}
-              <Link
+              <NavSectionLink
                 href="/trips"
+                active={isTripsSection}
+                activeClassName="bg-sky-50 text-sky-700 hover:bg-sky-100 hover:text-sky-800"
                 onClick={closeMobileMenu}
-                className={`inline-flex items-center rounded-lg px-3 py-3 text-sm font-medium transition-colors ${
-                  isTripsSection
-                    ? "bg-sky-50 text-sky-700"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                }`}
               >
-                <Plane className="mr-3 h-5 w-5" />
+                <Plane className="h-5 w-5" />
                 Trips
-              </Link>
-              <Link
+              </NavSectionLink>
+              <NavSectionLink
                 href="/attractions"
+                active={isAttractionsSection}
+                activeClassName="bg-orange-50 text-orange-700 hover:bg-orange-100 hover:text-orange-800"
                 onClick={closeMobileMenu}
-                className={`inline-flex items-center rounded-lg px-3 py-3 text-sm font-medium transition-colors ${
-                  isAttractionsSection
-                    ? "bg-orange-50 text-orange-700"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                }`}
               >
-                <Building className="mr-3 h-5 w-5" />
+                <Building className="h-5 w-5" />
                 Attractions
-              </Link>
+              </NavSectionLink>
 
-              {/* Action buttons */}
               {isTripsRoot && (
-                <Link
+                <NavCtaLink
                   href="/trips/new"
                   onClick={closeMobileMenu}
-                  className="mt-2 inline-flex items-center justify-center rounded-lg bg-sky-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-sky-700"
+                  className="mt-2 h-11 bg-sky-600 text-white hover:bg-sky-700"
                 >
-                  <Plus className="mr-2 h-4 w-4" />
+                  <Plus className="h-4 w-4" />
                   New Trip
-                </Link>
+                </NavCtaLink>
               )}
               {isAttractionsRoot && (
                 <>
-                  <Link
+                  <NavCtaLink
                     href="/attractions/new"
                     onClick={closeMobileMenu}
-                    className="mt-2 inline-flex items-center justify-center rounded-lg bg-orange-500 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-orange-600"
+                    className="mt-2 h-11 bg-orange-500 text-white hover:bg-orange-600"
                   >
-                    <Plus className="mr-2 h-4 w-4" />
+                    <Plus className="h-4 w-4" />
                     New Attraction
-                  </Link>
-                  <Link
+                  </NavCtaLink>
+                  <NavOutlineLink
                     href="/attractions/parse"
                     onClick={closeMobileMenu}
-                    className="inline-flex items-center justify-center rounded-lg border border-orange-500 bg-orange-50 px-4 py-3 text-sm font-medium text-orange-700 transition-colors hover:bg-orange-100"
+                    className={cn("h-11", attractionOutlineClass)}
                   >
-                    <CopyPlus className="mr-2 h-4 w-4" />
+                    <CopyPlus className="h-4 w-4" />
                     Parse Attractions
-                  </Link>
-                  <Link
+                  </NavOutlineLink>
+                  <NavOutlineLink
                     href="/attractions/map"
                     onClick={closeMobileMenu}
-                    className="inline-flex items-center justify-center rounded-lg border border-orange-500 bg-orange-50 px-4 py-3 text-sm font-medium text-orange-700 transition-colors hover:bg-orange-100"
+                    className={cn("h-11", attractionOutlineClass)}
                   >
-                    <MapPin className="mr-2 h-4 w-4" />
+                    <MapPin className="h-4 w-4" />
                     View Map
-                  </Link>
-                  <Link
+                  </NavOutlineLink>
+                  <NavOutlineLink
                     href="/attractions/raw"
                     onClick={closeMobileMenu}
-                    className="inline-flex items-center justify-center rounded-lg border border-violet-500 bg-violet-50 px-4 py-3 text-sm font-medium text-violet-700 transition-colors hover:bg-violet-100"
+                    className="h-11 border-violet-500 bg-violet-50 text-violet-700 hover:bg-violet-100 hover:text-violet-800"
                   >
-                    <Database className="mr-2 h-4 w-4" />
+                    <Database className="h-4 w-4" />
                     Raw
-                  </Link>
-                  <Link
+                  </NavOutlineLink>
+                  <NavOutlineLink
                     href="/attractions/verify"
                     onClick={closeMobileMenu}
-                    className="inline-flex items-center justify-center rounded-lg border border-emerald-500 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100"
+                    className="h-11 border-emerald-500 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
                   >
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    <CheckCircle2 className="h-4 w-4" />
                     Verify
-                  </Link>
+                  </NavOutlineLink>
                 </>
               )}
 
-              {/* Custom actions in mobile */}
               {actions && <div className="mt-2">{actions}</div>}
             </div>
           </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calendar, Loader2, Plus, Save } from "lucide-react";
+import { Calendar, Plus, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
@@ -9,8 +9,17 @@ import { toast } from "sonner";
 
 import { CountryCombobox } from "~/app/_components/geo/country-combobox";
 import { Button } from "~/app/_components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/app/_components/ui/card";
 import { FormField } from "~/app/_components/ui/field";
 import { Input } from "~/app/_components/ui/input";
+import { Separator } from "~/app/_components/ui/separator";
+import { Spinner } from "~/app/_components/ui/spinner";
 import {
   applyTrpcZodErrorsToForm,
   getTrpcFormErrorDescription,
@@ -190,22 +199,24 @@ export function TripForm({ mode, trip }: TripFormProps) {
         className="space-y-6"
         autoComplete="off"
       >
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="mb-6 flex items-center gap-3 border-b pb-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100">
-              <Calendar className="h-5 w-5 text-sky-600" />
+        <Card className="border border-gray-200 bg-white shadow-sm ring-0">
+          <CardHeader className="border-b pb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100">
+                <Calendar className="h-5 w-5 text-sky-600" />
+              </div>
+              <div>
+                <CardTitle className="text-xl text-gray-900">
+                  Trip Details
+                </CardTitle>
+                <CardDescription>
+                  Basic information about your travel plans
+                </CardDescription>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">
-                Trip Details
-              </h2>
-              <p className="text-sm text-gray-500">
-                Basic information about your travel plans
-              </p>
-            </div>
-          </div>
+          </CardHeader>
 
-          <div className="space-y-5">
+          <CardContent className="space-y-5 pt-6">
             <FormField
               label={
                 <>
@@ -291,8 +302,8 @@ export function TripForm({ mode, trip }: TripFormProps) {
                 disabled={isSubmitting || !!countriesError}
               />
             </FormField>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {isEditMode && (
           <OvernightStopsSection
@@ -305,24 +316,26 @@ export function TripForm({ mode, trip }: TripFormProps) {
           />
         )}
 
-        <div className="flex items-center justify-end gap-3 pt-2">
+        <Separator />
+
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 pt-1">
           <Button
             type="button"
             variant="outline"
             onClick={() => router.back()}
             disabled={isSubmitting}
-            className="h-12 px-6"
+            className="h-10 px-5"
           >
             Cancel
           </Button>
           <Button
             type="submit"
             disabled={isSubmitting || !!countriesError}
-            className="h-12 bg-orange-500 px-6 hover:bg-orange-600"
+            className="h-10 bg-orange-500 px-5 hover:bg-orange-600"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Spinner className="mr-2" />
                 {isEditMode ? "Saving..." : "Creating..."}
               </>
             ) : (

@@ -17,12 +17,20 @@ import {
 } from "~/lib/map/marker-icons/pin";
 import { useFitBounds } from "~/lib/map/use-fit-bounds";
 import { useMapClickDeselect } from "~/lib/map/use-map-click-deselect";
+import { bindMarkerTooltip } from "~/lib/map/marker-tooltip";
 
 import { useRawTriageContext } from "../raw-triage-context";
 import type { ExistingMapAttraction, HighlightIconKey, RawMapAttraction } from "../types";
 import { toHighlightIconKey } from "../types";
 
 export type PinTaggedMarker = L.Marker & { markerStatus: string };
+
+function syncMarkerTooltip(marker: L.Marker, label: string) {
+  const tooltip = marker.getTooltip();
+  const current = tooltip?.getContent();
+  if (typeof current === "string" && current === label) return;
+  bindMarkerTooltip(marker, label);
+}
 
 function createRawClusterIcon(cluster: L.MarkerCluster) {
   return createPieClusterIcon(
@@ -141,6 +149,7 @@ export function RawMapCanvas({ countryCode }: { countryCode?: string }) {
             const current = existingByIdRef.current.get(promotedId);
             if (current) onSelectExistingRef.current(current);
           });
+          syncMarkerTooltip(marker, item.name);
           continue;
         }
       }
@@ -166,6 +175,7 @@ export function RawMapCanvas({ countryCode }: { countryCode?: string }) {
           const current = existingByIdRef.current.get(id);
           if (current) onSelectExistingRef.current(current);
         });
+        syncMarkerTooltip(marker, item.name);
         continue;
       }
 
@@ -176,6 +186,7 @@ export function RawMapCanvas({ countryCode }: { countryCode?: string }) {
         const current = existingByIdRef.current.get(id);
         if (current) onSelectExistingRef.current(current);
       });
+      syncMarkerTooltip(marker, item.name);
       cluster.addLayer(marker);
       existingMarkersRef.current.set(id, marker);
     }
@@ -213,6 +224,7 @@ export function RawMapCanvas({ countryCode }: { countryCode?: string }) {
           const current = rawByIdRef.current.get(id);
           if (current) onSelectRawRef.current(current);
         });
+        syncMarkerTooltip(marker, item.name);
         continue;
       }
 
@@ -224,6 +236,7 @@ export function RawMapCanvas({ countryCode }: { countryCode?: string }) {
         const current = rawByIdRef.current.get(id);
         if (current) onSelectRawRef.current(current);
       });
+      syncMarkerTooltip(marker, item.name);
       cluster.addLayer(marker);
       rawMarkersRef.current.set(id, marker);
     }

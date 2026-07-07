@@ -11,6 +11,13 @@ import {
 
 import { Button } from "~/app/_components/ui/button";
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/app/_components/ui/card";
+import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
@@ -60,36 +67,39 @@ export function OvernightStopsSection({
   const overnightStops = useWatch({ control, name: "overnightStops" });
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-      <div className="mb-6 flex items-center justify-between gap-3 border-b pb-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
-            <Bed className="h-5 w-5 text-indigo-600" />
+    <Card className="border border-gray-200 bg-white shadow-sm ring-0">
+      <CardHeader className="border-b pb-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
+              <Bed className="h-5 w-5 text-indigo-600" />
+            </div>
+            <div>
+              <CardTitle className="text-xl text-gray-900">
+                Overnight Stops
+              </CardTitle>
+              <CardDescription>
+                Hotels and lodging for your trip
+              </CardDescription>
+            </div>
           </div>
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">
-              Overnight Stops
-            </h2>
-            <p className="text-sm text-gray-500">
-              Hotels and lodging for your trip
-            </p>
-          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={disabled || !tripStartDate || !tripEndDate}
+            onClick={() =>
+              append(emptyOvernightStop(tripStartDate, tripEndDate))
+            }
+            className="shrink-0"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add stop
+          </Button>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={disabled || !tripStartDate || !tripEndDate}
-          onClick={() =>
-            append(emptyOvernightStop(tripStartDate, tripEndDate))
-          }
-          className="shrink-0"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Add stop
-        </Button>
-      </div>
+      </CardHeader>
 
+      <CardContent className="pt-6">
       {fields.length === 0 ? (
         <p className="text-sm text-gray-500">
           No overnight stops yet. Add a hotel to record where you are staying.
@@ -270,6 +280,7 @@ export function OvernightStopsSection({
           })}
         </div>
       )}
-    </div>
+      </CardContent>
+    </Card>
   );
 }
