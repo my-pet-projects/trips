@@ -26,32 +26,40 @@ export const useMapCenteringAndBounds = ({
   panelHeight = 0,
   userLocation = null,
 }: MapCenteringAndBoundsOptions) => {
-  // Track whether we've already centered for the current selection
-  const lastCenteredIdRef = useRef<number | null>(null);
-  const panelHeightRef = useRef(panelHeight);
-  panelHeightRef.current = panelHeight;
+  const lastCenteredRef = useRef<{
+    id: number;
+    panelHeight: number;
+  } | null>(null);
 
-  // Center map on selected attraction - only when selection changes
+  // Center map on selected attraction, offset for the detail panel
   useEffect(() => {
     if (!mapRef.current || !selectedAttractionId) {
-      lastCenteredIdRef.current = null;
-      return;
-    }
-
-    // Skip if we already centered for this selection
-    if (lastCenteredIdRef.current === selectedAttractionId) {
+      lastCenteredRef.current = null;
       return;
     }
 
     const attraction = attractionsMap.get(selectedAttractionId);
     if (!attraction?.latitude || !attraction?.longitude) return;
 
+    // Wait until the detail panel reports its height (50% of map)
+    if (panelHeight === 0) {
+      return;
+    }
+
+    const last = lastCenteredRef.current;
+    if (
+      last?.id === selectedAttractionId &&
+      Math.abs(last.panelHeight - panelHeight) < 4
+    ) {
+      return;
+    }
+
     const map = mapRef.current;
-    lastCenteredIdRef.current = selectedAttractionId;
 
     const timeoutId = setTimeout(() => {
-      const offset =
-        panelHeightRef.current > 0 ? panelHeightRef.current / 2 : 0;
+      map.invalidateSize();
+
+      const offset = panelHeight / 2;
       const targetLatLng = L.latLng(
         attraction.latitude!,
         attraction.longitude!,
@@ -65,10 +73,15 @@ export const useMapCenteringAndBounds = ({
         animate: true,
         duration: 0.5,
       });
+
+      lastCenteredRef.current = {
+        id: selectedAttractionId,
+        panelHeight,
+      };
     }, 150);
 
     return () => clearTimeout(timeoutId);
-  }, [selectedAttractionId, attractionsMap, mapRef]);
+  }, [selectedAttractionId, attractionsMap, mapRef, panelHeight]);
 
   // Center map on selected day attractions
   useEffect(() => {

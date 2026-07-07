@@ -3,6 +3,7 @@ import { eq, inArray } from "drizzle-orm";
 import z from "zod";
 
 import { createLogger, errMsg } from "~/lib/logger";
+import { fetchAttractionsByCountryCodes, enrichAttractionsWithCityData } from "~/server/api/routers/attraction";
 import {
   createTRPCRouter,
   protectedProcedure,
@@ -129,6 +130,119 @@ export const tripRouter = createTRPCRouter({
             attractions: itineraryDayPlaces.map((place) => place.attraction),
           }),
         ),
+      };
+    }),
+
+  getItineraryViewData: publicProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const destinations = await ctx.db.query.tripDestinations.findMany({
+        where: eq(schema.tripDestinations.tripId, input.id),
+      });
+
+      const countryCodes = [
+        ...new Set(destinations.map((destination) => destination.countryCode)),
+      ];
+
+      const [trip, attractions] = await Promise.all([
+        ctx.db.query.trips.findFirst({
+          where: eq(schema.trips.id, input.id),
+          with: {
+            destinations: true,
+            itineraryDays: {
+              orderBy: (day, { asc }) => [asc(day.dayNumber)],
+              with: {
+                itineraryDayPlaces: {
+                  orderBy: (place, { asc }) => [asc(place.order)],
+                  with: {
+                    attraction: true,
+                  },
+                },
+              },
+            },
+          },
+        }),
+        fetchAttractionsByCountryCodes(ctx, countryCodes),
+      ]);
+
+      if (!trip) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Trip not found",
+        });
+      }
+
+      return {
+        trip: {
+          ...trip,
+          itineraryDays: trip.itineraryDays.map(
+            ({ id, name, dayNumber, itineraryDayPlaces }) => ({
+              id,
+              name,
+              dayNumber,
+              attractions: itineraryDayPlaces.map((place) => place.attraction),
+            }),
+          ),
+        },
+        attractions,
+      };
+    }),
+
+  getTripViewData: publicProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const trip = await ctx.db.query.trips.findFirst({
+        where: eq(schema.trips.id, input.id),
+        with: {
+          destinations: true,
+          itineraryDays: {
+            orderBy: (day, { asc }) => [asc(day.dayNumber)],
+            with: {
+              itineraryDayPlaces: {
+                orderBy: (place, { asc }) => [asc(place.order)],
+                with: {
+                  attraction: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!trip) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Trip not found",
+        });
+      }
+
+      const attractionsById = new Map<
+        number,
+        (typeof trip.itineraryDays)[number]["itineraryDayPlaces"][number]["attraction"]
+      >();
+      for (const day of trip.itineraryDays) {
+        for (const place of day.itineraryDayPlaces) {
+          attractionsById.set(place.attraction.id, place.attraction);
+        }
+      }
+
+      const attractions = await enrichAttractionsWithCityData(ctx, [
+        ...attractionsById.values(),
+      ]);
+
+      return {
+        trip: {
+          ...trip,
+          itineraryDays: trip.itineraryDays.map(
+            ({ id, name, dayNumber, itineraryDayPlaces }) => ({
+              id,
+              name,
+              dayNumber,
+              attractions: itineraryDayPlaces.map((place) => place.attraction),
+            }),
+          ),
+        },
+        attractions,
       };
     }),
 

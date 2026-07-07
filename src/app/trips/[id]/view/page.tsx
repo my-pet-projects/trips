@@ -1,10 +1,8 @@
-import { Pencil } from "lucide-react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { MapPageLayout } from "~/app/_components/map-page-layout";
 import { Navbar } from "~/app/_components/navbar";
-import { buttonVariants } from "~/app/_components/ui/button";
-import { cn } from "~/lib/utils";
+import { TripModeNav } from "~/app/trips/_components/trip-mode-nav";
 import { api } from "~/trpc/server";
 import { ItineraryViewer } from "./_components/itinerary-viewer";
 
@@ -19,7 +17,7 @@ export const metadata = {
   description: "View your trip itinerary",
 };
 
-export default async function ItineraryPage({ params }: TripViewPageProps) {
+export default async function TripViewPage({ params }: TripViewPageProps) {
   const { id } = await params;
   const tripId = parseInt(id, 10);
 
@@ -27,36 +25,26 @@ export default async function ItineraryPage({ params }: TripViewPageProps) {
     notFound();
   }
 
-  const trip = await api.trip.getWithItinerary({ id: tripId });
-  if (!trip) {
-    notFound();
-  }
-
-  const attractions = await api.attraction.getAttractionsByCountries({
-    countryCodes: trip.destinations.map((d) => d.countryCode),
+  const { trip, attractions } = await api.trip.getTripViewData({
+    id: tripId,
   });
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-linear-to-br from-sky-50 via-white to-orange-50">
-      <Navbar
-        title={trip.name}
-        subtitle="View your itinerary"
-        backHref="/trips"
-        actions={
-          <Link
-            href={`/trips/${tripId}/edit`}
-            className={cn(buttonVariants({ variant: "outline" }))}
-          >
-            <Pencil className="h-4 w-4" />
-            Edit Trip
-          </Link>
-        }
-      />
-
-      {/* Main Content */}
-      <main className="container mx-auto min-h-0 flex-1">
-        <ItineraryViewer trip={trip} tripAttractions={attractions} />
-      </main>
-    </div>
+    <MapPageLayout
+      navbar={
+        <Navbar
+          title={trip.name}
+          subtitle="View your itinerary"
+          backHref="/trips"
+          actions={<TripModeNav tripId={tripId} />}
+        />
+      }
+    >
+      <div className="container mx-auto flex h-full min-h-0 flex-col px-4">
+        <div className="mx-auto flex h-full min-h-0 w-full max-w-4xl flex-col">
+          <ItineraryViewer trip={trip} tripAttractions={attractions} />
+        </div>
+      </div>
+    </MapPageLayout>
   );
 }
