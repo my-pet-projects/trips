@@ -99,22 +99,7 @@ export const attractionRouter = createTRPCRouter({
     .input(z.object({ countryCodes: z.array(z.string().length(2)).min(1) }))
     .query(async ({ ctx, input }) => {
       try {
-        const attractions = await ctx.db
-          .select()
-          .from(schema.attractions)
-          .where(inArray(schema.attractions.countryCode, input.countryCodes))
-          .orderBy(schema.attractions.id);
-
-        const cityIds = [
-          ...new Set(attractions.map((attraction) => attraction.cityId)),
-        ];
-        const cities = await fetchCitiesWithCountries(ctx.geoDb, cityIds);
-        const enrichedAttractions = enrichAttractionsWithCities(
-          attractions,
-          cities,
-        );
-
-        return enrichedAttractions;
+        return await fetchAttractionsByCountryCodes(ctx, input.countryCodes);
       } catch (error) {
         log.error(
           { countryCodes: input.countryCodes, error: errMsg(error) },
@@ -407,6 +392,36 @@ export const attractionRouter = createTRPCRouter({
       }
     }),
 });
+
+export async function fetchAttractionsByCountryCodes(
+  ctx: Pick<Awaited<ReturnType<typeof import("~/server/api/trpc").createTRPCContext>>, "db" | "geoDb">,
+  countryCodes: string[],
+) {
+  if (countryCodes.length === 0) {
+    return [];
+  }
+
+  const attractions = await ctx.db
+    .select()
+    .from(schema.attractions)
+    .where(inArray(schema.attractions.countryCode, countryCodes))
+    .orderBy(schema.attractions.id);
+
+  return enrichAttractionsWithCityData(ctx, attractions);
+}
+
+export async function enrichAttractionsWithCityData<T extends { cityId: number }>(
+  ctx: Pick<Awaited<ReturnType<typeof import("~/server/api/trpc").createTRPCContext>>, "geoDb">,
+  attractions: T[],
+) {
+  if (attractions.length === 0) {
+    return [];
+  }
+
+  const cityIds = [...new Set(attractions.map((attraction) => attraction.cityId))];
+  const cities = await fetchCitiesWithCountries(ctx.geoDb, cityIds);
+  return enrichAttractionsWithCities(attractions, cities);
+}
 
 function enrichAttractionsWithCities<T extends { cityId: number }>(
   attractions: T[],

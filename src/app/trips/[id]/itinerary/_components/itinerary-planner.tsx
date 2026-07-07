@@ -83,8 +83,8 @@ export function ItineraryPlanner({
   };
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <div className="space-y-4">
+    <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-2">
+      <div className="min-h-0 space-y-4 overflow-y-auto px-4 py-4 lg:border-r lg:border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold text-gray-900">
@@ -179,8 +179,9 @@ export function ItineraryPlanner({
         )}
       </div>
 
-      <div className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
+      <div className="relative min-h-[45vh] overflow-hidden border-t border-gray-200 lg:min-h-0 lg:border-t-0">
         <ItineraryMap
+          className="h-full rounded-none border-0 shadow-none lg:rounded-none lg:border-0 lg:shadow-none"
           attractions={attractions}
           selectedDayAttractions={selectedDayAttractions}
           selectedDayId={selectedDayId}

@@ -63,7 +63,13 @@ export const useLeafletMap = (
     mapRef.current = map;
     setMapReady(true);
 
+    const resizeObserver = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+    resizeObserver.observe(containerRef.current);
+
     return () => {
+      resizeObserver.disconnect();
       map.remove();
       mapRef.current = null;
       hasInitializedBounds.current = false;

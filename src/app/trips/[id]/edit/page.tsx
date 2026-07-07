@@ -1,11 +1,8 @@
-import { Calendar, Eye } from "lucide-react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Navbar } from "~/app/_components/navbar";
-import { buttonVariants } from "~/app/_components/ui/button";
 import { TripForm } from "~/app/trips/_components/trip-form";
-import { cn } from "~/lib/utils";
+import { TripModeNav } from "~/app/trips/_components/trip-mode-nav";
 import { api } from "~/trpc/server";
 
 export const metadata = {
@@ -38,24 +35,7 @@ export default async function EditTripPage({ params }: EditTripPageProps) {
         title={trip.name}
         subtitle="Edit trip details"
         backHref="/trips"
-        actions={
-          <>
-            <Link
-              href={`/trips/${tripId}/itinerary`}
-              className={cn(buttonVariants({ variant: "outline" }))}
-            >
-              <Calendar className="h-4 w-4" />
-              Itinerary
-            </Link>
-            <Link
-              href={`/trips/${tripId}/view`}
-              className={cn(buttonVariants({ variant: "outline" }))}
-            >
-              <Eye className="h-4 w-4" />
-              View
-            </Link>
-          </>
-        }
+        actions={<TripModeNav tripId={tripId} />}
       />
 
       <main className="container mx-auto px-4 py-8">
