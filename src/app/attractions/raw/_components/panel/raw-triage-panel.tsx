@@ -1,8 +1,15 @@
 "use client";
 
-import { ExternalLink, MapPin, Pencil, X } from "lucide-react";
+import { BookOpen, ExternalLink, MapPin, Pencil, X } from "lucide-react";
 import Link from "next/link";
 
+import { buttonVariants } from "~/app/_components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/app/_components/ui/tooltip";
+import { cn } from "~/lib/utils";
 import { useRawTriageContext } from "../raw-triage-context";
 import { TriageActions } from "./triage-actions";
 
@@ -20,9 +27,16 @@ function domainLabel(url: string) {
   }
 }
 
+const linkClass = buttonVariants({
+  variant: "outline",
+  size: "sm",
+  className: "h-7 gap-1.5 px-2.5 text-xs",
+});
+
 export function RawTriagePanel() {
   const {
     selection,
+    isLoading,
     clearSelection,
     isMutating,
     onApprove,
@@ -30,14 +44,17 @@ export function RawTriagePanel() {
     onDuplicated,
   } = useRawTriageContext();
 
-  if (!selection) return null;
+  if (!selection || isLoading) return null;
 
   const { attraction } = selection;
   const mapsUrl = `https://www.google.com/maps?q=${attraction.latitude},${attraction.longitude}`;
 
   return (
     <div className="pointer-events-none absolute bottom-24 left-3 right-3 z-1001 md:bottom-6 md:left-1/2 md:w-full md:max-w-lg md:-translate-x-1/2">
-      <div className="pointer-events-auto rounded-xl border border-gray-200 bg-white/95 p-4 shadow-lg backdrop-blur-sm" data-testid="raw-triage-panel">
+      <div
+        className="pointer-events-auto rounded-xl border border-gray-200 bg-white p-4 shadow-lg"
+        data-testid="raw-triage-panel"
+      >
         <div className="mb-3 flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h3 className="truncate text-sm font-semibold text-gray-900">
@@ -49,22 +66,27 @@ export function RawTriagePanel() {
               </p>
             )}
           </div>
-          <button
-            type="button"
-            onClick={clearSelection}
-            className="shrink-0 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <Tooltip>
+            <TooltipTrigger
+              type="button"
+              onClick={clearSelection}
+              className="inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </TooltipTrigger>
+            <TooltipContent>Close</TooltipContent>
+          </Tooltip>
         </div>
 
         {selection.kind === "raw" && (
           <>
             {selection.attraction.description && (
-              <p className="mb-3 line-clamp-3 text-xs leading-relaxed text-gray-600">
-                {selection.attraction.description}
-              </p>
+              <div className="mb-3 rounded-lg bg-gray-50 p-3">
+                <p className="line-clamp-3 text-xs leading-relaxed text-gray-700">
+                  {selection.attraction.description}
+                </p>
+              </div>
             )}
             {selection.attraction.missingCoords && (
               <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-800">
@@ -72,22 +94,22 @@ export function RawTriagePanel() {
               </p>
             )}
             {selection.attraction.cityName && (
-              <p className="mb-3 text-xs text-gray-500">
-                City: {selection.attraction.cityName}
+              <p className="mb-3 text-xs text-gray-400">
+                {selection.attraction.cityName}
               </p>
             )}
           </>
         )}
 
-        <div className="mb-3 flex flex-wrap gap-2">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
           {selection.kind === "raw" && selection.attraction.sourceUrl && (
             <a
               href={selection.attraction.sourceUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs text-blue-700 hover:bg-blue-100"
+              className={linkClass}
             >
-              <ExternalLink className="h-3 w-3" />
+              <BookOpen className="h-3.5 w-3.5" />
               {sourceLabel(selection.attraction.source)}
             </a>
           )}
@@ -96,9 +118,9 @@ export function RawTriagePanel() {
               href={selection.attraction.sourceUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs text-blue-700 hover:bg-blue-100"
+              className={linkClass}
             >
-              <ExternalLink className="h-3 w-3" />
+              <ExternalLink className="h-3.5 w-3.5" />
               {domainLabel(selection.attraction.sourceUrl)}
             </a>
           )}
@@ -106,9 +128,9 @@ export function RawTriagePanel() {
             href={mapsUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs text-blue-700 hover:bg-blue-100"
+            className={linkClass}
           >
-            <MapPin className="h-3 w-3" />
+            <MapPin className="h-3.5 w-3.5" />
             Maps
           </a>
           {selection.kind === "existing" &&
@@ -117,14 +139,14 @@ export function RawTriagePanel() {
                 href={`/attractions/${selection.attraction.id}/edit`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 rounded-md border border-green-200 bg-green-50 px-2 py-1 text-xs text-green-700 hover:bg-green-100"
+                className={linkClass}
               >
-                <Pencil className="h-3 w-3" />
+                <Pencil className="h-3.5 w-3.5" />
                 Edit
               </Link>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-500">
-                <Pencil className="h-3 w-3" />
+              <span className={cn(linkClass, "text-gray-500")}>
+                <Pencil className="h-3.5 w-3.5" />
                 Saving…
               </span>
             ))}
@@ -135,23 +157,24 @@ export function RawTriagePanel() {
                 href={`/attractions/${selection.attraction.attractionId}/edit`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 rounded-md border border-green-200 bg-green-50 px-2 py-1 text-xs text-green-700 hover:bg-green-100"
+                className={linkClass}
               >
-                <Pencil className="h-3 w-3" />
+                <Pencil className="h-3.5 w-3.5" />
                 Edit
               </Link>
             )}
         </div>
 
-        {selection.kind === "raw" && selection.attraction.status === "pending" && (
-          <TriageActions
-            attractionId={selection.attraction.id}
-            isMutating={isMutating}
-            onApprove={onApprove}
-            onReject={onReject}
-            onDuplicated={onDuplicated}
-          />
-        )}
+        {selection.kind === "raw" &&
+          selection.attraction.status === "pending" && (
+            <TriageActions
+              attractionId={selection.attraction.id}
+              isMutating={isMutating}
+              onApprove={onApprove}
+              onReject={onReject}
+              onDuplicated={onDuplicated}
+            />
+          )}
       </div>
     </div>
   );

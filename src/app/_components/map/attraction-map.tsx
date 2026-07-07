@@ -2,12 +2,19 @@
 
 import L, { divIcon } from "leaflet";
 import "~/lib/map/leaflet-styles";
-import { BuildingIcon } from "lucide-react";
+import { AlertCircle, BuildingIcon } from "lucide-react";
 import React, { useEffect, useRef } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "~/app/_components/ui/alert";
+import { Spinner } from "~/app/_components/ui/spinner";
 import { api } from "~/trpc/react";
 import { normalizePoiName, type NearbyPoi } from "~/lib/geo/nearby-pois";
+import { bindMarkerTooltip } from "~/lib/map/marker-tooltip";
 import type { City } from "~/types";
 
 interface AttractionMapProps {
@@ -232,7 +239,7 @@ export function AttractionMap({
       const marker = L.marker([currentCity.latitude, currentCity.longitude], {
         icon: CURRENT_CITY_MARKER_ICON,
       }).addTo(map);
-      marker.bindTooltip(`Current City: ${currentCity.name}`);
+      bindMarkerTooltip(marker, `Current City: ${currentCity.name}`);
       cityMarkersRef.current.push(marker);
     }
 
@@ -240,7 +247,7 @@ export function AttractionMap({
       const marker = L.marker([city.latitude, city.longitude], {
         icon: NEAREST_CITY_MARKER_ICON,
       }).addTo(map);
-      marker.bindTooltip(city.name);
+      bindMarkerTooltip(marker, city.name);
       marker.bindPopup(city.name);
       cityMarkersRef.current.push(marker);
     }
@@ -269,7 +276,7 @@ export function AttractionMap({
         zIndexOffset: isSelected || isHovered ? 1000 : 0,
       }).addTo(map);
 
-      marker.bindTooltip(poi.name);
+      bindMarkerTooltip(marker, poi.name);
       marker.bindPopup(
         `<strong>${poi.name}</strong><br/>${poi.distanceMeters}m · ${poi.source}`,
       );
@@ -290,17 +297,26 @@ export function AttractionMap({
   return (
     <div className={className}>
       {error && (
-        <div className="mb-2 rounded-lg border border-red-200 bg-red-50 p-3">
-          <p className="text-sm text-red-800">
+        <Alert
+          variant="destructive"
+          className="mb-2 border-red-200 bg-red-50 [&>svg]:text-red-600"
+        >
+          <AlertCircle />
+          <AlertTitle className="text-red-900">Map warning</AlertTitle>
+          <AlertDescription className="text-red-800">
             Failed to load nearby cities. The map will still function normally.
-          </p>
-        </div>
+          </AlertDescription>
+        </Alert>
       )}
 
       {(isLoading || loadingExtended) && (
-        <div className="mb-2 rounded-lg border border-blue-200 bg-blue-50 p-3">
-          <p className="text-sm text-blue-800">Loading nearby cities...</p>
-        </div>
+        <Alert className="mb-2 border-blue-200 bg-blue-50 [&>svg]:text-blue-600">
+          <Spinner className="size-4 text-blue-600" />
+          <AlertTitle className="text-blue-900">Loading nearby cities</AlertTitle>
+          <AlertDescription className="text-blue-800">
+            Fetching map data…
+          </AlertDescription>
+        </Alert>
       )}
 
       <div

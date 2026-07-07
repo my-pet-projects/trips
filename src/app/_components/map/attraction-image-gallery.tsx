@@ -1,6 +1,15 @@
 import { BookOpen, ChevronDown, ExternalLink } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 
+import { Badge } from "~/app/_components/ui/badge";
+import { Button } from "~/app/_components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "~/app/_components/ui/collapsible";
+import { Skeleton } from "~/app/_components/ui/skeleton";
+import { Spinner } from "~/app/_components/ui/spinner";
 import { api } from "~/trpc/react";
 import type { AttractionDetail } from "~/types";
 
@@ -13,15 +22,13 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
 }) => {
   const loadedImages = useRef(new Set<string>());
   const failedImages = useRef(new Set<string>());
-  const [, forceUpdate] = useState(0);
-  const [articlesOpen, setArticlesOpen] = useState(false);
+  const [, forceUpdate] = React.useState(0);
 
   // Reset image load/fail caches and disclosure state when the attraction changes
   useEffect(() => {
     loadedImages.current = new Set();
     failedImages.current = new Set();
     forceUpdate(0);
-    setArticlesOpen(false);
   }, [attraction.id]);
   const { data, isLoading, isError, refetch } =
     api.attractionScraper.fetchAttractionDetails.useQuery(
@@ -44,9 +51,16 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-4">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-sky-500" />
-        <span className="ml-2 text-sm text-gray-500">Loading images...</span>
+      <div className="space-y-3 py-4">
+        <div className="flex items-center gap-2">
+          <Spinner className="text-sky-500" />
+          <span className="text-sm text-gray-500">Loading images...</span>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <Skeleton className="aspect-square rounded-lg" />
+          <Skeleton className="aspect-square rounded-lg" />
+          <Skeleton className="aspect-square rounded-lg" />
+        </div>
       </div>
     );
   }
@@ -55,13 +69,15 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
     return (
       <div className="mb-4 rounded-lg bg-red-50 p-3 text-center">
         <p className="text-sm text-red-600">Failed to load images</p>
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
+          className="mt-2 border-red-200 bg-red-100 text-red-700 hover:bg-red-200"
           onClick={() => void refetch()}
-          className="mt-2 rounded-md bg-red-100 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200"
         >
           Try Again
-        </button>
+        </Button>
       </div>
     );
   }
@@ -88,7 +104,7 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
               >
                 {!loadedImages.current.has(url) && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-200 border-t-sky-500" />
+                    <Spinner className="size-4 text-sky-500" />
                   </div>
                 )}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -125,20 +141,18 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
 
       {/* Wikipedia Articles */}
       {articles.length > 0 && (
-        <div className="rounded-lg border border-gray-200">
-          <button
-            type="button"
-            onClick={() => setArticlesOpen((o) => !o)}
-            className={`flex w-full items-center justify-between px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 ${articlesOpen ? "rounded-t-lg border-b border-gray-200" : "rounded-lg"}`}
-          >
+        <Collapsible key={attraction.id} className="rounded-lg border border-gray-200">
+          <CollapsibleTrigger className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
             <div className="flex items-center gap-2">
               <BookOpen className="h-4 w-4 text-gray-400" />
               <span>Wikipedia</span>
-              <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-500">{articles.length}</span>
+              <Badge variant="muted" className="px-1.5 py-0.5">
+                {articles.length}
+              </Badge>
             </div>
-            <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${articlesOpen ? "rotate-180" : ""}`} />
-          </button>
-          {articlesOpen && (
+            <ChevronDown className="h-4 w-4 text-gray-400 transition-transform data-open:rotate-180" />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
             <ul className="divide-y divide-gray-100">
               {articles.map((article) => (
                 <li key={article.url} className="p-3">
@@ -152,13 +166,15 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
                     <ExternalLink className="h-3 w-3" />
                   </a>
                   {article.snippet && (
-                    <p className="mt-1 text-xs leading-relaxed text-gray-500">{article.snippet}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-gray-500">
+                      {article.snippet}
+                    </p>
                   )}
                 </li>
               ))}
             </ul>
-          )}
-        </div>
+          </CollapsibleContent>
+        </Collapsible>
       )}
     </div>
   );

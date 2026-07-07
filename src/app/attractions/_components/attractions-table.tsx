@@ -17,6 +17,14 @@ import {
   TableHeader,
   TableRow,
 } from "~/app/_components/ui/table";
+import { Badge } from "~/app/_components/ui/badge";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "~/app/_components/ui/empty";
 import type { AttractionRow } from "~/types";
 
 import { cn } from "~/lib/utils";
@@ -41,18 +49,20 @@ export function AttractionsTable({
   return (
     <div className="mt-6">
       {totalCount === 0 && (
-        <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-          <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-linear-to-br from-orange-100 to-orange-200 shadow-lg">
-            <MapPin className="h-12 w-12 text-orange-600" />
-          </div>
-          <h2 className="text-foreground mb-3 text-3xl font-bold">
-            No Attractions Found
-          </h2>
-          <p className="text-muted-foreground mb-8 max-w-md text-lg text-balance">
-            No attractions match your current filters. Try adjusting your search
-            criteria.
-          </p>
-        </div>
+        <Empty className="min-h-[60vh] border-none bg-transparent">
+          <EmptyHeader>
+            <EmptyMedia className="mb-2 size-24 rounded-full bg-linear-to-br from-orange-100 to-orange-200 shadow-lg">
+              <MapPin className="size-12 text-orange-600" />
+            </EmptyMedia>
+            <EmptyTitle className="text-3xl font-bold">
+              No Attractions Found
+            </EmptyTitle>
+            <EmptyDescription className="max-w-md text-lg">
+              No attractions match your current filters. Try adjusting your
+              search criteria.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       )}
 
       {totalCount > 0 && (
@@ -114,22 +124,22 @@ export function AttractionsTable({
                                 {attraction.name}
                               </span>
                               {attraction.highlight === "must_see" && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                                <Badge variant="warning" className="gap-1 px-2 py-0.5">
                                   <Star className="h-3 w-3" />
                                   Must see
-                                </span>
+                                </Badge>
                               )}
                               {attraction.highlight === "recommended" && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-700">
+                                <Badge variant="teal" className="gap-1 px-2 py-0.5">
                                   <ThumbsUp className="h-3 w-3" />
                                   Recommended
-                                </span>
+                                </Badge>
                               )}
                               {attraction.highlight === "skip" && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-600">
+                                <Badge variant="destructive" className="gap-1 px-2 py-0.5">
                                   <SkipForward className="h-3 w-3" />
                                   Skip
-                                </span>
+                                </Badge>
                               )}
                             </div>
                             {attraction.nameLocal && (

@@ -3,6 +3,12 @@
 import { MapPin, Navigation } from "lucide-react";
 import type { RefObject } from "react";
 
+import { Button } from "~/app/_components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/app/_components/ui/tooltip";
 import { MapInlineLoading } from "~/lib/map/map-loading";
 
 type LeafletMapCanvasProps = {
@@ -30,30 +36,51 @@ export function LeafletMapCanvas({
 
       {enableLocationTracking && toggleLocationTracking && centerOnUserLocation && (
         <div className="absolute top-4 right-4 z-1000 flex flex-col gap-2">
-          <button
-            type="button"
-            data-testid="map-geo-track"
-            onClick={toggleLocationTracking}
-            className={`rounded-lg p-3 shadow-lg transition-all ${
-              isTrackingLocation
-                ? "bg-blue-600 text-white"
-                : "bg-white text-gray-700 hover:bg-gray-50"
-            }`}
-            title={isTrackingLocation ? "Stop tracking location" : "Track my location"}
-          >
-            <Navigation
-              className={`h-5 w-5 ${isTrackingLocation ? "animate-pulse" : ""}`}
-            />
-          </button>
-          {userLocation && (
-            <button
-              type="button"
-              onClick={centerOnUserLocation}
-              className="rounded-lg bg-white p-3 text-gray-700 shadow-lg transition-all hover:bg-gray-50"
-              title="Center on my location"
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  data-testid="map-geo-track"
+                  size="icon"
+                  aria-label={
+                    isTrackingLocation ? "Stop tracking location" : "Track my location"
+                  }
+                  onClick={toggleLocationTracking}
+                  className={
+                    isTrackingLocation
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : "bg-white text-gray-700 hover:bg-gray-50"
+                  }
+                />
+              }
             >
-              <MapPin className="h-5 w-5" />
-            </button>
+              <Navigation
+                className={`h-5 w-5 ${isTrackingLocation ? "animate-pulse" : ""}`}
+              />
+            </TooltipTrigger>
+            <TooltipContent>
+              {isTrackingLocation ? "Stop tracking location" : "Track my location"}
+            </TooltipContent>
+          </Tooltip>
+          {userLocation && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    aria-label="Center on my location"
+                    className="bg-white text-gray-700 hover:bg-gray-50"
+                    onClick={centerOnUserLocation}
+                  />
+                }
+              >
+                <MapPin className="h-5 w-5" />
+              </TooltipTrigger>
+              <TooltipContent>Center on my location</TooltipContent>
+            </Tooltip>
           )}
         </div>
       )}

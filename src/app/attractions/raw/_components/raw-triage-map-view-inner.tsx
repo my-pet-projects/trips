@@ -21,7 +21,7 @@ function TriageOverlays({ countryCode }: { countryCode?: string }) {
         </div>
       )}
       {isLoading && (
-        <div className="absolute inset-0 z-1000 bg-white/60 backdrop-blur-sm">
+        <div className="absolute inset-0 z-1010 bg-white/60 backdrop-blur-sm">
           <MapLoadingOverlay label="Loading attractions…" />
         </div>
       )}

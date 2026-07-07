@@ -1,17 +1,23 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import Select, {
-  components,
-  type GroupBase,
-  type InputProps,
-  type MultiValue,
-  type MultiValueProps,
-  type OptionProps,
-  type SingleValueProps,
-} from "react-select";
+import React from "react";
 
-import { getFlagEmoji } from "~/lib/utils";
+import {
+  Combobox,
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxStatus,
+  ComboboxValue,
+  useComboboxAnchor,
+} from "~/app/_components/ui/combobox";
+import { Label } from "~/app/_components/ui/label";
+import { getFlagEmoji, cn } from "~/lib/utils";
 import type { Country } from "~/types";
 
 export interface CountrySelectOption {
@@ -25,6 +31,7 @@ interface CountryComboboxBaseProps {
   isLoading: boolean;
   error?: boolean;
   showLabel?: boolean;
+  inputAriaLabel?: string;
   placeholder?: string;
   disabled?: boolean;
   compact?: boolean;
@@ -46,107 +53,34 @@ type CountryComboboxProps =
   | CountryComboboxSingleProps
   | CountryComboboxMultiProps;
 
-function useIsMounted() {
-  const [mounted, setMounted] = useState(false);
+const countryLabel = (country: Country) => country.name;
+const countryEquals = (a: Country, b: Country) => a.cca2 === b.cca2;
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  return mounted;
-}
-
-interface SelectClassNamesArgs {
-  isFocused: boolean;
-  isDisabled: boolean;
-  hasError: boolean;
-  isMulti: boolean;
-  compact?: boolean;
-}
-
-const getSelectClassNames = ({
-  isDisabled,
-  hasError,
-  isMulti,
+function CountryOptionLabel({
+  country,
   compact,
-}: SelectClassNamesArgs) => ({
-  control: (state: { isFocused: boolean; isDisabled: boolean }) =>
-    `!w-full !rounded-lg !border ${
-      state.isFocused
-        ? "!border-orange-500 !ring-1 !ring-orange-500"
-        : hasError
-          ? "!border-red-500"
-          : "!border-gray-300"
-    } !bg-gray-50 ${
-      isMulti ? "!min-h-[3rem]" : compact ? "!h-8 !min-h-0" : "!h-12"
-    } ${compact ? "!text-xs" : "!text-base"} ${state.isDisabled || isDisabled ? "!bg-gray-200" : ""}`,
-  placeholder: () => compact ? "!text-gray-400 !text-xs !truncate" : "!text-gray-400",
-  singleValue: () => "!truncate",
-  input: () => compact ? "!text-xs" : "",
-  indicatorSeparator: () => "!bg-gray-300",
-  dropdownIndicator: () => compact ? "!text-gray-400 hover:!text-gray-500 !p-1" : "!text-gray-400 hover:!text-gray-500",
-  clearIndicator: () => compact ? "!text-gray-400 hover:!text-red-500 !p-1" : "!text-gray-400 hover:!text-red-500",
-  menu: () => "!rounded-lg !shadow-md !mt-2 !z-[1000]",
-  option: (state: { isSelected: boolean; isFocused: boolean }) =>
-    `${compact ? "!text-xs !py-1" : ""} !text-gray-800 ${
-      state.isSelected
-        ? "!bg-orange-200 !text-orange-700"
-        : state.isFocused
-          ? "!bg-orange-50"
-          : "!bg-white"
-    }`,
-  multiValue: () => "!bg-orange-100 !rounded-md",
-  multiValueLabel: () => "!text-orange-900 !px-2",
-  multiValueRemove: () =>
-    "!text-orange-700 hover:!bg-orange-200 hover:!text-orange-900",
-});
-
-const CustomOption = (
-  props: OptionProps<CountrySelectOption, boolean, GroupBase<CountrySelectOption>>,
-) => (
-  <components.Option {...props}>
+}: {
+  country: Country;
+  compact?: boolean;
+}) {
+  return (
     <div className="flex items-center gap-2">
-      <span className="text-xl leading-none">{getFlagEmoji(props.data.fullCountry.cca2)}</span>
-      <span>{props.data.label}</span>
-    </div>
-  </components.Option>
-);
-
-const CustomMultiValue = (
-  props: MultiValueProps<
-    CountrySelectOption,
-    true,
-    GroupBase<CountrySelectOption>
-  >,
-) => (
-  <components.MultiValue {...props}>
-    <div className="flex items-center gap-1.5">
-      <span className="text-base leading-none">
-        {getFlagEmoji(props.data.fullCountry.cca2)}
+      <span className={compact ? "text-sm leading-none" : "text-xl leading-none"}>
+        {getFlagEmoji(country.cca2)}
       </span>
-      <span className="text-sm">{props.data.label}</span>
+      <span className={compact ? "text-xs" : undefined}>{country.name}</span>
     </div>
-  </components.MultiValue>
-);
+  );
+}
 
-const CustomInput = (
-  props: InputProps<
-    CountrySelectOption,
-    boolean,
-    GroupBase<CountrySelectOption>
-  >,
-) => (
-  <components.Input
-    {...props}
-    autoComplete="nope"
-    autoCorrect="off"
-    autoCapitalize="off"
-    spellCheck={false}
-    data-lpignore="true"
-    data-1p-ignore="true"
-    data-form-type="other"
-  />
-);
+function CountryChipLabel({ country }: { country: Country }) {
+  return (
+    <>
+      <span className="text-sm leading-none">{getFlagEmoji(country.cca2)}</span>
+      <span>{country.name}</span>
+    </>
+  );
+}
 
 const CountryComboboxSingle: React.FC<CountryComboboxSingleProps> = ({
   options,
@@ -154,94 +88,89 @@ const CountryComboboxSingle: React.FC<CountryComboboxSingleProps> = ({
   disabled,
   error = false,
   showLabel = true,
+  inputAriaLabel,
   placeholder,
   compact,
   value,
   onChange,
 }) => {
-  const mounted = useIsMounted();
-
-  const selectedOption = value
-    ? {
-        value: value.cca2,
-        label: value.name,
-        fullCountry: value,
-      }
-    : null;
-
-  const handleSingleChange = (newValue: CountrySelectOption | null) => {
-    onChange(newValue?.fullCountry ?? null);
-  };
-
-  const singleSelectComponents = useMemo(
-    () => ({
-      Option: ((props) => {
-        return (
-          <components.Option {...props}>
-            <div className="flex items-center gap-2">
-              <span className={compact ? "text-sm leading-none" : "text-xl leading-none"}>
-                {getFlagEmoji(props.data.fullCountry.cca2)}
-              </span>
-              <span className={compact ? "text-xs" : ""}>{props.data.label}</span>
-            </div>
-          </components.Option>
-        );
-      }) as React.ComponentType<OptionProps<CountrySelectOption, false, GroupBase<CountrySelectOption>>>,
-      SingleValue: ((props) => {
-        return (
-          <components.SingleValue {...props}>
-            <div className="flex items-center gap-2">
-              <span className={compact ? "text-sm leading-none" : "text-xl leading-none"}>
-                {getFlagEmoji(props.data.fullCountry.cca2)}
-              </span>
-              <span className={compact ? "text-xs" : ""}>{props.data.label}</span>
-            </div>
-          </components.SingleValue>
-        );
-      }) as React.ComponentType<SingleValueProps<CountrySelectOption, false, GroupBase<CountrySelectOption>>>,
-      Input: CustomInput as React.ComponentType<
-        InputProps<CountrySelectOption, false, GroupBase<CountrySelectOption>>
-      >,
-    }),
-    [compact],
+  const items = React.useMemo(
+    () => options.map((option) => option.fullCountry),
+    [options],
   );
-
-  if (!mounted) {
-    return null;
-  }
 
   return (
     <div className="w-full" data-testid="country-select-container">
       {showLabel && (
-        <div className="mb-1.5 block text-sm font-medium text-gray-700">
+        <Label htmlFor="country-select-single" className="mb-1.5 block text-gray-700">
           Country
-        </div>
+        </Label>
       )}
-      <Select<CountrySelectOption, false, GroupBase<CountrySelectOption>>
-        instanceId="country-select-single"
-        inputId="country-select-single"
-        aria-label="Country"
-        options={options}
-        isLoading={isLoading}
-        loadingMessage={() => compact ? "Loading…" : "Loading countries..."}
-        value={selectedOption}
-        onChange={handleSingleChange}
-        isClearable
-        isDisabled={error || isLoading || disabled}
-        placeholder={
-          placeholder ??
-          (error ? "Error loading countries" : "Select a country...")
-        }
-        noOptionsMessage={() => "No countries found"}
-        components={singleSelectComponents}
-        classNames={getSelectClassNames({
-          isFocused: false,
-          isDisabled: error || isLoading,
-          hasError: error,
-          isMulti: false,
-          compact,
-        })}
-      />
+      <Combobox
+        items={items}
+        value={value}
+        onValueChange={(nextValue) => onChange(nextValue)}
+        itemToStringLabel={countryLabel}
+        isItemEqualToValue={countryEquals}
+        disabled={error || isLoading || disabled}
+      >
+        <ComboboxInput
+          id="country-select-single"
+          {...(!showLabel && {
+            "aria-label": inputAriaLabel ?? "Country",
+          })}
+          showClear
+          startAdornment={
+            value ? (
+              <span
+                className={cn(
+                  "shrink-0 pl-1 leading-none",
+                  compact ? "text-sm" : "text-xl",
+                )}
+                aria-hidden
+              >
+                {getFlagEmoji(value.cca2)}
+              </span>
+            ) : null
+          }
+          placeholder={
+            placeholder ??
+            (error ? "Error loading countries" : "Select a country...")
+          }
+          className={cn(
+            compact
+              ? "h-9 [&_input]:min-w-0 [&_input]:flex-1 [&_input]:py-1 [&_input]:text-xs [&_input]:leading-5"
+              : "h-12 [&_input]:text-base",
+            error && "border-red-500",
+          )}
+          autoComplete="nope"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          data-lpignore="true"
+          data-1p-ignore="true"
+          data-form-type="other"
+        />
+        <ComboboxContent className="group/combobox-content">
+          {isLoading && (
+            <ComboboxStatus>
+              {compact ? "Loading…" : "Loading countries..."}
+            </ComboboxStatus>
+          )}
+          <ComboboxEmpty>No countries found</ComboboxEmpty>
+          <ComboboxList>
+            {(country: Country) => (
+              <ComboboxItem
+                key={country.cca2}
+                value={country}
+                className={compact ? "py-1 text-xs" : undefined}
+              >
+                <CountryOptionLabel country={country} compact={compact} />
+              </ComboboxItem>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
       {error && (
         <p className="mt-1 text-sm text-red-500">
           Failed to load countries. Please try again.
@@ -257,74 +186,75 @@ const CountryComboboxMulti: React.FC<CountryComboboxMultiProps> = ({
   disabled,
   error = false,
   showLabel = true,
+  inputAriaLabel,
   placeholder,
   value,
   onChange,
 }) => {
-  const mounted = useIsMounted();
-
-  const selectedOptions: readonly CountrySelectOption[] = value.map(
-    (country) => ({
-      value: country.cca2,
-      label: country.name,
-      fullCountry: country,
-    }),
+  const anchor = useComboboxAnchor();
+  const items = React.useMemo(
+    () => options.map((option) => option.fullCountry),
+    [options],
   );
-
-  const handleMultiChange = (newValue: MultiValue<CountrySelectOption>) => {
-    const countries = newValue ? newValue.map((opt) => opt.fullCountry) : [];
-    onChange(countries);
-  };
-
-  const multiSelectComponents = useMemo(
-    () => ({
-      Option: CustomOption as React.ComponentType<
-        OptionProps<CountrySelectOption, true, GroupBase<CountrySelectOption>>
-      >,
-      MultiValue: CustomMultiValue,
-      Input: CustomInput as React.ComponentType<
-        InputProps<CountrySelectOption, true, GroupBase<CountrySelectOption>>
-      >,
-    }),
-    [],
-  );
-
-  if (!mounted) {
-    return null;
-  }
 
   return (
     <div className="w-full">
       {showLabel && (
-        <div className="mb-1.5 block text-sm font-medium text-gray-700">
+        <Label htmlFor="country-select-multi" className="mb-1.5 block text-gray-700">
           Countries
-        </div>
+        </Label>
       )}
-      <Select<CountrySelectOption, true, GroupBase<CountrySelectOption>>
-        instanceId="country-select-multi"
-        inputId="country-select-multi"
-        aria-label="Countries"
-        options={options}
-        isLoading={isLoading}
-        loadingMessage={() => "Loading countries..."}
-        value={selectedOptions}
-        onChange={handleMultiChange}
-        isMulti
-        isClearable
-        isDisabled={error || isLoading || disabled}
-        placeholder={
-          placeholder ??
-          (error ? "Error loading countries" : "Select countries...")
-        }
-        noOptionsMessage={() => "No countries found"}
-        components={multiSelectComponents}
-        classNames={getSelectClassNames({
-          isFocused: false,
-          isDisabled: error || isLoading,
-          hasError: error,
-          isMulti: true,
-        })}
-      />
+      <Combobox
+        multiple
+        items={items}
+        value={value}
+        onValueChange={onChange}
+        itemToStringLabel={countryLabel}
+        isItemEqualToValue={countryEquals}
+        disabled={error || isLoading || disabled}
+      >
+        <ComboboxChips ref={anchor}>
+          <ComboboxValue>
+            {(countries: Country[]) =>
+              countries.map((country) => (
+                <ComboboxChip key={country.cca2}>
+                  <CountryChipLabel country={country} />
+                </ComboboxChip>
+              ))
+            }
+          </ComboboxValue>
+          <ComboboxChipsInput
+            id="country-select-multi"
+            {...(!showLabel && {
+              "aria-label": inputAriaLabel ?? "Countries",
+            })}
+            placeholder={
+              placeholder ??
+              (error ? "Error loading countries" : "Select countries...")
+            }
+            autoComplete="nope"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            data-lpignore="true"
+            data-1p-ignore="true"
+            data-form-type="other"
+          />
+        </ComboboxChips>
+        <ComboboxContent anchor={anchor} className="group/combobox-content">
+          {isLoading && (
+            <ComboboxStatus>Loading countries...</ComboboxStatus>
+          )}
+          <ComboboxEmpty>No countries found</ComboboxEmpty>
+          <ComboboxList>
+            {(country: Country) => (
+              <ComboboxItem key={country.cca2} value={country}>
+                <CountryOptionLabel country={country} />
+              </ComboboxItem>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
       {error && (
         <p className="mt-1 text-sm text-red-500">
           Failed to load countries. Please try again.
@@ -337,7 +267,7 @@ const CountryComboboxMulti: React.FC<CountryComboboxMultiProps> = ({
 export const CountryCombobox: React.FC<CountryComboboxProps> = (props) => {
   if (props.multiple) {
     return <CountryComboboxMulti {...props} />;
-  } else {
-    return <CountryComboboxSingle {...props} />;
   }
+
+  return <CountryComboboxSingle {...props} />;
 };

@@ -5,12 +5,13 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Loader2,
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useTransition } from "react";
 
 import { Button } from "~/app/_components/ui/button";
+import { Progress } from "~/app/_components/ui/progress";
+import { Spinner } from "~/app/_components/ui/spinner";
 
 type PaginationProps = {
   currentPage: number;
@@ -103,21 +104,17 @@ export function Pagination({
 
   return (
     <div className="relative">
-      {/* Loading indicator bar */}
       {isPending && (
-        <div className="absolute top-0 right-0 left-0 h-1 overflow-hidden bg-gray-100">
-          <div className="h-full w-1/3 animate-[slide_1.5s_ease-in-out_infinite] bg-orange-500" />
+        <div className="absolute top-0 right-0 left-0">
+          <Progress value={null} className="rounded-none" />
         </div>
       )}
 
       <div
         className={`flex flex-col items-center justify-between gap-4 border-t bg-white px-4 py-3 transition-opacity duration-200 sm:px-6 ${isPending ? "opacity-60" : "opacity-100"}`}
       >
-        {/* Results info with loading spinner */}
         <div className="flex items-center gap-2 text-sm text-gray-700">
-          {isPending && (
-            <Loader2 className="h-4 w-4 animate-spin text-orange-500" />
-          )}
+          {isPending && <Spinner className="text-orange-500" />}
           <span>
             Showing <span className="font-medium">{startItem}</span> to{" "}
             <span className="font-medium">{endItem}</span> of{" "}

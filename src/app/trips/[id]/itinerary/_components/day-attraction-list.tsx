@@ -3,6 +3,11 @@
 import { Clock, GripVertical, Route, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/app/_components/ui/tooltip";
 import type { ItineraryDayData, RouteData } from "~/types";
 
 type DayAttractionListProps = {
@@ -150,18 +155,21 @@ export function DayAttractionList({
               onMouseLeave={() => onHoverAttraction(null)}
               onClick={(e) => handleClick(e, attraction.id)}
             >
-              <button
-                type="button"
-                className={`attraction-drag-handle cursor-grab rounded p-1 transition-all hover:bg-gray-200 ${
-                  isDragging ? "cursor-grabbing" : ""
-                }`}
-                draggable
-                onDragStart={(e) => handleDragStart(e, index)}
-                onDragEnd={handleDragEnd}
-                title="Drag to reorder"
-              >
-                <GripVertical className="h-4 w-4 text-gray-400 transition-colors group-hover/item:text-gray-600" />
-              </button>
+              <Tooltip>
+                <TooltipTrigger
+                  type="button"
+                  aria-label="Drag to reorder"
+                  className={`attraction-drag-handle cursor-grab rounded p-1 transition-all hover:bg-gray-200 ${
+                    isDragging ? "cursor-grabbing" : ""
+                  }`}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragEnd={handleDragEnd}
+                >
+                  <GripVertical className="h-4 w-4 text-gray-400 transition-colors group-hover/item:text-gray-600" />
+                </TooltipTrigger>
+                <TooltipContent>Drag to reorder</TooltipContent>
+              </Tooltip>
 
               <span
                 className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-md ring-2 ring-white transition-transform group-hover/item:scale-110"
@@ -176,14 +184,17 @@ export function DayAttractionList({
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={(e) => handleRemove(e, attraction.id)}
-                className="shrink-0 rounded-lg p-1 text-gray-400 opacity-0 transition-all group-hover/item:opacity-100 hover:bg-red-50 hover:text-red-600 hover:shadow-sm active:scale-90"
-                title="Remove attraction"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
+              <Tooltip>
+                <TooltipTrigger
+                  type="button"
+                  aria-label="Remove attraction"
+                  onClick={(e) => handleRemove(e, attraction.id)}
+                  className="shrink-0 rounded-lg p-1 text-gray-400 opacity-0 transition-all group-hover/item:opacity-100 hover:bg-red-50 hover:text-red-600 hover:shadow-sm active:scale-90"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </TooltipTrigger>
+                <TooltipContent>Remove attraction</TooltipContent>
+              </Tooltip>
             </div>
 
             {legToNext && index < attractions.length - 1 && (
