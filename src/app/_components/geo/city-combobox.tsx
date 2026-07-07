@@ -1,8 +1,16 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef } from "react";
-import Select, { components, type GroupBase, type InputProps } from "react-select";
 
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxStatus,
+} from "~/app/_components/ui/combobox";
 import type { City } from "~/types";
 
 export interface CitySelectOption {
@@ -22,6 +30,9 @@ interface CityComboboxProps {
   error?: boolean;
   showLabel?: boolean;
 }
+
+const cityLabel = (city: City) => city.name;
+const cityEquals = (a: City, b: City) => a.id === b.id;
 
 export const CityCombobox: React.FC<CityComboboxProps> = ({
   options,
@@ -44,28 +55,61 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
     };
   }, []);
 
+  const items = useMemo(
+    () => options.map((option) => option.fullCity),
+    [options],
+  );
+
   const handleDebouncedSearch = (searchTerm: string) => {
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
+
     if (searchTerm !== (value?.name ?? "")) {
       debounceTimerRef.current = setTimeout(() => {
         onDebouncedSearchTermChange(searchTerm);
       }, 300);
-    } else {
-      onDebouncedSearchTermChange("");
+      return;
     }
+
+    onDebouncedSearchTermChange("");
   };
 
-  const selectedOption = value
-    ? { value: value.id, label: value.name, fullCity: value }
-    : null;
+  const disabled = isDisabled || !countryCode || error;
 
-  const customComponents = useMemo(
-    () => ({
-      Input: (props: InputProps<CitySelectOption, false, GroupBase<CitySelectOption>>) => (
-        <components.Input
-          {...props}
+  return (
+    <div className="h-12 w-full">
+      {showLabel && (
+        <div className="mb-1 block text-sm font-medium text-gray-700">City</div>
+      )}
+      <Combobox
+        items={items}
+        filteredItems={items}
+        filter={null}
+        value={value}
+        onValueChange={(city) => {
+          onChange(city);
+          onDebouncedSearchTermChange("");
+        }}
+        onInputValueChange={(searchTerm) => {
+          handleDebouncedSearch(searchTerm);
+        }}
+        itemToStringLabel={cityLabel}
+        isItemEqualToValue={cityEquals}
+        disabled={disabled}
+      >
+        <ComboboxInput
+          id="city-select"
+          aria-label="City"
+          showClear
+          className="h-12 text-base"
+          placeholder={
+            error
+              ? "Error loading cities"
+              : !countryCode
+                ? "Select a country first"
+                : "Select a city..."
+          }
           autoComplete="nope"
           autoCorrect="off"
           autoCapitalize="off"
@@ -74,69 +118,20 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
           data-1p-ignore="true"
           data-form-type="other"
         />
-      ),
-    }),
-    [],
-  );
-
-  return (
-    <div className="h-12 w-full">
-      {showLabel && (
-        <div className="mb-1 block text-sm font-medium text-gray-700">City</div>
-      )}
-      <Select<CitySelectOption>
-        instanceId="city-select"
-        inputId="city-select"
-        aria-label="City"
-        options={options}
-        isLoading={isLoading}
-        loadingMessage={() => "Loading cities..."}
-        value={selectedOption}
-        onInputChange={(newValue, { action }) => {
-          if (action === "input-change") {
-            handleDebouncedSearch(newValue);
-          } else if (action === "menu-close" || action === "input-blur") {
-            handleDebouncedSearch(value?.name ?? "");
-          }
-        }}
-        onChange={(option) => {
-          onChange(option?.fullCity ?? null);
-          onDebouncedSearchTermChange("");
-        }}
-        isClearable
-        isDisabled={isDisabled || !countryCode || error}
-        placeholder={
-          error
-            ? "Error loading cities"
-            : !countryCode
-              ? "Select a country first"
-              : "Select a city..."
-        }
-        noOptionsMessage={() =>
-          countryCode ? "No cities found" : "Select a country first"
-        }
-        components={customComponents}
-        filterOption={null}
-        classNames={{
-          control: (state) =>
-            `!w-full !rounded-lg !border ${
-              state.isFocused
-                ? "!border-orange-500 !ring-1 !ring-orange-500"
-                : error
-                  ? "!border-red-500"
-                  : "!border-gray-300"
-            } !bg-gray-50 !h-12 !text-base ${state.isDisabled ? "!bg-gray-200" : ""}`,
-          placeholder: () => "!text-gray-400",
-          singleValue: () => "!truncate",
-          input: () => "",
-          indicatorSeparator: () => "!bg-gray-300",
-          dropdownIndicator: () => "!text-gray-400 hover:!text-gray-500",
-          clearIndicator: () => "!text-gray-400 hover:!text-red-500",
-          menu: () => "!rounded-lg !shadow-md !mt-2 !z-[1000]",
-          option: (state) =>
-            `!text-gray-800 ${state.isSelected ? "!bg-orange-200 !text-orange-700" : state.isFocused ? "!bg-orange-50" : "!bg-white"}`,
-        }}
-      />
+        <ComboboxContent className="group/combobox-content">
+          {isLoading && <ComboboxStatus>Loading cities...</ComboboxStatus>}
+          <ComboboxEmpty>
+            {countryCode ? "No cities found" : "Select a country first"}
+          </ComboboxEmpty>
+          <ComboboxList>
+            {(city: City) => (
+              <ComboboxItem key={city.id} value={city}>
+                {city.name}
+              </ComboboxItem>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
       {error && countryCode && (
         <p className="mt-1 text-sm text-red-500">
           Failed to load cities. Please try again.

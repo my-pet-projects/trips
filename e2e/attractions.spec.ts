@@ -125,9 +125,7 @@ test.describe("Attractions URL State Persistence", () => {
     // Wait for country select to be ready
     const container = await waitForCountrySelectReady(page);
 
-    // react-select clear indicator - specifically target the X button
-    // The clear indicator has "clearIndicator" in its class name
-    const clearButton = container.locator('[class*="clearIndicator"]').first();
+    const clearButton = container.locator('[data-slot="combobox-clear"]').first();
 
     // Only run if clear button is visible (country is selected and clearable)
     const isVisible = await clearButton
