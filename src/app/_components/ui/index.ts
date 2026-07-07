@@ -50,6 +50,19 @@ export {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "./dropdown-menu";
+export {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "./collapsible";
+export {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  FormError,
+  FormField,
+} from "./field";
 export { Input } from "./input";
 export { Label } from "./label";
 export { Toaster } from "./sonner";
@@ -64,3 +77,4 @@ export {
   TableRow,
 } from "./table";
 export { Textarea } from "./textarea";
+export { Toggle, ToggleGroup } from "./toggle-group";

@@ -2,6 +2,9 @@
 
 import type { ReactNode } from "react";
 
+import { Toggle, ToggleGroup } from "~/app/_components/ui/toggle-group";
+import { cn } from "~/lib/utils";
+
 export interface MapFilterPill {
   key: string;
   label?: string;
@@ -29,30 +32,51 @@ function FilterPills({
   disabled?: boolean;
 }) {
   return (
-    <>
+    <ToggleGroup
+      multiple
+      disabled={disabled}
+      value={Array.from(visible)}
+      onValueChange={(values) => {
+        const nextVisible = new Set(values);
+        for (const { key } of filters) {
+          if (visible.has(key) !== nextVisible.has(key)) {
+            onToggle(key);
+          }
+        }
+      }}
+      className="gap-1.5"
+    >
       {filters.map(({ key, label, color, count }) => (
-        <button
-          type="button"
+        <Toggle
           key={key}
+          value={key}
           data-testid={`map-filter-${key}`}
-          disabled={disabled}
-          onClick={() => onToggle(key)}
-          className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1 text-xs font-medium transition-opacity ${
-            compact ? "gap-1 px-2.5 py-1.5 font-semibold" : ""
-          } ${disabled ? "pointer-events-none opacity-25" : visible.has(key) ? "opacity-100" : compact ? "opacity-30" : "opacity-40"}`}
+          className={cn(
+            "flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border-0 bg-transparent px-2.5 py-1 text-xs font-medium shadow-none transition-opacity hover:bg-transparent",
+            compact ? "gap-1 px-2.5 py-1.5 font-semibold" : "",
+            disabled
+              ? "pointer-events-none opacity-25"
+              : visible.has(key)
+                ? "opacity-100"
+                : compact
+                  ? "opacity-30"
+                  : "opacity-40",
+            "data-pressed:border-0 data-pressed:bg-transparent data-pressed:text-inherit",
+          )}
         >
           <span className={`h-2.5 w-2.5 rounded-full ${color}`} />
           {label}
           <span
-            className={`rounded-full bg-gray-100 px-1.5 py-0.5 text-gray-600 ${
-              compact ? "bg-transparent px-0 py-0" : ""
-            }`}
+            className={cn(
+              "rounded-full bg-gray-100 px-1.5 py-0.5 text-gray-600",
+              compact && "bg-transparent px-0 py-0",
+            )}
           >
             {count}
           </span>
-        </button>
+        </Toggle>
       ))}
-    </>
+    </ToggleGroup>
   );
 }
 

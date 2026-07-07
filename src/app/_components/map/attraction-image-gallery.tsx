@@ -1,6 +1,11 @@
 import { BookOpen, ChevronDown, ExternalLink } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "~/app/_components/ui/collapsible";
 import { api } from "~/trpc/react";
 import type { AttractionDetail } from "~/types";
 
@@ -13,15 +18,13 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
 }) => {
   const loadedImages = useRef(new Set<string>());
   const failedImages = useRef(new Set<string>());
-  const [, forceUpdate] = useState(0);
-  const [articlesOpen, setArticlesOpen] = useState(false);
+  const [, forceUpdate] = React.useState(0);
 
   // Reset image load/fail caches and disclosure state when the attraction changes
   useEffect(() => {
     loadedImages.current = new Set();
     failedImages.current = new Set();
     forceUpdate(0);
-    setArticlesOpen(false);
   }, [attraction.id]);
   const { data, isLoading, isError, refetch } =
     api.attractionScraper.fetchAttractionDetails.useQuery(
@@ -125,20 +128,18 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
 
       {/* Wikipedia Articles */}
       {articles.length > 0 && (
-        <div className="rounded-lg border border-gray-200">
-          <button
-            type="button"
-            onClick={() => setArticlesOpen((o) => !o)}
-            className={`flex w-full items-center justify-between px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 ${articlesOpen ? "rounded-t-lg border-b border-gray-200" : "rounded-lg"}`}
-          >
+        <Collapsible className="rounded-lg border border-gray-200">
+          <CollapsibleTrigger className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
             <div className="flex items-center gap-2">
               <BookOpen className="h-4 w-4 text-gray-400" />
               <span>Wikipedia</span>
-              <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-500">{articles.length}</span>
+              <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-500">
+                {articles.length}
+              </span>
             </div>
-            <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${articlesOpen ? "rotate-180" : ""}`} />
-          </button>
-          {articlesOpen && (
+            <ChevronDown className="h-4 w-4 text-gray-400 transition-transform data-open:rotate-180" />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
             <ul className="divide-y divide-gray-100">
               {articles.map((article) => (
                 <li key={article.url} className="p-3">
@@ -152,13 +153,15 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
                     <ExternalLink className="h-3 w-3" />
                   </a>
                   {article.snippet && (
-                    <p className="mt-1 text-xs leading-relaxed text-gray-500">{article.snippet}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-gray-500">
+                      {article.snippet}
+                    </p>
                   )}
                 </li>
               ))}
             </ul>
-          )}
-        </div>
+          </CollapsibleContent>
+        </Collapsible>
       )}
     </div>
   );

@@ -9,8 +9,8 @@ import { toast } from "sonner";
 
 import { CountryCombobox } from "~/app/_components/geo/country-combobox";
 import { Button } from "~/app/_components/ui/button";
+import { FormField } from "~/app/_components/ui/field";
 import { Input } from "~/app/_components/ui/input";
-import { Label } from "~/app/_components/ui/label";
 import {
   applyTrpcZodErrorsToForm,
   getTrpcFormErrorDescription,
@@ -206,72 +206,74 @@ export function TripForm({ mode, trip }: TripFormProps) {
           </div>
 
           <div className="space-y-5">
-            <div>
-              <Label htmlFor="name">
-                Trip Name <span className="text-red-500">*</span>
-              </Label>
+            <FormField
+              label={
+                <>
+                  Trip Name <span className="text-red-500">*</span>
+                </>
+              }
+              htmlFor="name"
+              error={errors.name?.message}
+            >
               <Input
                 id="name"
                 {...register("name")}
-                className="mt-1.5 h-12"
+                className="h-12"
                 placeholder="e.g., European Backpacking Adventure"
                 disabled={isSubmitting}
               />
-              {errors.name && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.name.message}
-                </p>
-              )}
-            </div>
+            </FormField>
 
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <div>
-                <Label htmlFor="startDate">
-                  Start Date <span className="text-red-500">*</span>
-                </Label>
+              <FormField
+                label={
+                  <>
+                    Start Date <span className="text-red-500">*</span>
+                  </>
+                }
+                htmlFor="startDate"
+                error={errors.startDate?.message}
+              >
                 <Input
                   id="startDate"
                   type="date"
                   {...register("startDate")}
-                  className="mt-1.5 h-12"
+                  className="h-12"
                   disabled={isSubmitting}
                 />
-                {errors.startDate && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.startDate.message}
-                  </p>
-                )}
-              </div>
+              </FormField>
 
-              <div>
-                <Label htmlFor="endDate">
-                  End Date <span className="text-red-500">*</span>
-                </Label>
+              <FormField
+                label={
+                  <>
+                    End Date <span className="text-red-500">*</span>
+                  </>
+                }
+                htmlFor="endDate"
+                error={errors.endDate?.message}
+              >
                 <Input
                   id="endDate"
                   type="date"
                   {...register("endDate")}
-                  className="mt-1.5 h-12"
+                  className="h-12"
                   disabled={isSubmitting}
                 />
-                {errors.endDate && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.endDate.message}
-                  </p>
-                )}
-              </div>
+              </FormField>
             </div>
 
-            <div>
-              <Label className="mb-1.5 block">
-                Destinations <span className="text-red-500">*</span>
-              </Label>
-              {countriesError && (
-                <p className="mb-2 text-sm text-red-600">
-                  Failed to load countries. Please refresh the page and try
-                  again.
-                </p>
-              )}
+            <FormField
+              label={
+                <>
+                  Destinations <span className="text-red-500">*</span>
+                </>
+              }
+              error={
+                countriesError
+                  ? "Failed to load countries. Please refresh the page and try again."
+                  : errors.destinations?.message
+              }
+            >
               <CountryCombobox
                 options={countryOptions}
                 isLoading={isLoadingCountries || isSubmitting}
@@ -288,12 +290,7 @@ export function TripForm({ mode, trip }: TripFormProps) {
                 }
                 disabled={isSubmitting || !!countriesError}
               />
-              {errors.destinations && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.destinations.message}
-                </p>
-              )}
-            </div>
+            </FormField>
           </div>
         </div>
 

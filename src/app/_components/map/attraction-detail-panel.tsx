@@ -5,9 +5,6 @@ import {
   Images,
   MapPin,
   Pencil,
-  SkipForward,
-  Star,
-  ThumbsUp,
   Trash2,
   X,
 } from "lucide-react";
@@ -15,6 +12,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import type { AttractionDetail } from "~/types";
+import { HighlightToggleGroup } from "~/app/_components/highlight-toggle-group";
 import { AttractionImageGallery } from "./attraction-image-gallery";
 
 type Highlight = "must_see" | "recommended" | "skip" | null;
@@ -83,12 +81,6 @@ export function AttractionDetailPanel({
     resizeObserver.observe(panelRef.current);
     return () => resizeObserver.disconnect();
   }, [onPanelHeightChange, isOpen]);
-
-  const handleHighlight = (value: Highlight) => {
-    const next = highlight === value ? null : value;
-    setHighlight(next);
-    onHighlightChange?.(attraction.id, next);
-  };
 
   const mapsUrl =
     attraction.latitude != null && attraction.longitude != null
@@ -176,44 +168,15 @@ export function AttractionDetailPanel({
 
         {/* Highlight buttons */}
         {onHighlightChange && (
-          <div className="mt-3 flex gap-2">
-            <button
-              type="button"
-              onClick={() => handleHighlight("must_see")}
-              className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-                highlight === "must_see"
-                  ? "border-amber-400 bg-amber-50 text-amber-700"
-                  : "border-gray-200 text-gray-500 hover:border-amber-300 hover:bg-amber-50/50"
-              }`}
-            >
-              <Star className="h-3.5 w-3.5" />
-              Must see
-            </button>
-            <button
-              type="button"
-              onClick={() => handleHighlight("recommended")}
-              className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-                highlight === "recommended"
-                  ? "border-teal-400 bg-teal-50 text-teal-700"
-                  : "border-gray-200 text-gray-500 hover:border-teal-300 hover:bg-teal-50/50"
-              }`}
-            >
-              <ThumbsUp className="h-3.5 w-3.5" />
-              Recommended
-            </button>
-            <button
-              type="button"
-              onClick={() => handleHighlight("skip")}
-              className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-                highlight === "skip"
-                  ? "border-red-300 bg-red-50 text-red-600"
-                  : "border-gray-200 text-gray-500 hover:border-red-200 hover:bg-red-50/50"
-              }`}
-            >
-              <SkipForward className="h-3.5 w-3.5" />
-              Skip
-            </button>
-          </div>
+          <HighlightToggleGroup
+            value={highlight}
+            onChange={(next) => {
+              setHighlight(next);
+              onHighlightChange(attraction.id, next);
+            }}
+            compact
+            className="mt-3"
+          />
         )}
       </div>
 
