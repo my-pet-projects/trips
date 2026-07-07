@@ -141,7 +141,7 @@ export const AttractionImageGallery: React.FC<AttractionImageGalleryProps> = ({
 
       {/* Wikipedia Articles */}
       {articles.length > 0 && (
-        <Collapsible className="rounded-lg border border-gray-200">
+        <Collapsible key={attraction.id} className="rounded-lg border border-gray-200">
           <CollapsibleTrigger className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
             <div className="flex items-center gap-2">
               <BookOpen className="h-4 w-4 text-gray-400" />

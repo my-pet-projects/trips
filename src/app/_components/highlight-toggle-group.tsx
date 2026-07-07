@@ -54,16 +54,8 @@ export function HighlightToggleGroup({
 }: HighlightToggleGroupProps) {
   return (
     <ToggleGroup
-      multiple
       value={value ? [value] : []}
-      onValueChange={(values) => {
-        if (values.length === 0) {
-          onChange(null);
-          return;
-        }
-
-        onChange(values[values.length - 1] ?? null);
-      }}
+      onValueChange={(values) => onChange(values[0] ?? null)}
       className={className}
     >
       {HIGHLIGHT_OPTIONS.map(
@@ -76,10 +68,9 @@ export function HighlightToggleGroup({
               value === optionValue
                 ? activeClass
                 : `border-gray-200 bg-white text-gray-600 ${idleHoverClass}`,
-              "data-pressed:border-inherit data-pressed:bg-inherit data-pressed:text-inherit",
             )}
           >
-            <Icon className={compact ? "h-4 w-4" : "h-4 w-4"} />
+            <Icon className={compact ? "h-3 w-3" : "h-4 w-4"} />
             {label}
           </Toggle>
         ),

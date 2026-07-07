@@ -11,6 +11,7 @@ import {
   ComboboxList,
   ComboboxStatus,
 } from "~/app/_components/ui/combobox";
+import { Label } from "~/app/_components/ui/label";
 import type { City } from "~/types";
 
 export interface CitySelectOption {
@@ -80,7 +81,9 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
   return (
     <div className="h-12 w-full">
       {showLabel && (
-        <div className="mb-1 block text-sm font-medium text-gray-700">City</div>
+        <Label htmlFor="city-select" className="mb-1 block text-gray-700">
+          City
+        </Label>
       )}
       <Combobox
         items={items}
@@ -88,10 +91,17 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
         filter={null}
         value={value}
         onValueChange={(city) => {
+          if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+            debounceTimerRef.current = null;
+          }
           onChange(city);
           onDebouncedSearchTermChange("");
         }}
-        onInputValueChange={(searchTerm) => {
+        onInputValueChange={(searchTerm, eventDetails) => {
+          if (eventDetails.reason === "item-press") {
+            return;
+          }
           handleDebouncedSearch(searchTerm);
         }}
         itemToStringLabel={cityLabel}
@@ -100,7 +110,6 @@ export const CityCombobox: React.FC<CityComboboxProps> = ({
       >
         <ComboboxInput
           id="city-select"
-          aria-label="City"
           showClear
           className="h-12 text-base"
           placeholder={

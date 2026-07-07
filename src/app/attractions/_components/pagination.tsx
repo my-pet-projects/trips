@@ -106,7 +106,7 @@ export function Pagination({
     <div className="relative">
       {isPending && (
         <div className="absolute top-0 right-0 left-0">
-          <Progress value={35} className="rounded-none" />
+          <Progress value={null} className="rounded-none" />
         </div>
       )}
 

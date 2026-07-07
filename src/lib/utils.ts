@@ -19,7 +19,12 @@ export function getFlagEmoji(countryCode: string): string {
 }
 
 export function validateReturnTo(returnTo: string | null | undefined): string | null {
-  if (!returnTo || !returnTo.startsWith("/") || returnTo.startsWith("//")) {
+  if (
+    !returnTo ||
+    !returnTo.startsWith("/") ||
+    returnTo.startsWith("//") ||
+    returnTo.startsWith("/\\")
+  ) {
     return null;
   }
 

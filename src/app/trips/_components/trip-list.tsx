@@ -194,51 +194,6 @@ function TripCard({
                   {dest.country.name}
                 </Badge>
               ))}
-              {hiddenDestinations.length > 0 && (
-                <span
-                  className="relative z-20"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                >
-                  <Dialog>
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <DialogTrigger
-                            className={badgeVariants({
-                              variant: "muted",
-                              className: "cursor-pointer px-2.5 py-1 text-gray-500",
-                            })}
-                          />
-                        }
-                      >
-                        +{hiddenDestinations.length} more
-                      </TooltipTrigger>
-                      <TooltipContent>View all destinations</TooltipContent>
-                    </Tooltip>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>All destinations</DialogTitle>
-                      <DialogDescription>
-                        Countries included in {name}
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex flex-wrap gap-2">
-                      {destinations.map((dest) => (
-                        <Badge key={dest.id} variant="muted" className="gap-1.5 px-2.5 py-1">
-                          <span className="text-sm">
-                            {getFlagEmoji(dest.country.cca2)}
-                          </span>
-                          {dest.country.name}
-                        </Badge>
-                      ))}
-                    </div>
-                  </DialogContent>
-                  </Dialog>
-                </span>
-              )}
             </div>
           ) : (
             <div className="flex items-center gap-2 text-sm text-gray-400">
@@ -248,6 +203,46 @@ function TripCard({
           )}
         </CardContent>
       </Link>
+
+      {hiddenDestinations.length > 0 && (
+        <div className="px-6 pb-4">
+          <Dialog>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <DialogTrigger
+                    className={badgeVariants({
+                      variant: "muted",
+                      className: "cursor-pointer px-2.5 py-1 text-gray-500",
+                    })}
+                  />
+                }
+              >
+                +{hiddenDestinations.length} more
+              </TooltipTrigger>
+              <TooltipContent>View all destinations</TooltipContent>
+            </Tooltip>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>All destinations</DialogTitle>
+                <DialogDescription>
+                  Countries included in {name}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-wrap gap-2">
+                {destinations.map((dest) => (
+                  <Badge key={dest.id} variant="muted" className="gap-1.5 px-2.5 py-1">
+                    <span className="text-sm">
+                      {getFlagEmoji(dest.country.cca2)}
+                    </span>
+                    {dest.country.name}
+                  </Badge>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
 
       {/* Actions Menu */}
       <div className="absolute top-3 right-3 z-10">

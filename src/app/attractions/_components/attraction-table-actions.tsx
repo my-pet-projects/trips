@@ -1,6 +1,7 @@
 "use client";
 
 import { Edit, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -76,16 +77,10 @@ export function AttractionTableActions({
               />
             }
           >
-            <a
-              href={getEditUrl()}
-              onClick={(e) => {
-                e.preventDefault();
-                router.push(getEditUrl());
-              }}
-            >
+            <Link href={getEditUrl()} data-testid="edit-attraction-link">
               <Edit className="h-4 w-4" />
               <span className="sr-only">Edit attraction</span>
-            </a>
+            </Link>
           </TooltipTrigger>
           <TooltipContent>Edit attraction</TooltipContent>
         </Tooltip>

@@ -151,9 +151,8 @@ export function Navbar({
                 variant="outline"
                 size="icon"
                 className="size-10"
-                data-testid="navbar-back-button"
               >
-                <Link href={backHref}>
+                <Link href={backHref} data-testid="navbar-back-button">
                   <ArrowLeft className="h-5 w-5" />
                   <span className="sr-only">Back</span>
                 </Link>

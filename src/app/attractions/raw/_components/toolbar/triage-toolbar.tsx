@@ -60,11 +60,13 @@ export function TriageToolbar({ countryCode }: { countryCode?: string }) {
       desktopLeading={desktopLeading}
       groups={[
         {
+          id: "status",
           filters: statusPills,
           visible: visibleStatuses,
           onToggle: (key) => toggleStatus(key as (typeof STATUS_FILTER_PILLS)[number]["key"]),
         },
         {
+          id: "highlight",
           filters: highlightPills,
           visible: visibleHighlights,
           onToggle: (key) =>

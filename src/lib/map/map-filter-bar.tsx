@@ -83,6 +83,7 @@ function FilterPills({
 }
 
 export type FilterGroup = {
+  id: string;
   filters: MapFilterPill[];
   visible: Set<string>;
   onToggle: (key: string) => void;
@@ -99,7 +100,7 @@ type MapFilterBarProps = {
 
 function renderGroups(groups: FilterGroup[], compact: boolean) {
   return groups.map((group, index) => (
-    <span key={index} className="contents">
+    <span key={group.id} className="contents">
       {index > 0 && <Divider compact={compact} />}
       <FilterPills
         filters={group.filters}

@@ -16,6 +16,7 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from "~/app/_components/ui/combobox";
+import { Label } from "~/app/_components/ui/label";
 import { getFlagEmoji, cn } from "~/lib/utils";
 import type { Country } from "~/types";
 
@@ -99,9 +100,9 @@ const CountryComboboxSingle: React.FC<CountryComboboxSingleProps> = ({
   return (
     <div className="w-full" data-testid="country-select-container">
       {showLabel && (
-        <div className="mb-1.5 block text-sm font-medium text-gray-700">
+        <Label htmlFor="country-select-single" className="mb-1.5 block text-gray-700">
           Country
-        </div>
+        </Label>
       )}
       <Combobox
         items={items}
@@ -113,7 +114,6 @@ const CountryComboboxSingle: React.FC<CountryComboboxSingleProps> = ({
       >
         <ComboboxInput
           id="country-select-single"
-          aria-label="Country"
           showClear
           startAdornment={
             value ? (
@@ -194,9 +194,9 @@ const CountryComboboxMulti: React.FC<CountryComboboxMultiProps> = ({
   return (
     <div className="w-full">
       {showLabel && (
-        <div className="mb-1.5 block text-sm font-medium text-gray-700">
+        <Label htmlFor="country-select-multi" className="mb-1.5 block text-gray-700">
           Countries
-        </div>
+        </Label>
       )}
       <Combobox
         multiple

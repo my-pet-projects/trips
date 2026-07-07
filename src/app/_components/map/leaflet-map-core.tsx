@@ -43,6 +43,9 @@ export function LeafletMapCanvas({
                   type="button"
                   data-testid="map-geo-track"
                   size="icon"
+                  aria-label={
+                    isTrackingLocation ? "Stop tracking location" : "Track my location"
+                  }
                   onClick={toggleLocationTracking}
                   className={
                     isTrackingLocation
@@ -68,6 +71,7 @@ export function LeafletMapCanvas({
                     type="button"
                     size="icon"
                     variant="outline"
+                    aria-label="Center on my location"
                     className="bg-white text-gray-700 hover:bg-gray-50"
                     onClick={centerOnUserLocation}
                   />

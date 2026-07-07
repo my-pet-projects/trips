@@ -107,13 +107,20 @@ export function ItineraryDay({
           <div className="flex overflow-hidden rounded-lg border border-gray-300 bg-linear-to-b from-white to-gray-50 shadow-sm">
             <Tooltip>
               <TooltipTrigger
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  moveDay(day.id, "up");
-                }}
-                disabled={day.dayNumber === 1 || isRemoving}
-                className="group/btn flex items-center justify-center px-2 py-1.5 text-gray-600 transition-all hover:bg-blue-50 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="px-2 py-1.5 text-gray-600 hover:bg-blue-50 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      moveDay(day.id, "up");
+                    }}
+                    disabled={day.dayNumber === 1 || isRemoving}
+                    aria-label="Move day up"
+                  />
+                }
               >
                 <ChevronUp className="h-4 w-4 transition-transform" />
               </TooltipTrigger>
@@ -122,13 +129,20 @@ export function ItineraryDay({
             <Separator orientation="vertical" className="h-auto" />
             <Tooltip>
               <TooltipTrigger
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  moveDay(day.id, "down");
-                }}
-                disabled={isRemoving}
-                className="group/btn flex items-center justify-center px-2 py-1.5 text-gray-600 transition-all hover:bg-blue-50 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="px-2 py-1.5 text-gray-600 hover:bg-blue-50 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      moveDay(day.id, "down");
+                    }}
+                    disabled={isRemoving}
+                    aria-label="Move day down"
+                  />
+                }
               >
                 <ChevronDown className="h-4 w-4 transition-transform" />
               </TooltipTrigger>

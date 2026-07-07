@@ -14,7 +14,7 @@ import {
 import { Spinner } from "~/app/_components/ui/spinner";
 import { api } from "~/trpc/react";
 import { normalizePoiName, type NearbyPoi } from "~/lib/geo/nearby-pois";
-import { bindMarkerTooltip, MARKER_TOOLTIP_OPTIONS } from "~/lib/map/marker-tooltip";
+import { bindMarkerTooltip } from "~/lib/map/marker-tooltip";
 import type { City } from "~/types";
 
 interface AttractionMapProps {
@@ -239,7 +239,7 @@ export function AttractionMap({
       const marker = L.marker([currentCity.latitude, currentCity.longitude], {
         icon: CURRENT_CITY_MARKER_ICON,
       }).addTo(map);
-      marker.bindTooltip(`Current City: ${currentCity.name}`, MARKER_TOOLTIP_OPTIONS);
+      bindMarkerTooltip(marker, `Current City: ${currentCity.name}`);
       cityMarkersRef.current.push(marker);
     }
 
@@ -247,7 +247,7 @@ export function AttractionMap({
       const marker = L.marker([city.latitude, city.longitude], {
         icon: NEAREST_CITY_MARKER_ICON,
       }).addTo(map);
-      marker.bindTooltip(city.name, MARKER_TOOLTIP_OPTIONS);
+      bindMarkerTooltip(marker, city.name);
       marker.bindPopup(city.name);
       cityMarkersRef.current.push(marker);
     }

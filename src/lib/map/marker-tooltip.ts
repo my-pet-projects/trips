@@ -14,5 +14,8 @@ export function bindMarkerTooltip(marker: L.Marker, label: string) {
   const text = label.trim();
   marker.unbindTooltip();
   if (!text) return;
-  marker.bindTooltip(text, MARKER_TOOLTIP_OPTIONS);
+
+  const element = document.createElement("span");
+  element.textContent = text;
+  marker.bindTooltip(element, MARKER_TOOLTIP_OPTIONS);
 }
