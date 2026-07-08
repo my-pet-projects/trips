@@ -24,6 +24,7 @@ import {
   applyTrpcZodErrorsToForm,
   getTrpcFormErrorDescription,
 } from "~/lib/trpc-error-message";
+import { formatDateForInput } from "~/lib/format-date-for-input";
 import { tripFormSchema, type TripFormData } from "~/server/api/schemas/trip";
 import { api } from "~/trpc/react";
 import type { Country, TripById } from "~/types";
@@ -39,13 +40,6 @@ type TripFormProps =
       mode: "edit";
       trip: TripById;
     };
-
-const formatDateForInput = (date: Date | string | null | undefined): string => {
-  if (!date) return "";
-  const d = new Date(date);
-  if (isNaN(d.getTime())) return "";
-  return d.toISOString().split("T")[0] ?? "";
-};
 
 export function TripForm({ mode, trip }: TripFormProps) {
   const router = useRouter();

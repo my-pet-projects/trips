@@ -67,9 +67,9 @@ test.describe("Itinerary viewer map", () => {
     await expect(page.getByTestId("map-canvas")).toBeVisible();
     await expect(page.getByTestId("map-geo-track")).toBeVisible();
 
-    const nextDay = page.getByTestId("itinerary-next-day");
-    if (await nextDay.isEnabled()) {
-      await nextDay.click();
+    const nextPlan = page.getByTestId("itinerary-next-plan");
+    if (await nextPlan.isEnabled()) {
+      await nextPlan.click();
       await expect(page.locator(LEAFLET_CONTAINER)).toBeVisible();
     }
   });

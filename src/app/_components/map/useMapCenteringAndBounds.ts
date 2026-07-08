@@ -8,8 +8,8 @@ export type MapCenteringAndBoundsOptions = {
   hasInitializedBounds: React.RefObject<boolean>;
   attractions: AttractionSummary[];
   attractionsMap: Map<number, AttractionSummary>;
-  selectedDayAttractions?: BasicAttraction[];
-  selectedDayId?: number | null;
+  selectedBlockAttractions?: BasicAttraction[];
+  selectedBlockId?: number | null;
   selectedAttractionId?: number | null;
   panelHeight?: number;
   userLocation?: [number, number] | null;
@@ -20,8 +20,8 @@ export const useMapCenteringAndBounds = ({
   hasInitializedBounds,
   attractions,
   attractionsMap,
-  selectedDayAttractions = [],
-  selectedDayId = null,
+  selectedBlockAttractions = [],
+  selectedBlockId = null,
   selectedAttractionId = null,
   panelHeight = 0,
   userLocation = null,
@@ -85,10 +85,10 @@ export const useMapCenteringAndBounds = ({
 
   // Center map on selected day attractions
   useEffect(() => {
-    if (!mapRef.current || !selectedDayId || selectedAttractionId) return;
+    if (!mapRef.current || !selectedBlockId || selectedAttractionId) return;
 
     const map = mapRef.current;
-    const validAttractions = selectedDayAttractions.filter(
+    const validAttractions = selectedBlockAttractions.filter(
       (a) => a.latitude && a.longitude,
     );
 
@@ -122,8 +122,8 @@ export const useMapCenteringAndBounds = ({
 
     return () => clearTimeout(timeoutId);
   }, [
-    selectedDayId,
-    selectedDayAttractions,
+    selectedBlockId,
+    selectedBlockAttractions,
     selectedAttractionId,
     userLocation,
     mapRef,
@@ -134,7 +134,7 @@ export const useMapCenteringAndBounds = ({
     if (
       !mapRef.current ||
       hasInitializedBounds.current ||
-      selectedDayId ||
+      selectedBlockId ||
       selectedAttractionId
     )
       return;
@@ -160,7 +160,7 @@ export const useMapCenteringAndBounds = ({
   }, [
     mapRef,
     attractions,
-    selectedDayId,
+    selectedBlockId,
     selectedAttractionId,
     hasInitializedBounds,
   ]);

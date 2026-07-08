@@ -22,9 +22,9 @@ import { useSyncedMarkers } from "~/lib/map/use-synced-markers";
 import type { AttractionSummary } from "~/types";
 
 import {
-  EMPTY_ATTRACTION_TO_DAY,
-  EMPTY_DAY_COLORS,
-  EMPTY_DAY_ORDERS,
+  EMPTY_ATTRACTION_TO_BLOCK,
+  EMPTY_BLOCK_COLORS,
+  EMPTY_BLOCK_ORDERS,
 } from "./map-constants";
 import { useCircleMarkerVisuals } from "./useCircleMarkerVisuals";
 
@@ -60,12 +60,12 @@ export type UseLeafletMarkersOptions = {
   onMarkerClick: (attraction: AttractionSummary) => void;
   enableClustering?: boolean;
   markerMeta?: Map<number, MarkerMeta>;
-  attractionToDayMap?: Map<number, number>;
-  dayColors?: Map<number, string>;
+  attractionToBlockMap?: Map<number, number>;
+  blockColors?: Map<number, string>;
   hoveredAttractionId?: number | null;
   selectedAttractionId?: number | null;
-  selectedDayId?: number | null;
-  selectedDayAttractionOrders?: Map<number, number>;
+  selectedBlockId?: number | null;
+  selectedBlockAttractionOrders?: Map<number, number>;
 };
 
 export const useLeafletMarkers = ({
@@ -76,12 +76,12 @@ export const useLeafletMarkers = ({
   onMarkerClick,
   enableClustering = false,
   markerMeta,
-  attractionToDayMap = EMPTY_ATTRACTION_TO_DAY,
-  dayColors = EMPTY_DAY_COLORS,
+  attractionToBlockMap = EMPTY_ATTRACTION_TO_BLOCK,
+  blockColors = EMPTY_BLOCK_COLORS,
   hoveredAttractionId = null,
   selectedAttractionId = null,
-  selectedDayId = null,
-  selectedDayAttractionOrders = EMPTY_DAY_ORDERS,
+  selectedBlockId = null,
+  selectedBlockAttractionOrders = EMPTY_BLOCK_ORDERS,
 }: UseLeafletMarkersOptions) => {
   const markersRef = useRef<Map<number, L.Marker>>(new Map());
   const dataRef = useRef<Map<number, AttractionSummary>>(new Map());
@@ -122,21 +122,21 @@ export const useLeafletMarkers = ({
       const color = getCircleMarkerColor(
         attraction.id,
         markerMetaRef.current,
-        attractionToDayMap,
-        dayColors,
+        attractionToBlockMap,
+        blockColors,
       );
-      const attractionDayId = attractionToDayMap.get(attraction.id);
-      const isInAnyDay = attractionDayId !== undefined;
-      const isInSelectedDay = attractionDayId === selectedDayId;
-      const orderNumber = selectedDayAttractionOrders.get(attraction.id);
+      const attractionBlockId = attractionToBlockMap.get(attraction.id);
+      const isInAnyBlock = attractionBlockId !== undefined;
+      const isInSelectedBlock = attractionBlockId === selectedBlockId;
+      const orderNumber = selectedBlockAttractionOrders.get(attraction.id);
 
       const marker = L.marker([attraction.latitude!, attraction.longitude!], {
         icon: circleMarkerDivIcon({
           color,
           size: BASE_CIRCLE_MARKER_SIZE,
-          isInDay: isInAnyDay,
-          orderNumber: isInSelectedDay ? orderNumber : undefined,
-          isVerified: meta?.isVerified && !isInAnyDay,
+          isInBlock: isInAnyBlock,
+          orderNumber: isInSelectedBlock ? orderNumber : undefined,
+          isVerified: meta?.isVerified && !isInAnyBlock,
         }),
         zIndexOffset: 0,
         pane: "markerPane",
@@ -151,7 +151,7 @@ export const useLeafletMarkers = ({
 
       return marker;
     },
-    [attractionToDayMap, dayColors, selectedDayId, selectedDayAttractionOrders],
+    [attractionToBlockMap, blockColors, selectedBlockId, selectedBlockAttractionOrders],
   );
 
   const bindClick = useCallback((marker: L.Marker, id: number) => {
@@ -179,10 +179,10 @@ export const useLeafletMarkers = ({
     mapRef,
     markersRef,
     attractionsMap,
-    attractionToDayMap,
-    dayColors,
-    selectedDayId,
-    selectedDayAttractionOrders,
+    attractionToBlockMap,
+    blockColors,
+    selectedBlockId,
+    selectedBlockAttractionOrders,
     markerMeta,
     hoveredAttractionId,
     selectedAttractionId,

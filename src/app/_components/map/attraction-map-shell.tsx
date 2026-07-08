@@ -7,9 +7,9 @@ import type { AttractionDetail, AttractionSummary } from "~/types";
 import { AttractionDetailPanel } from "./attraction-detail-panel";
 
 export type AttractionMapStatus = {
-  dayId: number | undefined;
-  isInAnyDay: boolean;
-  isInSelectedDay: boolean;
+  blockId: number | undefined;
+  isInAnyBlock: boolean;
+  isInSelectedBlock: boolean;
 };
 
 export type AttractionMapShellProps = {
@@ -22,8 +22,8 @@ export type AttractionMapShellProps = {
     highlight: "must_see" | "recommended" | "skip" | null,
   ) => void;
   onDeleteAttraction?: (attractionId: number) => void;
-  onAddToDay?: (attraction: AttractionDetail) => void;
-  selectedDayId?: number | null;
+  onAddToPlan?: (attraction: AttractionDetail) => void;
+  selectedBlockId?: number | null;
   resolveAttractionStatus?: (attraction: AttractionDetail) => AttractionMapStatus;
   className?: string;
   children: (
@@ -39,8 +39,8 @@ export function AttractionMapShell({
   onAttractionSelect,
   onHighlightChange,
   onDeleteAttraction,
-  onAddToDay,
-  selectedDayId = null,
+  onAddToPlan,
+  selectedBlockId = null,
   resolveAttractionStatus,
   className,
   children,
@@ -76,9 +76,9 @@ export function AttractionMapShell({
     if (!panelAttraction) return null;
     return (
       resolveAttractionStatus?.(panelAttraction) ?? {
-        dayId: undefined,
-        isInAnyDay: false,
-        isInSelectedDay: false,
+        blockId: undefined,
+        isInAnyBlock: false,
+        isInSelectedBlock: false,
       }
     );
   }, [panelAttraction, resolveAttractionStatus]);
@@ -93,11 +93,11 @@ export function AttractionMapShell({
         <AttractionDetailPanel
           attraction={panelAttraction}
           attractionStatus={attractionStatus}
-          selectedDayId={selectedDayId}
+          selectedBlockId={selectedBlockId}
           isOpen={!!selectedAttractionId}
           onClose={handleClose}
           onClosed={handlePanelClosed}
-          onAddToDay={onAddToDay && panelAttraction ? () => onAddToDay(panelAttraction) : undefined}
+          onAddToPlan={onAddToPlan && panelAttraction ? () => onAddToPlan(panelAttraction) : undefined}
           onPanelHeightChange={setPanelHeight}
           onHighlightChange={onHighlightChange}
           onDelete={onDeleteAttraction}

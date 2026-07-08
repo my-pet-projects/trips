@@ -10,7 +10,7 @@ const VERIFIED_RING_WIDTH = 3;
 export type CircleMarkerIconOptions = {
   color: string;
   size?: number;
-  isInDay?: boolean;
+  isInBlock?: boolean;
   isHighlighted?: boolean;
   orderNumber?: number;
   isVerified?: boolean;
@@ -25,7 +25,7 @@ export type CircleMarkerIconResult = {
 export function createCircleMarkerIcon({
   color,
   size = BASE_CIRCLE_MARKER_SIZE,
-  isInDay = false,
+  isInBlock = false,
   isHighlighted = false,
   orderNumber,
   isVerified = false,
@@ -66,7 +66,7 @@ export function createCircleMarkerIcon({
           white-space: nowrap;
           text-align: center;
         ">
-          ${orderNumber ?? (isInDay ? "●" : "")}
+          ${orderNumber ?? (isInBlock ? "●" : "")}
         </div>
       </div>`;
 

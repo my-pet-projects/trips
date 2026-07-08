@@ -8,6 +8,34 @@
       "when": 1783376492798,
       "tag": "0000_add_trip_overnight_stops",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1783461912980,
+      "tag": "0001_add_itinerary_day_pinning",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1783510800281,
+      "tag": "0002_clean_invisible_woman",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1783520000000,
+      "tag": "0003_add_plan_block_pin_checks",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1783523600000,
+      "tag": "0004_rename_plan_block_tables",
+      "breakpoints": true
     }
   ]
 }

@@ -15,6 +15,24 @@ import * as schema from "~/server/db/schema";
 
 const log = createLogger("trip");
 
+function mapPlanBlockFromDb(
+  block: (typeof schema.planBlocks.$inferSelect) & {
+    planBlockPlaces: Array<{
+      order: number;
+      attraction: (typeof schema.attractions.$inferSelect);
+    }>;
+  },
+) {
+  return {
+    id: block.id,
+    name: block.name,
+    blockNumber: block.blockNumber,
+    pinnedStartDate: block.pinnedStartDate,
+    pinnedEndDate: block.pinnedEndDate,
+    attractions: block.planBlockPlaces.map((place) => place.attraction),
+  };
+}
+
 export const tripRouter = createTRPCRouter({
   listTrips: publicProcedure.query(async ({ ctx }) => {
     const trips = await ctx.db.query.trips.findMany({
@@ -99,10 +117,13 @@ export const tripRouter = createTRPCRouter({
         where: eq(schema.trips.id, input.id),
         with: {
           destinations: true,
-          itineraryDays: {
-            orderBy: (day, { asc }) => [asc(day.dayNumber)],
+          overnightStops: {
+            orderBy: (stop, { asc }) => [asc(stop.checkInDate)],
+          },
+          planBlocks: {
+            orderBy: (block, { asc }) => [asc(block.blockNumber)],
             with: {
-              itineraryDayPlaces: {
+              planBlockPlaces: {
                 orderBy: (place, { asc }) => [asc(place.order)],
                 with: {
                   attraction: true,
@@ -120,16 +141,11 @@ export const tripRouter = createTRPCRouter({
         });
       }
 
+      const { planBlocks: dbPlanBlocks, ...tripRest } = trip;
+
       return {
-        ...trip,
-        itineraryDays: trip.itineraryDays.map(
-          ({ id, name, dayNumber, itineraryDayPlaces }) => ({
-            id,
-            name,
-            dayNumber,
-            attractions: itineraryDayPlaces.map((place) => place.attraction),
-          }),
-        ),
+        ...tripRest,
+        planBlocks: dbPlanBlocks.map(mapPlanBlockFromDb),
       };
     }),
 
@@ -149,17 +165,20 @@ export const tripRouter = createTRPCRouter({
           where: eq(schema.trips.id, input.id),
           with: {
             destinations: true,
-            itineraryDays: {
-              orderBy: (day, { asc }) => [asc(day.dayNumber)],
-              with: {
-                itineraryDayPlaces: {
-                  orderBy: (place, { asc }) => [asc(place.order)],
-                  with: {
-                    attraction: true,
-                  },
+            overnightStops: {
+              orderBy: (stop, { asc }) => [asc(stop.checkInDate)],
+            },
+            planBlocks: {
+            orderBy: (block, { asc }) => [asc(block.blockNumber)],
+            with: {
+              planBlockPlaces: {
+                orderBy: (place, { asc }) => [asc(place.order)],
+                with: {
+                  attraction: true,
                 },
               },
             },
+          },
           },
         }),
         fetchAttractionsByCountryCodes(ctx, countryCodes),
@@ -172,17 +191,12 @@ export const tripRouter = createTRPCRouter({
         });
       }
 
+      const { planBlocks: dbPlanBlocks, ...tripRest } = trip;
+
       return {
         trip: {
-          ...trip,
-          itineraryDays: trip.itineraryDays.map(
-            ({ id, name, dayNumber, itineraryDayPlaces }) => ({
-              id,
-              name,
-              dayNumber,
-              attractions: itineraryDayPlaces.map((place) => place.attraction),
-            }),
-          ),
+          ...tripRest,
+          planBlocks: dbPlanBlocks.map(mapPlanBlockFromDb),
         },
         attractions,
       };
@@ -195,10 +209,13 @@ export const tripRouter = createTRPCRouter({
         where: eq(schema.trips.id, input.id),
         with: {
           destinations: true,
-          itineraryDays: {
-            orderBy: (day, { asc }) => [asc(day.dayNumber)],
+          overnightStops: {
+            orderBy: (stop, { asc }) => [asc(stop.checkInDate)],
+          },
+          planBlocks: {
+            orderBy: (block, { asc }) => [asc(block.blockNumber)],
             with: {
-              itineraryDayPlaces: {
+              planBlockPlaces: {
                 orderBy: (place, { asc }) => [asc(place.order)],
                 with: {
                   attraction: true,
@@ -218,10 +235,10 @@ export const tripRouter = createTRPCRouter({
 
       const attractionsById = new Map<
         number,
-        (typeof trip.itineraryDays)[number]["itineraryDayPlaces"][number]["attraction"]
+        (typeof trip.planBlocks)[number]["planBlockPlaces"][number]["attraction"]
       >();
-      for (const day of trip.itineraryDays) {
-        for (const place of day.itineraryDayPlaces) {
+      for (const block of trip.planBlocks) {
+        for (const place of block.planBlockPlaces) {
           attractionsById.set(place.attraction.id, place.attraction);
         }
       }
@@ -230,17 +247,12 @@ export const tripRouter = createTRPCRouter({
         ...attractionsById.values(),
       ]);
 
+      const { planBlocks: dbPlanBlocks, ...tripRest } = trip;
+
       return {
         trip: {
-          ...trip,
-          itineraryDays: trip.itineraryDays.map(
-            ({ id, name, dayNumber, itineraryDayPlaces }) => ({
-              id,
-              name,
-              dayNumber,
-              attractions: itineraryDayPlaces.map((place) => place.attraction),
-            }),
-          ),
+          ...tripRest,
+          planBlocks: dbPlanBlocks.map(mapPlanBlockFromDb),
         },
         attractions,
       };
