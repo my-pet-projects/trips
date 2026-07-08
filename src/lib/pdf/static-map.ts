@@ -3,7 +3,7 @@
  * Creates canvas-based map images with numbered markers.
  */
 
-import { DEFAULT_DAY_COLOR } from "~/lib/map/colors";
+import { DEFAULT_BLOCK_COLOR } from "~/lib/map/colors";
 
 import {
   TILE_SIZE,
@@ -177,7 +177,7 @@ export async function fetchMapImage(
   lat: number,
   lng: number,
   orderNumber: number,
-  color: string = DEFAULT_DAY_COLOR,
+  color: string = DEFAULT_BLOCK_COLOR,
 ): Promise<string | null> {
   const cacheKey = `${lat},${lng},${orderNumber},${color}`;
   if (mapImageCache.has(cacheKey)) {
@@ -215,7 +215,7 @@ export async function fetchMapImage(
  */
 export async function fetchOverviewMap(
   markers: MapMarker[],
-  color: string = DEFAULT_DAY_COLOR,
+  color: string = DEFAULT_BLOCK_COLOR,
 ): Promise<string | null> {
   if (markers.length === 0) return null;
 

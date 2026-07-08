@@ -4,7 +4,7 @@
 
 // Main PDF generation functions
 export {
-  generateAllDaysPdf,
-  generateDayPdf,
+  generateAllPlansPdf,
+  generatePlanBlockPdf,
   type PdfProgressCallback,
-} from "./generate-day-pdf";
+} from "./generate-plan-block-pdf";

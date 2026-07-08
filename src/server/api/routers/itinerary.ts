@@ -3,183 +3,187 @@ import { eq, inArray } from "drizzle-orm";
 import z from "zod";
 
 import { createLogger, errMsg } from "~/lib/logger";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import {
+  createPlanBlockInputSchema,
+  updatePlanBlocksInputSchema,
+} from "~/server/api/schemas/itinerary";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import * as schema from "~/server/db/schema";
 
 const log = createLogger("itinerary");
 
 export const itineraryRouter = createTRPCRouter({
-  createItineraryDay: publicProcedure
-    .input(
-      z.object({
-        tripId: z.number(),
-        name: z.string().min(1).max(100),
-        dayNumber: z.number().min(1),
-      }),
-    )
+  createPlanBlock: protectedProcedure
+    .input(createPlanBlockInputSchema)
     .mutation(async ({ ctx, input }) => {
-      const existing = await ctx.db.query.trips.findFirst({
+      const trip = await ctx.db.query.trips.findFirst({
         where: eq(schema.trips.id, input.tripId),
       });
 
-      if (!existing) {
+      if (!trip) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Trip not found",
         });
       }
 
-      const result = await ctx.db
-        .insert(schema.itineraryDays)
-        .values(input)
-        .returning();
+      try {
+        const result = await ctx.db
+          .insert(schema.planBlocks)
+          .values({
+            tripId: input.tripId,
+            name: input.name,
+            blockNumber: input.blockNumber,
+            pinnedStartDate: input.pinnedStartDate,
+            pinnedEndDate: input.pinnedEndDate,
+          })
+          .returning();
 
-      if (!result[0]) {
+        if (!result[0]) {
+          log.error(
+            { tripId: input.tripId },
+            "Failed to create plan block - no result returned",
+          );
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create plan block",
+          });
+        }
+
+        return result[0];
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+
         log.error(
-          { tripId: input.tripId },
-          "Failed to create itinerary day - no result returned",
+          { tripId: input.tripId, error: errMsg(error) },
+          "Error creating plan block",
         );
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create itinerary day",
+          message: "Failed to create plan block",
+          cause: error,
         });
       }
-
-      return result[0];
     }),
 
-  deleteItineraryDay: publicProcedure
+  deletePlanBlock: protectedProcedure
     .input(
       z.object({
-        dayId: z.number(),
+        blockId: z.number(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { dayId } = input;
+      const { blockId } = input;
 
-      const existing = await ctx.db.query.itineraryDays.findFirst({
-        where: eq(schema.itineraryDays.id, dayId),
+      const existing = await ctx.db.query.planBlocks.findFirst({
+        where: eq(schema.planBlocks.id, blockId),
       });
 
       if (!existing) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Itinerary day not found",
+          message: "Plan block not found",
         });
       }
 
       await ctx.db
-        .delete(schema.itineraryDays)
-        .where(eq(schema.itineraryDays.id, dayId));
+        .delete(schema.planBlocks)
+        .where(eq(schema.planBlocks.id, blockId));
 
-      return { success: true, deletedId: dayId };
+      return { success: true, deletedId: blockId };
     }),
 
-  updateItineraryDays: publicProcedure
-    .input(
-      z.object({
-        tripId: z.number(),
-        days: z.array(
-          z.object({
-            id: z.number(),
-            name: z.string().min(1).max(100),
-            dayNumber: z.number().min(1),
-            attractions: z.array(
-              z.object({
-                attractionId: z.number(),
-                order: z.number().min(1),
-              }),
-            ),
-          }),
-        ),
-      }),
-    )
+  updatePlanBlocks: protectedProcedure
+    .input(updatePlanBlocksInputSchema)
     .mutation(async ({ ctx, input }) => {
-      const { tripId, days } = input;
+      const { tripId, blocks } = input;
 
-      const existing = await ctx.db.query.trips.findFirst({
+      const trip = await ctx.db.query.trips.findFirst({
         where: eq(schema.trips.id, tripId),
       });
 
-      if (!existing) {
+      if (!trip) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Trip not found",
         });
       }
 
-      // Verify all provided days belong to this trip
-      const allowedDays = await ctx.db.query.itineraryDays.findMany({
-        where: eq(schema.itineraryDays.tripId, tripId),
+      const allowedBlocks = await ctx.db.query.planBlocks.findMany({
+        where: eq(schema.planBlocks.tripId, tripId),
       });
 
-      const allowedDayIds = new Set(allowedDays.map((d) => d.id));
+      const allowedBlockIds = new Set(allowedBlocks.map((block) => block.id));
 
-      for (const day of days) {
-        if (!allowedDayIds.has(day.id)) {
+      for (const block of blocks) {
+        if (!allowedBlockIds.has(block.id)) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: `Day ${day.id} does not belong to trip ${tripId}`,
+            message: `Plan block ${block.id} does not belong to trip ${tripId}`,
           });
         }
       }
 
       try {
         await ctx.db.transaction(async (tx) => {
-          // Unique on (tripId, dayNumber) — renumber in two phases to avoid
-          // conflicts when swapping positions (e.g. day 2 → 1 while day 1 exists).
           const tempOffset = 10_000;
-          for (const day of days) {
+          for (const block of blocks) {
             await tx
-              .update(schema.itineraryDays)
-              .set({ dayNumber: day.dayNumber + tempOffset })
-              .where(eq(schema.itineraryDays.id, day.id));
+              .update(schema.planBlocks)
+              .set({ blockNumber: block.blockNumber + tempOffset })
+              .where(eq(schema.planBlocks.id, block.id));
           }
 
-          for (const day of days) {
+          for (const block of blocks) {
             await tx
-              .update(schema.itineraryDays)
+              .update(schema.planBlocks)
               .set({
-                name: day.name,
-                dayNumber: day.dayNumber,
+                name: block.name,
+                blockNumber: block.blockNumber,
+                pinnedStartDate: block.pinnedStartDate,
+                pinnedEndDate: block.pinnedEndDate,
               })
-              .where(eq(schema.itineraryDays.id, day.id));
+              .where(eq(schema.planBlocks.id, block.id));
           }
 
-          // Delete all existing places for these days
-          const dayIds = days.map((d) => d.id);
-          if (dayIds.length > 0) {
+          const blockIds = blocks.map((block) => block.id);
+          if (blockIds.length > 0) {
             await tx
-              .delete(schema.itineraryDayPlaces)
-              .where(inArray(schema.itineraryDayPlaces.itineraryDayId, dayIds));
+              .delete(schema.planBlockPlaces)
+              .where(inArray(schema.planBlockPlaces.planBlockId, blockIds));
           }
 
-          // Insert all new places
-          const allPlaces = days.flatMap((day) =>
-            day.attractions.map((attr) => ({
-              itineraryDayId: day.id,
+          const allPlaces = blocks.flatMap((block) =>
+            block.attractions.map((attr) => ({
+              planBlockId: block.id,
               attractionId: attr.attractionId,
               order: attr.order,
             })),
           );
 
           if (allPlaces.length > 0) {
-            await tx.insert(schema.itineraryDayPlaces).values(allPlaces);
+            await tx.insert(schema.planBlockPlaces).values(allPlaces);
           }
         });
 
         return {
           success: true,
-          updatedCount: days.length,
+          updatedCount: blocks.length,
         };
       } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+
         log.error(
           { tripId: input.tripId, error: errMsg(error) },
-          "Error updating itinerary days",
+          "Error updating plan blocks",
         );
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update itinerary days",
+          message: "Failed to update plan blocks",
           cause: error,
         });
       }
