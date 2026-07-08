@@ -32,6 +32,9 @@ export type ExistingAttraction =
 // Route types
 export type RouteData = RouterOutputs["route"]["buildRoute"];
 
-// Itinerary types (derived from Trip)
-export type ItineraryDayData = Trip["itineraryDays"][number];
-export type BasicAttraction = ItineraryDayData["attractions"][number];
+// Plan block types (derived from Trip)
+export type PlanBlock = Trip["planBlocks"][number];
+export type BasicAttraction = PlanBlock["attractions"][number];
+export type PlanBlockFieldPatch = Partial<
+  Pick<PlanBlock, "name" | "pinnedStartDate" | "pinnedEndDate">
+>;

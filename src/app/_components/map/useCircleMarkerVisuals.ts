@@ -14,32 +14,32 @@ import type { AttractionSummary } from "~/types";
 function getMarkerVisualState(
   attractionId: number,
   attractionsMap: Map<number, AttractionSummary>,
-  attractionToDayMap: Map<number, number>,
-  dayColors: Map<number, string>,
-  selectedDayId: number | null,
-  selectedDayAttractionOrders: Map<number, number>,
+  attractionToBlockMap: Map<number, number>,
+  blockColors: Map<number, string>,
+  selectedBlockId: number | null,
+  selectedBlockAttractionOrders: Map<number, number>,
   markerMeta: Map<number, MarkerMeta> | undefined,
   hoveredAttractionId: number | null,
   selectedAttractionId: number | null,
 ) {
   const attraction = attractionsMap.get(attractionId);
-  const attractionDayId = attractionToDayMap.get(attractionId);
-  const isInAnyDay = attractionDayId !== undefined;
-  const isInSelectedDay = attractionDayId === selectedDayId;
+  const attractionBlockId = attractionToBlockMap.get(attractionId);
+  const isInAnyBlock = attractionBlockId !== undefined;
+  const isInSelectedBlock = attractionBlockId === selectedBlockId;
   const isHovered = hoveredAttractionId === attractionId;
   const isSelected = selectedAttractionId === attractionId;
   const meta = markerMeta?.get(attractionId);
-  const color = getCircleMarkerColor(attractionId, markerMeta, attractionToDayMap, dayColors);
+  const color = getCircleMarkerColor(attractionId, markerMeta, attractionToBlockMap, blockColors);
 
   return {
     attraction,
     color,
-    isInAnyDay,
-    isInSelectedDay,
+    isInAnyBlock,
+    isInSelectedBlock,
     isHovered,
     isSelected,
-    orderNumber: selectedDayAttractionOrders.get(attractionId),
-    isVerified: meta?.isVerified && !isInAnyDay,
+    orderNumber: selectedBlockAttractionOrders.get(attractionId),
+    isVerified: meta?.isVerified && !isInAnyBlock,
     size: isSelected
       ? BASE_CIRCLE_MARKER_SIZE + 8
       : isHovered
@@ -53,10 +53,10 @@ type UseCircleMarkerVisualsOptions = {
   mapRef: RefObject<L.Map | null>;
   markersRef: RefObject<Map<number, L.Marker>>;
   attractionsMap: Map<number, AttractionSummary>;
-  attractionToDayMap: Map<number, number>;
-  dayColors: Map<number, string>;
-  selectedDayId: number | null;
-  selectedDayAttractionOrders: Map<number, number>;
+  attractionToBlockMap: Map<number, number>;
+  blockColors: Map<number, string>;
+  selectedBlockId: number | null;
+  selectedBlockAttractionOrders: Map<number, number>;
   markerMeta: Map<number, MarkerMeta> | undefined;
   hoveredAttractionId: number | null;
   selectedAttractionId: number | null;
@@ -67,10 +67,10 @@ export function useCircleMarkerVisuals({
   mapRef,
   markersRef,
   attractionsMap,
-  attractionToDayMap,
-  dayColors,
-  selectedDayId,
-  selectedDayAttractionOrders,
+  attractionToBlockMap,
+  blockColors,
+  selectedBlockId,
+  selectedBlockAttractionOrders,
   markerMeta,
   hoveredAttractionId,
   selectedAttractionId,
@@ -78,7 +78,7 @@ export function useCircleMarkerVisuals({
 }: UseCircleMarkerVisualsOptions) {
   useEffect(() => {
     if (!mapRef.current) return;
-    if (enableClustering && attractionToDayMap.size === 0 && dayColors.size === 0 && !markerMeta) {
+    if (enableClustering && attractionToBlockMap.size === 0 && blockColors.size === 0 && !markerMeta) {
       return;
     }
 
@@ -86,10 +86,10 @@ export function useCircleMarkerVisuals({
       const visual = getMarkerVisualState(
         id,
         attractionsMap,
-        attractionToDayMap,
-        dayColors,
-        selectedDayId,
-        selectedDayAttractionOrders,
+        attractionToBlockMap,
+        blockColors,
+        selectedBlockId,
+        selectedBlockAttractionOrders,
         markerMeta,
         hoveredAttractionId,
         selectedAttractionId,
@@ -101,9 +101,9 @@ export function useCircleMarkerVisuals({
         createCircleMarkerIcon({
           color: visual.color,
           size: visual.size,
-          isInDay: visual.isInAnyDay,
+          isInBlock: visual.isInAnyBlock,
           isHighlighted: visual.isHovered || visual.isSelected,
-          orderNumber: visual.isInSelectedDay ? visual.orderNumber : undefined,
+          orderNumber: visual.isInSelectedBlock ? visual.orderNumber : undefined,
           isVerified: visual.isVerified,
         }),
       );
@@ -120,10 +120,10 @@ export function useCircleMarkerVisuals({
     }
   }, [
     attractionsMap,
-    attractionToDayMap,
-    dayColors,
-    selectedDayId,
-    selectedDayAttractionOrders,
+    attractionToBlockMap,
+    blockColors,
+    selectedBlockId,
+    selectedBlockAttractionOrders,
     markerMeta,
     hoveredAttractionId,
     selectedAttractionId,

@@ -48,10 +48,10 @@ export const VERIFIED_COLOR: MapColorDef = {
     "border-emerald-500 bg-emerald-500 text-white hover:border-emerald-600 hover:bg-emerald-600",
 };
 
-/** Default itinerary day / PDF map marker color when no day color is set. */
-export const DEFAULT_DAY_COLOR = "#3b82f6";
+/** Default plan block / PDF map marker color when no day color is set. */
+export const DEFAULT_BLOCK_COLOR = "#3b82f6";
 
-export const ITINERARY_DAY_PALETTE = [
+export const PLAN_BLOCK_PALETTE = [
   "#3b82f6",
   "#ef4444",
   "#10b981",
@@ -66,8 +66,8 @@ export const ITINERARY_DAY_PALETTE = [
   "#f43f5e",
 ] as const;
 
-export function getItineraryDayColor(index: number): string {
-  return ITINERARY_DAY_PALETTE[index % ITINERARY_DAY_PALETTE.length]!;
+export function getPlanBlockColor(index: number): string {
+  return PLAN_BLOCK_PALETTE[index % PLAN_BLOCK_PALETTE.length]!;
 }
 
 export type RawStatusKey = "pending" | "rejected" | "duplicated";

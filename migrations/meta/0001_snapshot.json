@@ -1,0 +1,925 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "d4a9e60a-6d36-4e0a-8feb-faae6c711028",
+  "prevId": "4ac0c34c-36ee-4726-a0f4-94f00b27e148",
+  "tables": {
+    "attractions": {
+      "name": "attractions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text(256)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name_local": {
+          "name": "name_local",
+          "type": "text(256)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "latitude": {
+          "name": "latitude",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "longitude": {
+          "name": "longitude",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "highlight": {
+          "name": "highlight",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "is_predefined": {
+          "name": "is_predefined",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "source_url": {
+          "name": "source_url",
+          "type": "text(256)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "city_id": {
+          "name": "city_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "country_code": {
+          "name": "country_code",
+          "type": "text(2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "is_verified": {
+          "name": "is_verified",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        }
+      },
+      "indexes": {
+        "attractions_city_idx": {
+          "name": "attractions_city_idx",
+          "columns": [
+            "city_id"
+          ],
+          "isUnique": false
+        },
+        "attractions_coords_idx": {
+          "name": "attractions_coords_idx",
+          "columns": [
+            "latitude",
+            "longitude"
+          ],
+          "isUnique": false
+        },
+        "attractions_country_id_idx": {
+          "name": "attractions_country_id_idx",
+          "columns": [
+            "country_code",
+            "id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "itinerary_day_places": {
+      "name": "itinerary_day_places",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "itinerary_day_id": {
+          "name": "itinerary_day_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "attraction_id": {
+          "name": "attraction_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "order": {
+          "name": "order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "itinerary_day_places_day_idx": {
+          "name": "itinerary_day_places_day_idx",
+          "columns": [
+            "itinerary_day_id"
+          ],
+          "isUnique": false
+        },
+        "itinerary_day_places_unique_idx": {
+          "name": "itinerary_day_places_unique_idx",
+          "columns": [
+            "itinerary_day_id",
+            "attraction_id"
+          ],
+          "isUnique": true
+        },
+        "itinerary_day_places_order_unique_idx": {
+          "name": "itinerary_day_places_order_unique_idx",
+          "columns": [
+            "itinerary_day_id",
+            "order"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "itinerary_day_places_itinerary_day_id_itinerary_days_id_fk": {
+          "name": "itinerary_day_places_itinerary_day_id_itinerary_days_id_fk",
+          "tableFrom": "itinerary_day_places",
+          "tableTo": "itinerary_days",
+          "columnsFrom": [
+            "itinerary_day_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "itinerary_day_places_attraction_id_attractions_id_fk": {
+          "name": "itinerary_day_places_attraction_id_attractions_id_fk",
+          "tableFrom": "itinerary_day_places",
+          "tableTo": "attractions",
+          "columnsFrom": [
+            "attraction_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "itinerary_day_places_order_check": {
+          "name": "itinerary_day_places_order_check",
+          "value": "\"itinerary_day_places\".\"order\" >= 1"
+        }
+      }
+    },
+    "itinerary_days": {
+      "name": "itinerary_days",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text(256)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "trip_id": {
+          "name": "trip_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "day_number": {
+          "name": "day_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "overnight_stop_id": {
+          "name": "overnight_stop_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "pinned_start_date": {
+          "name": "pinned_start_date",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "pinned_end_date": {
+          "name": "pinned_end_date",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "itinerary_days_trip_idx": {
+          "name": "itinerary_days_trip_idx",
+          "columns": [
+            "trip_id"
+          ],
+          "isUnique": false
+        },
+        "itinerary_days_trip_day_unique_idx": {
+          "name": "itinerary_days_trip_day_unique_idx",
+          "columns": [
+            "trip_id",
+            "day_number"
+          ],
+          "isUnique": true
+        },
+        "itinerary_days_overnight_stop_idx": {
+          "name": "itinerary_days_overnight_stop_idx",
+          "columns": [
+            "overnight_stop_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "itinerary_days_trip_id_trips_id_fk": {
+          "name": "itinerary_days_trip_id_trips_id_fk",
+          "tableFrom": "itinerary_days",
+          "tableTo": "trips",
+          "columnsFrom": [
+            "trip_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "itinerary_days_overnight_stop_id_trip_overnight_stops_id_fk": {
+          "name": "itinerary_days_overnight_stop_id_trip_overnight_stops_id_fk",
+          "tableFrom": "itinerary_days",
+          "tableTo": "trip_overnight_stops",
+          "columnsFrom": [
+            "overnight_stop_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "itinerary_days_day_number_check": {
+          "name": "itinerary_days_day_number_check",
+          "value": "\"itinerary_days\".\"day_number\" >= 1"
+        }
+      }
+    },
+    "raw_attractions": {
+      "name": "raw_attractions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text(256)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name_local": {
+          "name": "name_local",
+          "type": "text(256)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "latitude": {
+          "name": "latitude",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "longitude": {
+          "name": "longitude",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "source_url": {
+          "name": "source_url",
+          "type": "text(256)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "city_name": {
+          "name": "city_name",
+          "type": "text(256)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "city_id": {
+          "name": "city_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "country_code": {
+          "name": "country_code",
+          "type": "text(2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "source": {
+          "name": "source",
+          "type": "text(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "attraction_id": {
+          "name": "attraction_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "raw_attractions_status_idx": {
+          "name": "raw_attractions_status_idx",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        },
+        "raw_attractions_country_idx": {
+          "name": "raw_attractions_country_idx",
+          "columns": [
+            "country_code"
+          ],
+          "isUnique": false
+        },
+        "raw_attractions_country_status_id_idx": {
+          "name": "raw_attractions_country_status_id_idx",
+          "columns": [
+            "country_code",
+            "status",
+            "id"
+          ],
+          "isUnique": false
+        },
+        "raw_attractions_city_idx": {
+          "name": "raw_attractions_city_idx",
+          "columns": [
+            "city_id"
+          ],
+          "isUnique": false
+        },
+        "raw_attractions_source_url_idx": {
+          "name": "raw_attractions_source_url_idx",
+          "columns": [
+            "source_url"
+          ],
+          "isUnique": true
+        },
+        "raw_attractions_attraction_idx": {
+          "name": "raw_attractions_attraction_idx",
+          "columns": [
+            "attraction_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "raw_attractions_attraction_id_attractions_id_fk": {
+          "name": "raw_attractions_attraction_id_attractions_id_fk",
+          "tableFrom": "raw_attractions",
+          "tableTo": "attractions",
+          "columnsFrom": [
+            "attraction_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "routes": {
+      "name": "routes",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "from_attraction_id": {
+          "name": "from_attraction_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "to_attraction_id": {
+          "name": "to_attraction_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "geo_json": {
+          "name": "geo_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "distance_m": {
+          "name": "distance_m",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "duration_s": {
+          "name": "duration_s",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "routes_unique_idx": {
+          "name": "routes_unique_idx",
+          "columns": [
+            "from_attraction_id",
+            "to_attraction_id"
+          ],
+          "isUnique": true
+        },
+        "routes_from_attraction_idx": {
+          "name": "routes_from_attraction_idx",
+          "columns": [
+            "from_attraction_id"
+          ],
+          "isUnique": false
+        },
+        "routes_to_attraction_idx": {
+          "name": "routes_to_attraction_idx",
+          "columns": [
+            "to_attraction_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "routes_from_attraction_id_attractions_id_fk": {
+          "name": "routes_from_attraction_id_attractions_id_fk",
+          "tableFrom": "routes",
+          "tableTo": "attractions",
+          "columnsFrom": [
+            "from_attraction_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "routes_to_attraction_id_attractions_id_fk": {
+          "name": "routes_to_attraction_id_attractions_id_fk",
+          "tableFrom": "routes",
+          "tableTo": "attractions",
+          "columnsFrom": [
+            "to_attraction_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "routes_no_self_reference_check": {
+          "name": "routes_no_self_reference_check",
+          "value": "\"routes\".\"from_attraction_id\" != \"routes\".\"to_attraction_id\""
+        }
+      }
+    },
+    "trip_destinations": {
+      "name": "trip_destinations",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "trip_id": {
+          "name": "trip_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "country_code": {
+          "name": "country_code",
+          "type": "text(2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "trip_destinations_trip_idx": {
+          "name": "trip_destinations_trip_idx",
+          "columns": [
+            "trip_id"
+          ],
+          "isUnique": false
+        },
+        "trip_destinations_unique_idx": {
+          "name": "trip_destinations_unique_idx",
+          "columns": [
+            "trip_id",
+            "country_code"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "trip_destinations_trip_id_trips_id_fk": {
+          "name": "trip_destinations_trip_id_trips_id_fk",
+          "tableFrom": "trip_destinations",
+          "tableTo": "trips",
+          "columnsFrom": [
+            "trip_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "trip_overnight_stops": {
+      "name": "trip_overnight_stops",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "trip_id": {
+          "name": "trip_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text(256)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "latitude": {
+          "name": "latitude",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "longitude": {
+          "name": "longitude",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "check_in_date": {
+          "name": "check_in_date",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "check_out_date": {
+          "name": "check_out_date",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "trip_overnight_stops_trip_idx": {
+          "name": "trip_overnight_stops_trip_idx",
+          "columns": [
+            "trip_id"
+          ],
+          "isUnique": false
+        },
+        "trip_overnight_stops_check_in_idx": {
+          "name": "trip_overnight_stops_check_in_idx",
+          "columns": [
+            "trip_id",
+            "check_in_date"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "trip_overnight_stops_trip_id_trips_id_fk": {
+          "name": "trip_overnight_stops_trip_id_trips_id_fk",
+          "tableFrom": "trip_overnight_stops",
+          "tableTo": "trips",
+          "columnsFrom": [
+            "trip_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "trip_overnight_stops_check_out_after_check_in": {
+          "name": "trip_overnight_stops_check_out_after_check_in",
+          "value": "\"trip_overnight_stops\".\"check_out_date\" > \"trip_overnight_stops\".\"check_in_date\""
+        }
+      }
+    },
+    "trips": {
+      "name": "trips",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text(256)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "end_date": {
+          "name": "end_date",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "trips_start_date_idx": {
+          "name": "trips_start_date_idx",
+          "columns": [
+            "start_date"
+          ],
+          "isUnique": false
+        },
+        "trips_end_date_idx": {
+          "name": "trips_end_date_idx",
+          "columns": [
+            "end_date"
+          ],
+          "isUnique": false
+        },
+        "trips_name_idx": {
+          "name": "trips_name_idx",
+          "columns": [
+            "name"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}
