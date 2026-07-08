@@ -1,7 +1,7 @@
 import L from "leaflet";
 import { useEffect, useRef } from "react";
 
-import { DEFAULT_DAY_COLOR } from "~/lib/map/colors";
+import { DEFAULT_BLOCK_COLOR } from "~/lib/map/colors";
 import type { RouteData } from "~/types";
 import { useInjectStyles } from "./useInjectStyles";
 
@@ -35,14 +35,14 @@ type DayPolylines = {
 
 export const useLeafletRoutes = (
   mapRef: React.RefObject<L.Map | null>,
-  dayRoutes: Map<number, RouteData>,
-  dayColors: Map<number, string>,
-  selectedDayId: number | null,
+  blockRoutes: Map<number, RouteData>,
+  blockColors: Map<number, string>,
+  selectedBlockId: number | null,
   hoveredAttractionId: number | null,
   selectedAttractionId: number | null,
   isLoadingRoutes: boolean,
 ) => {
-  const dayPolylinesRef = useRef<Map<number, DayPolylines>>(new Map());
+  const blockPolylinesRef = useRef<Map<number, DayPolylines>>(new Map());
 
   useInjectStyles("leaflet-route-styles", ROUTE_STYLES);
 
@@ -53,15 +53,15 @@ export const useLeafletRoutes = (
     const map = mapRef.current;
 
     // Remove all existing polylines
-    dayPolylinesRef.current.forEach(({ main, legs }) => {
+    blockPolylinesRef.current.forEach(({ main, legs }) => {
       main.remove();
       legs.forEach(({ polyline }) => polyline.remove());
     });
-    dayPolylinesRef.current.clear();
+    blockPolylinesRef.current.clear();
 
-    dayRoutes.forEach((route, dayId) => {
-      const color = dayColors.get(dayId) ?? DEFAULT_DAY_COLOR;
-      const isSelectedDay = dayId === selectedDayId;
+    blockRoutes.forEach((route, dayId) => {
+      const color = blockColors.get(dayId) ?? DEFAULT_BLOCK_COLOR;
+      const isSelectedBlock = dayId === selectedBlockId;
 
       const latLngs = route.geojson.geometry.coordinates.map(
         ([lng, lat]) => [lat, lng] as [number, number],
@@ -69,8 +69,8 @@ export const useLeafletRoutes = (
 
       const main = L.polyline(latLngs, {
         color,
-        weight: isSelectedDay ? 4 : 3,
-        opacity: isSelectedDay ? 0.8 : 0.5,
+        weight: isSelectedBlock ? 4 : 3,
+        opacity: isSelectedBlock ? 0.8 : 0.5,
         lineJoin: "round",
         lineCap: "round",
       }).addTo(map);
@@ -83,7 +83,7 @@ export const useLeafletRoutes = (
 
       const legs: LegPolyline[] = [];
 
-      if (isSelectedDay && route.legs) {
+      if (isSelectedBlock && route.legs) {
         route.legs.forEach((leg) => {
           const legLatLngs = leg.geometryGeojsonParsed.coordinates.map(
             ([lng, lat]) => [lat, lng] as [number, number],
@@ -105,28 +105,28 @@ export const useLeafletRoutes = (
         });
       }
 
-      dayPolylinesRef.current.set(dayId, { main, legs });
+      blockPolylinesRef.current.set(dayId, { main, legs });
     });
 
     return () => {
-      dayPolylinesRef.current.forEach(({ main, legs }) => {
+      blockPolylinesRef.current.forEach(({ main, legs }) => {
         main.remove();
         legs.forEach(({ polyline }) => polyline.remove());
       });
-      dayPolylinesRef.current.clear();
+      blockPolylinesRef.current.clear();
     };
-  }, [mapRef, dayRoutes, dayColors, selectedDayId, isLoadingRoutes]);
+  }, [mapRef, blockRoutes, blockColors, selectedBlockId, isLoadingRoutes]);
 
   // Update opacity/animation on existing polylines when hover/select changes.
-  // Also depends on dayRoutes/isLoadingRoutes so styling is re-applied after rebuild.
+  // Also depends on blockRoutes/isLoadingRoutes so styling is re-applied after rebuild.
   useEffect(() => {
     if (!mapRef.current) return;
 
     const hasActiveLeg =
-      selectedDayId !== null &&
+      selectedBlockId !== null &&
       (selectedAttractionId !== null || hoveredAttractionId !== null) &&
       (() => {
-        const dp = dayPolylinesRef.current.get(selectedDayId);
+        const dp = blockPolylinesRef.current.get(selectedBlockId);
         return dp?.legs.some(
           (l) =>
             l.fromAttractionId === selectedAttractionId ||
@@ -136,13 +136,13 @@ export const useLeafletRoutes = (
         ) ?? false;
       })();
 
-    dayPolylinesRef.current.forEach(({ main, legs }, dayId) => {
-      const isSelectedDay = dayId === selectedDayId;
+    blockPolylinesRef.current.forEach(({ main, legs }, dayId) => {
+      const isSelectedBlock = dayId === selectedBlockId;
 
       // Main polyline opacity
-      let weight = isSelectedDay ? 4 : 3;
-      let opacity = isSelectedDay ? 0.8 : 0.5;
-      if (isSelectedDay && hasActiveLeg) {
+      let weight = isSelectedBlock ? 4 : 3;
+      let opacity = isSelectedBlock ? 0.8 : 0.5;
+      if (isSelectedBlock && hasActiveLeg) {
         opacity = 0.3;
         weight = 2;
       }
@@ -175,5 +175,5 @@ export const useLeafletRoutes = (
         }
       });
     });
-  }, [mapRef, hoveredAttractionId, selectedAttractionId, selectedDayId, dayRoutes, isLoadingRoutes]);
+  }, [mapRef, hoveredAttractionId, selectedAttractionId, selectedBlockId, blockRoutes, isLoadingRoutes]);
 };

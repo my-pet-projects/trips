@@ -19,13 +19,13 @@ type ItineraryLeafletMapProps = {
   selectedAttractionId: number | null;
   panelHeight: number;
   onMarkerClick: (attraction: AttractionSummary) => void;
-  selectedDayAttractions: BasicAttraction[];
-  selectedDayId: number | null;
-  attractionToDayMap: Map<number, number>;
-  dayColors: Map<number, string>;
+  selectedBlockAttractions: BasicAttraction[];
+  selectedBlockId: number | null;
+  attractionToBlockMap: Map<number, number>;
+  blockColors: Map<number, string>;
   hoveredAttractionId: number | null;
-  dayRoutes: Map<number, RouteData>;
-  selectedDayAttractionOrders: Map<number, number>;
+  blockRoutes: Map<number, RouteData>;
+  selectedBlockAttractionOrders: Map<number, number>;
   enableLocationTracking?: boolean;
   enableClustering?: boolean;
   isLoadingRoutes?: boolean;
@@ -38,13 +38,13 @@ export default function ItineraryLeafletMap({
   selectedAttractionId,
   panelHeight,
   onMarkerClick,
-  selectedDayAttractions,
-  selectedDayId,
-  attractionToDayMap,
-  dayColors,
+  selectedBlockAttractions,
+  selectedBlockId,
+  attractionToBlockMap,
+  blockColors,
   hoveredAttractionId,
-  dayRoutes,
-  selectedDayAttractionOrders,
+  blockRoutes,
+  selectedBlockAttractionOrders,
   enableLocationTracking = false,
   enableClustering = false,
   isLoadingRoutes = false,
@@ -58,12 +58,12 @@ export default function ItineraryLeafletMap({
     mapReady,
     attractions,
     attractionsMap,
-    attractionToDayMap,
-    dayColors,
+    attractionToBlockMap,
+    blockColors,
     hoveredAttractionId,
     selectedAttractionId,
-    selectedDayId,
-    selectedDayAttractionOrders,
+    selectedBlockId,
+    selectedBlockAttractionOrders,
     onMarkerClick,
     enableClustering,
     markerMeta,
@@ -71,9 +71,9 @@ export default function ItineraryLeafletMap({
 
   useLeafletRoutes(
     mapRef,
-    dayRoutes,
-    dayColors,
-    selectedDayId,
+    blockRoutes,
+    blockColors,
+    selectedBlockId,
     hoveredAttractionId,
     selectedAttractionId,
     isLoadingRoutes,
@@ -91,15 +91,15 @@ export default function ItineraryLeafletMap({
     hasInitializedBounds,
     attractions,
     attractionsMap,
-    selectedDayAttractions,
-    selectedDayId,
+    selectedBlockAttractions,
+    selectedBlockId,
     selectedAttractionId,
     panelHeight,
     userLocation,
   });
 
   const showLoadingRoutesMessage =
-    isLoadingRoutes && !!selectedDayId && selectedDayAttractions.length > 0;
+    isLoadingRoutes && !!selectedBlockId && selectedBlockAttractions.length > 0;
 
   return (
     <LeafletMapCanvas

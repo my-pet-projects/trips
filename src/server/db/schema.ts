@@ -93,7 +93,7 @@ export const tripOvernightStops = sqliteTable(
 export const tripsRelations = relations(trips, ({ many }) => ({
   destinations: many(tripDestinations),
   overnightStops: many(tripOvernightStops),
-  itineraryDays: many(itineraryDays),
+  planBlocks: many(planBlocks),
 }));
 
 export const tripDestinationsRelations = relations(
@@ -148,15 +148,17 @@ export const attractions = sqliteTable(
   ],
 );
 
-export const itineraryDays = sqliteTable(
-  "itinerary_days",
+export const planBlocks = sqliteTable(
+  "plan_blocks",
   {
     id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
     name: text("name", { length: 256 }).notNull(),
     tripId: integer("trip_id")
       .notNull()
       .references(() => trips.id, { onDelete: "cascade" }),
-    dayNumber: integer("day_number").notNull(),
+    blockNumber: integer("block_number").notNull(),
+    pinnedStartDate: integer("pinned_start_date", { mode: "timestamp" }),
+    pinnedEndDate: integer("pinned_end_date", { mode: "timestamp" }),
     createdAt: integer("created_at", { mode: "timestamp" })
       .default(sql`(unixepoch())`)
       .notNull(),
@@ -165,61 +167,66 @@ export const itineraryDays = sqliteTable(
     ),
   },
   (table) => [
-    index("itinerary_days_trip_idx").on(table.tripId),
-    uniqueIndex("itinerary_days_trip_day_unique_idx").on(
+    index("plan_blocks_trip_idx").on(table.tripId),
+    uniqueIndex("plan_blocks_trip_block_unique_idx").on(
       table.tripId,
-      table.dayNumber,
+      table.blockNumber,
     ),
-    check("itinerary_days_day_number_check", sql`${table.dayNumber} >= 1`),
+    check("plan_blocks_block_number_check", sql`${table.blockNumber} >= 1`),
+    check(
+      "plan_blocks_pinned_end_after_start",
+      sql`${table.pinnedEndDate} IS NULL OR ${table.pinnedStartDate} IS NOT NULL`,
+    ),
+    check(
+      "plan_blocks_pinned_range_valid",
+      sql`${table.pinnedEndDate} IS NULL OR ${table.pinnedStartDate} IS NULL OR ${table.pinnedEndDate} >= ${table.pinnedStartDate}`,
+    ),
   ],
 );
 
-export const itineraryDaysRelations = relations(
-  itineraryDays,
-  ({ one, many }) => ({
-    trip: one(trips, {
-      fields: [itineraryDays.tripId],
-      references: [trips.id],
-    }),
-    itineraryDayPlaces: many(itineraryDayPlaces),
+export const planBlocksRelations = relations(planBlocks, ({ one, many }) => ({
+  trip: one(trips, {
+    fields: [planBlocks.tripId],
+    references: [trips.id],
   }),
-);
+  planBlockPlaces: many(planBlockPlaces),
+}));
 
-export const itineraryDayPlaces = sqliteTable(
-  "itinerary_day_places",
+export const planBlockPlaces = sqliteTable(
+  "plan_block_places",
   {
     id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
-    itineraryDayId: integer("itinerary_day_id")
+    planBlockId: integer("plan_block_id")
       .notNull()
-      .references(() => itineraryDays.id, { onDelete: "cascade" }),
+      .references(() => planBlocks.id, { onDelete: "cascade" }),
     attractionId: integer("attraction_id")
       .notNull()
       .references(() => attractions.id, { onDelete: "restrict" }),
     order: integer("order").notNull(),
   },
   (table) => [
-    index("itinerary_day_places_day_idx").on(table.itineraryDayId),
-    uniqueIndex("itinerary_day_places_unique_idx").on(
-      table.itineraryDayId,
+    index("plan_block_places_block_idx").on(table.planBlockId),
+    uniqueIndex("plan_block_places_unique_idx").on(
+      table.planBlockId,
       table.attractionId,
     ),
-    uniqueIndex("itinerary_day_places_order_unique_idx").on(
-      table.itineraryDayId,
+    uniqueIndex("plan_block_places_order_unique_idx").on(
+      table.planBlockId,
       table.order,
     ),
-    check("itinerary_day_places_order_check", sql`${table.order} >= 1`),
+    check("plan_block_places_order_check", sql`${table.order} >= 1`),
   ],
 );
 
-export const itineraryDayPlacesRelations = relations(
-  itineraryDayPlaces,
+export const planBlockPlacesRelations = relations(
+  planBlockPlaces,
   ({ one }) => ({
-    itineraryDay: one(itineraryDays, {
-      fields: [itineraryDayPlaces.itineraryDayId],
-      references: [itineraryDays.id],
+    planBlock: one(planBlocks, {
+      fields: [planBlockPlaces.planBlockId],
+      references: [planBlocks.id],
     }),
     attraction: one(attractions, {
-      fields: [itineraryDayPlaces.attractionId],
+      fields: [planBlockPlaces.attractionId],
       references: [attractions.id],
     }),
   }),

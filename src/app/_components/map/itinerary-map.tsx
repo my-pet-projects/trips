@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback } from "react";
 
-import { useItineraryRouteMap } from "~/lib/itinerary/use-itinerary-route-map";
+import { usePlanBlockRouteMap } from "~/lib/itinerary/use-plan-block-route-map";
 import { MapDynamicLoading } from "~/lib/map/map-loading";
 import type { MarkerMeta } from "~/lib/map/marker-meta";
 import {
@@ -14,11 +14,11 @@ import type {
   AttractionDetail,
   AttractionSummary,
   BasicAttraction,
-  ItineraryDayData,
+  PlanBlock,
 } from "~/types";
 
 import { AttractionMapShell } from "./attraction-map-shell";
-import { useItineraryMapDerivedState } from "./use-itinerary-map-derived-state";
+import { usePlanBlockMapDerivedState } from "./use-plan-block-map-derived-state";
 
 const ItineraryLeafletMap = dynamic(
   () => import("./itinerary-leaflet-map"),
@@ -31,15 +31,15 @@ const ItineraryLeafletMap = dynamic(
 type ItineraryMapProps = {
   attractions: AttractionSummary[] | AttractionDetail[];
   selectedAttractionDetail?: AttractionDetail | null;
-  selectedDayAttractions: BasicAttraction[];
-  selectedDayId: number | null;
+  selectedBlockAttractions: BasicAttraction[];
+  selectedBlockId: number | null;
   selectedAttractionId: number | null;
-  allDaysAttractions: Map<number, BasicAttraction[]>;
-  dayColors: Map<number, string>;
+  allBlocksAttractions: Map<number, BasicAttraction[]>;
+  blockColors: Map<number, string>;
   hoveredAttractionId: number | null;
-  itineraryDays: ItineraryDayData[];
+  planBlocks: PlanBlock[];
   onAttractionSelect: (attractionId: number | null) => void;
-  onAddAttractionToDay?: (attraction: AttractionDetail) => void;
+  onAddAttractionToBlock?: (attraction: AttractionDetail) => void;
   onHighlightChange?: (
     attractionId: number,
     highlight: "must_see" | "recommended" | "skip" | null,
@@ -55,15 +55,15 @@ type ItineraryMapProps = {
 export function ItineraryMap({
   attractions,
   selectedAttractionDetail,
-  selectedDayAttractions,
-  selectedDayId,
+  selectedBlockAttractions,
+  selectedBlockId,
   selectedAttractionId,
-  allDaysAttractions,
-  dayColors,
+  allBlocksAttractions,
+  blockColors,
   hoveredAttractionId,
-  itineraryDays,
+  planBlocks,
   onAttractionSelect,
-  onAddAttractionToDay,
+  onAddAttractionToBlock,
   onHighlightChange,
   onDeleteAttraction,
   enableLocationTracking = false,
@@ -72,10 +72,17 @@ export function ItineraryMap({
   markerMeta,
   tripsImageSource,
 }: ItineraryMapProps) {
-  const { dayRoutes, isLoadingRoutes } = useItineraryRouteMap(itineraryDays);
+  const { blockRoutes, isLoadingRoutes } = usePlanBlockRouteMap(planBlocks);
 
-  const { attractionToDayMap, selectedDayAttractionOrders, resolveAttractionStatus } =
-    useItineraryMapDerivedState(allDaysAttractions, selectedDayAttractions, selectedDayId);
+  const {
+    attractionToBlockMap,
+    selectedBlockAttractionOrders,
+    resolveAttractionStatus,
+  } = usePlanBlockMapDerivedState(
+    allBlocksAttractions,
+    selectedBlockAttractions,
+    selectedBlockId,
+  );
 
   const handleMarkerClick = useCallback(
     (attraction: AttractionSummary) => {
@@ -93,8 +100,8 @@ export function ItineraryMap({
       onAttractionSelect={onAttractionSelect}
       onHighlightChange={onHighlightChange}
       onDeleteAttraction={onDeleteAttraction}
-      onAddToDay={onAddAttractionToDay}
-      selectedDayId={selectedDayId}
+      onAddToPlan={onAddAttractionToBlock}
+      selectedBlockId={selectedBlockId}
       resolveAttractionStatus={resolveAttractionStatus}
       className={className}
     >
@@ -102,15 +109,15 @@ export function ItineraryMap({
         <ItineraryLeafletMap
           attractions={attractions as AttractionSummary[]}
           attractionsMap={attractionsMap}
-          selectedDayAttractions={selectedDayAttractions}
-          selectedDayId={selectedDayId}
-          selectedDayAttractionOrders={selectedDayAttractionOrders}
-          attractionToDayMap={attractionToDayMap}
-          dayColors={dayColors}
+          selectedBlockAttractions={selectedBlockAttractions}
+          selectedBlockId={selectedBlockId}
+          selectedBlockAttractionOrders={selectedBlockAttractionOrders}
+          attractionToBlockMap={attractionToBlockMap}
+          blockColors={blockColors}
           hoveredAttractionId={hoveredAttractionId}
           selectedAttractionId={selectedAttractionId}
           panelHeight={panelHeight}
-          dayRoutes={dayRoutes}
+          blockRoutes={blockRoutes}
           onMarkerClick={handleMarkerClick}
           enableLocationTracking={enableLocationTracking}
           enableClustering={enableClustering}

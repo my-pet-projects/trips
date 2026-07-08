@@ -7,8 +7,8 @@ import { useCallback, useMemo, useState } from "react";
 import { ItineraryMap } from "~/app/_components/map/itinerary-map";
 import { Badge } from "~/app/_components/ui/badge";
 import { Button } from "~/app/_components/ui/button";
-import { useItineraryDayMaps } from "~/lib/itinerary/use-itinerary-day-maps";
-import { DEFAULT_DAY_COLOR } from "~/lib/map/colors";
+import { usePlanBlockMaps } from "~/lib/itinerary/use-plan-block-maps";
+import { DEFAULT_BLOCK_COLOR } from "~/lib/map/colors";
 import type { AttractionDetail, Trip } from "~/types";
 
 type ItineraryViewerProps = {
@@ -20,54 +20,54 @@ export function ItineraryViewer({
   trip,
   tripAttractions: attractions,
 }: ItineraryViewerProps) {
-  const { itineraryDays } = trip;
-  const [selectedDayId, setSelectedDayId] = useState<number | null>(
-    () => trip.itineraryDays[0]?.id ?? null,
+  const { planBlocks } = trip;
+  const [selectedBlockId, setSelectedBlockId] = useState<number | null>(
+    () => trip.planBlocks[0]?.id ?? null,
   );
   const [selectedAttractionId, setSelectedAttractionId] = useState<
     number | null
   >(null);
 
-  const { allDaysAttractions, dayColors } = useItineraryDayMaps(itineraryDays);
+  const { allBlocksAttractions, blockColors } = usePlanBlockMaps(planBlocks);
 
-  const selectedDay = useMemo(
-    () => itineraryDays.find((d) => d.id === selectedDayId),
-    [itineraryDays, selectedDayId],
+  const selectedBlock = useMemo(
+    () => planBlocks.find((b) => b.id === selectedBlockId),
+    [planBlocks, selectedBlockId],
   );
 
-  const dayColor = useMemo(
-    () => dayColors.get(selectedDayId ?? 0) ?? DEFAULT_DAY_COLOR,
-    [dayColors, selectedDayId],
+  const blockColor = useMemo(
+    () => blockColors.get(selectedBlockId ?? 0) ?? DEFAULT_BLOCK_COLOR,
+    [blockColors, selectedBlockId],
   );
 
-  const selectedDayIndex = itineraryDays.findIndex(
-    (d) => d.id === selectedDayId,
+  const selectedBlockIndex = planBlocks.findIndex(
+    (b) => b.id === selectedBlockId,
   );
-  const canGoPrevDay = selectedDayIndex > 0;
-  const canGoNextDay =
-    selectedDayIndex >= 0 && selectedDayIndex < itineraryDays.length - 1;
+  const canGoPrevBlock = selectedBlockIndex > 0;
+  const canGoNextBlock =
+    selectedBlockIndex >= 0 && selectedBlockIndex < planBlocks.length - 1;
 
-  const handlePrevDay = useCallback(() => {
-    if (canGoPrevDay) {
-      const prevDay = itineraryDays[selectedDayIndex - 1];
-      if (prevDay) {
-        setSelectedDayId(prevDay.id);
+  const handlePrevBlock = useCallback(() => {
+    if (canGoPrevBlock) {
+      const prevBlock = planBlocks[selectedBlockIndex - 1];
+      if (prevBlock) {
+        setSelectedBlockId(prevBlock.id);
         setSelectedAttractionId(null);
       }
     }
-  }, [canGoPrevDay, itineraryDays, selectedDayIndex]);
+  }, [canGoPrevBlock, planBlocks, selectedBlockIndex]);
 
-  const handleNextDay = useCallback(() => {
-    if (canGoNextDay) {
-      const nextDay = itineraryDays[selectedDayIndex + 1];
-      if (nextDay) {
-        setSelectedDayId(nextDay.id);
+  const handleNextBlock = useCallback(() => {
+    if (canGoNextBlock) {
+      const nextBlock = planBlocks[selectedBlockIndex + 1];
+      if (nextBlock) {
+        setSelectedBlockId(nextBlock.id);
         setSelectedAttractionId(null);
       }
     }
-  }, [canGoNextDay, itineraryDays, selectedDayIndex]);
+  }, [canGoNextBlock, planBlocks, selectedBlockIndex]);
 
-  const handleAddAttractionToDay = useCallback(() => {
+  const handleAddAttractionToBlock = useCallback(() => {
     // Do nothing - this is view-only mode
   }, []);
 
@@ -89,11 +89,11 @@ export function ItineraryViewer({
               type="button"
               variant="ghost"
               size="icon"
-              data-testid="itinerary-prev-day"
-              onClick={handlePrevDay}
-              disabled={!canGoPrevDay}
+              data-testid="itinerary-prev-plan"
+              onClick={handlePrevBlock}
+              disabled={!canGoPrevBlock}
               className="text-gray-600 md:size-10"
-              aria-label="Previous day"
+              aria-label="Previous plan"
             >
               <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
             </Button>
@@ -101,13 +101,13 @@ export function ItineraryViewer({
             <div className="flex min-w-0 items-center gap-1.5 md:gap-2">
               <div
                 className="h-3 w-3 shrink-0 rounded-full shadow-md md:h-4 md:w-4"
-                style={{ backgroundColor: dayColor }}
+                style={{ backgroundColor: blockColor }}
               />
               <h1 className="truncate text-sm font-bold text-gray-900 md:text-lg">
-                {selectedDay?.name}
+                {selectedBlock?.name}
               </h1>
               <Badge variant="muted" className="shrink-0 px-1.5 py-0.5 font-semibold md:px-2">
-                {selectedDay?.attractions.length ?? 0} stops
+                {selectedBlock?.attractions.length ?? 0} stops
               </Badge>
             </div>
 
@@ -115,11 +115,11 @@ export function ItineraryViewer({
               type="button"
               variant="ghost"
               size="icon"
-              data-testid="itinerary-next-day"
-              onClick={handleNextDay}
-              disabled={!canGoNextDay}
+              data-testid="itinerary-next-plan"
+              onClick={handleNextBlock}
+              disabled={!canGoNextBlock}
               className="text-gray-600 md:size-10"
-              aria-label="Next day"
+              aria-label="Next plan"
             >
               <ChevronRight className="h-5 w-5 md:h-6 md:w-6" />
             </Button>
@@ -139,30 +139,30 @@ export function ItineraryViewer({
         <div className="relative flex-1 overflow-hidden">
           <ItineraryMap
             attractions={attractions}
-            selectedDayAttractions={selectedDay?.attractions ?? []}
-            selectedDayId={selectedDayId}
+            selectedBlockAttractions={selectedBlock?.attractions ?? []}
+            selectedBlockId={selectedBlockId}
             selectedAttractionId={selectedAttractionId}
-            allDaysAttractions={allDaysAttractions}
-            dayColors={dayColors}
+            allBlocksAttractions={allBlocksAttractions}
+            blockColors={blockColors}
             hoveredAttractionId={null}
-            itineraryDays={itineraryDays}
+            planBlocks={planBlocks}
             onAttractionSelect={setSelectedAttractionId}
-            onAddAttractionToDay={handleAddAttractionToDay}
+            onAddAttractionToBlock={handleAddAttractionToBlock}
             enableLocationTracking
             tripsImageSource="map-view"
           />
         </div>
 
         {/* Attractions List */}
-        {selectedDay &&
-          selectedDay.attractions.length > 0 &&
+        {selectedBlock &&
+          selectedBlock.attractions.length > 0 &&
           !selectedAttractionId && (
             <div className="border-t border-gray-200 bg-white p-4 shadow-lg">
               <h2 className="mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase">
-                Attractions for {selectedDay.name}
+                Attractions for {selectedBlock.name}
               </h2>
               <div className="max-h-48 space-y-2 overflow-y-auto">
-                {selectedDay.attractions.map((attraction, index) => (
+                {selectedBlock.attractions.map((attraction, index) => (
                   <Button
                     type="button"
                     variant="outline"
@@ -172,7 +172,7 @@ export function ItineraryViewer({
                   >
                     <div
                       className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow"
-                      style={{ backgroundColor: dayColor }}
+                      style={{ backgroundColor: blockColor }}
                     >
                       {index + 1}
                     </div>

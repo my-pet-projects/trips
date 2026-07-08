@@ -38,15 +38,15 @@ type Highlight = "must_see" | "recommended" | "skip" | null;
 type AttractionDetailPanelProps = {
   attraction: AttractionDetail;
   attractionStatus: {
-    dayId: number | undefined;
-    isInAnyDay: boolean;
-    isInSelectedDay: boolean;
+    blockId: number | undefined;
+    isInAnyBlock: boolean;
+    isInSelectedBlock: boolean;
   };
-  selectedDayId: number | null;
+  selectedBlockId: number | null;
   isOpen: boolean;
   onClose: () => void;
   onClosed: () => void;
-  onAddToDay?: () => void;
+  onAddToPlan?: () => void;
   onPanelHeightChange?: (height: number) => void;
   onHighlightChange?: (attractionId: number, highlight: Highlight) => void;
   onDelete?: (attractionId: number) => void;
@@ -55,11 +55,11 @@ type AttractionDetailPanelProps = {
 export function AttractionDetailPanel({
   attraction,
   attractionStatus,
-  selectedDayId,
+  selectedBlockId,
   isOpen,
   onClose,
   onClosed,
-  onAddToDay,
+  onAddToPlan,
   onPanelHeightChange,
   onHighlightChange,
   onDelete,
@@ -262,20 +262,20 @@ export function AttractionDetailPanel({
 
         <AttractionImageGallery attraction={attraction} />
 
-        {onAddToDay ? (
+        {onAddToPlan ? (
           <div className="flex gap-2">
             <Button
               className="flex-1"
-              onClick={onAddToDay}
-              disabled={!selectedDayId || attractionStatus.isInAnyDay}
+              onClick={onAddToPlan}
+              disabled={!selectedBlockId || attractionStatus.isInAnyBlock}
             >
-              {!selectedDayId
-                ? "Select a day first"
-                : attractionStatus.isInAnyDay
-                  ? attractionStatus.isInSelectedDay
-                    ? "Already in this day"
-                    : "Already in another day"
-                  : "Add to Day"}
+              {!selectedBlockId
+                ? "Select a plan first"
+                : attractionStatus.isInAnyBlock
+                  ? attractionStatus.isInSelectedBlock
+                    ? "Already in this plan"
+                    : "Already in another plan"
+                  : "Add to plan"}
             </Button>
             <Button variant="outline" onClick={onClose}>
               Close

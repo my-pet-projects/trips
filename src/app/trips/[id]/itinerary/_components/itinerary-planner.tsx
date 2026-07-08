@@ -18,11 +18,12 @@ import {
   EmptyTitle,
 } from "~/app/_components/ui/empty";
 import { Spinner } from "~/app/_components/ui/spinner";
-import { useItineraryDayMaps } from "~/lib/itinerary/use-itinerary-day-maps";
-import { useItineraryEditor } from "~/lib/itinerary/use-itinerary-editor";
+import { usePlanBlockEditor } from "~/lib/itinerary/use-plan-block-editor";
+import { usePlanBlockMaps } from "~/lib/itinerary/use-plan-block-maps";
 import type { AttractionDetail, Trip } from "~/types";
-import { ItineraryDay } from "./itinerary-day";
-import { ItineraryAllDaysPdfButton } from "./itinerary-pdf-export-button";
+import { PlanBlocksPdfButton } from "./plan-block-pdf-export-button";
+import { OvernightStopsPanel } from "./overnight-stops-panel";
+import { PlanBlockCard } from "./plan-block";
 
 type ItineraryPlannerProps = {
   trip: Trip;
@@ -41,43 +42,44 @@ export function ItineraryPlanner({
   >(null);
 
   const {
-    itineraryDays,
-    selectedDayId,
-    setSelectedDayId,
+    planBlocks,
+    selectedBlockId,
+    setSelectedBlockId,
     isSaving,
-    isAddingDay,
-    dayBeingRemoved,
+    isAddingBlock,
+    blockBeingRemoved,
     saveError,
-    addDay,
-    removeDay,
+    addBlock,
+    removeBlock,
     retrySave,
-    addAttractionToDay,
+    addAttractionToBlock,
     removeAttraction,
     reorderAttractions,
-    moveDay,
-  } = useItineraryEditor(trip);
+    moveBlock,
+    updateBlock,
+  } = usePlanBlockEditor(trip);
 
-  const { allDaysAttractions, dayColors, attractionToDayMap } =
-    useItineraryDayMaps(itineraryDays);
+  const { allBlocksAttractions, blockColors, attractionToBlockMap } =
+    usePlanBlockMaps(planBlocks);
 
   const handleSelectAttraction = useCallback(
     (attractionId: number | null) => {
       setSelectedAttractionId(attractionId);
       if (attractionId === null) return;
-      const day = attractionToDayMap.get(attractionId);
-      if (day) setSelectedDayId(day.id);
+      const block = attractionToBlockMap.get(attractionId);
+      if (block) setSelectedBlockId(block.id);
     },
-    [attractionToDayMap],
+    [attractionToBlockMap, setSelectedBlockId],
   );
 
-  const selectedDayAttractions = useMemo(
+  const selectedBlockAttractions = useMemo(
     () =>
-      itineraryDays.find((d) => d.id === selectedDayId)?.attractions ?? [],
-    [itineraryDays, selectedDayId],
+      planBlocks.find((b) => b.id === selectedBlockId)?.attractions ?? [],
+    [planBlocks, selectedBlockId],
   );
 
-  const handleAddAttractionToDay = (attraction: AttractionDetail) => {
-    if (addAttractionToDay(selectedDayId, attraction)) {
+  const handleAddAttractionToBlock = (attraction: AttractionDetail) => {
+    if (addAttractionToBlock(selectedBlockId, attraction)) {
       setSelectedAttractionId(null);
     }
   };
@@ -87,9 +89,7 @@ export function ItineraryPlanner({
       <div className="min-h-0 space-y-4 overflow-y-auto px-4 py-4 lg:border-r lg:border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Daily Itinerary
-            </h2>
+            <h2 className="text-lg font-semibold text-gray-900">Itinerary</h2>
             {isSaving && (
               <span className="inline-flex items-center gap-1.5 text-sm text-gray-500">
                 <Spinner className="h-3.5 w-3.5" />
@@ -98,20 +98,20 @@ export function ItineraryPlanner({
             )}
           </div>
           <div className="flex gap-2">
-            <ItineraryAllDaysPdfButton
-              days={itineraryDays}
+            <PlanBlocksPdfButton
+              blocks={planBlocks}
               tripName={trip.name}
-              dayColors={dayColors}
-              disabled={itineraryDays.every((d) => d.attractions.length === 0)}
+              blockColors={blockColors}
+              disabled={planBlocks.every((b) => b.attractions.length === 0)}
             />
             <Button
               type="button"
               variant="outline"
-              onClick={addDay}
-              disabled={isAddingDay}
+              onClick={addBlock}
+              disabled={isAddingBlock}
             >
               <Plus className="h-4 w-4" />
-              {isAddingDay ? "Adding..." : "Add Day"}
+              {isAddingBlock ? "Adding..." : "Add plan"}
             </Button>
           </div>
         </div>
@@ -141,38 +141,48 @@ export function ItineraryPlanner({
           </Alert>
         )}
 
-        {itineraryDays.length === 0 ? (
+        <OvernightStopsPanel overnightStops={trip.overnightStops} />
+
+        {planBlocks.length === 0 ? (
           <Empty className="border-gray-200 bg-gray-50">
             <EmptyHeader>
-              <EmptyTitle>No days in your itinerary yet</EmptyTitle>
+              <EmptyTitle>No plans in your itinerary yet</EmptyTitle>
               <EmptyDescription>
-                Add your first day to start planning attractions on the map.
+                Add your first plan to start placing attractions on the map.
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
-              <Button type="button" onClick={addDay}>
+              <Button type="button" onClick={addBlock}>
                 <Plus className="h-4 w-4" />
-                Add First Day
+                Add first plan
               </Button>
             </EmptyContent>
           </Empty>
         ) : (
           <div className="space-y-3">
-            {itineraryDays.map((day, index) => (
-              <ItineraryDay
-                key={day.id}
-                day={day}
+            {planBlocks.map((block, index) => (
+              <PlanBlockCard
+                key={block.id}
+                block={block}
                 index={index}
-                isSelected={selectedDayId === day.id}
-                isRemoving={dayBeingRemoved === day.id}
-                selectedAttractionId={selectedAttractionId}
-                onSelectDay={setSelectedDayId}
-                onSelectAttraction={handleSelectAttraction}
-                onHoverAttraction={setHoveredAttraction}
-                removeDay={removeDay}
-                removeAttraction={removeAttraction}
-                reorderAttractions={reorderAttractions}
-                moveDay={moveDay}
+                trip={trip}
+                state={{
+                  isSelected: selectedBlockId === block.id,
+                  isRemoving: blockBeingRemoved === block.id,
+                  selectedAttractionId,
+                }}
+                actions={{
+                  select: () => setSelectedBlockId(block.id),
+                  update: (patch) => updateBlock(block.id, patch),
+                  remove: () => removeBlock(block.id),
+                  move: (direction) => moveBlock(block.id, direction),
+                  selectAttraction: handleSelectAttraction,
+                  hoverAttraction: setHoveredAttraction,
+                  removeAttraction: (attractionId) =>
+                    removeAttraction(block.id, attractionId),
+                  reorderAttractions: (attractions) =>
+                    reorderAttractions(block.id, attractions),
+                }}
               />
             ))}
           </div>
@@ -183,15 +193,15 @@ export function ItineraryPlanner({
         <ItineraryMap
           className="h-full rounded-none border-0 shadow-none lg:rounded-none lg:border-0 lg:shadow-none"
           attractions={attractions}
-          selectedDayAttractions={selectedDayAttractions}
-          selectedDayId={selectedDayId}
+          selectedBlockAttractions={selectedBlockAttractions}
+          selectedBlockId={selectedBlockId}
           selectedAttractionId={selectedAttractionId}
-          allDaysAttractions={allDaysAttractions}
-          dayColors={dayColors}
+          allBlocksAttractions={allBlocksAttractions}
+          blockColors={blockColors}
           hoveredAttractionId={hoveredAttraction}
-          itineraryDays={itineraryDays}
+          planBlocks={planBlocks}
           onAttractionSelect={handleSelectAttraction}
-          onAddAttractionToDay={handleAddAttractionToDay}
+          onAddAttractionToBlock={handleAddAttractionToBlock}
           tripsImageSource="map-itinerary"
         />
       </div>
