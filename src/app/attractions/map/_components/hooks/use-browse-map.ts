@@ -168,3 +168,5 @@ export function useBrowseMap() {
     onDeleteAttraction,
   };
 }
+
+export type BrowseMapState = ReturnType<typeof useBrowseMap>;

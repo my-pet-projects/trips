@@ -7,17 +7,26 @@ import {
   type AttractionHighlightKey,
 } from "~/lib/map/colors";
 
-import { useBrowseMapContext } from "../browse-context";
+import type { BrowseMapState } from "../hooks/use-browse-map";
 
-export function BrowseToolbar() {
-  const {
-    counts,
-    attractions,
-    showVerifiedOnly,
-    toggleVerifiedOnly,
-    visibleHighlights,
-    toggleHighlight,
-  } = useBrowseMapContext();
+type BrowseToolbarProps = Pick<
+  BrowseMapState,
+  | "counts"
+  | "attractions"
+  | "showVerifiedOnly"
+  | "toggleVerifiedOnly"
+  | "visibleHighlights"
+  | "toggleHighlight"
+>;
+
+export function BrowseToolbar({
+  counts,
+  attractions,
+  showVerifiedOnly,
+  toggleVerifiedOnly,
+  visibleHighlights,
+  toggleHighlight,
+}: BrowseToolbarProps) {
 
   const highlightPills = HIGHLIGHT_FILTER_PILLS.map(({ key, label, color }) => ({
     key,

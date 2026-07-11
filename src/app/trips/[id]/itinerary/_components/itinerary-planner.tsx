@@ -59,8 +59,7 @@ export function ItineraryPlanner({
     updateBlock,
   } = usePlanBlockEditor(trip);
 
-  const { allBlocksAttractions, blockColors, attractionToBlockMap } =
-    usePlanBlockMaps(planBlocks);
+  const { blockColors, attractionToBlockMap } = usePlanBlockMaps(planBlocks);
 
   const handleSelectAttraction = useCallback(
     (attractionId: number | null) => {
@@ -196,7 +195,7 @@ export function ItineraryPlanner({
           selectedBlockAttractions={selectedBlockAttractions}
           selectedBlockId={selectedBlockId}
           selectedAttractionId={selectedAttractionId}
-          allBlocksAttractions={allBlocksAttractions}
+          attractionToBlockMap={attractionToBlockMap}
           blockColors={blockColors}
           hoveredAttractionId={hoveredAttraction}
           planBlocks={planBlocks}

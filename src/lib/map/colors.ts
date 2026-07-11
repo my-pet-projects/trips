@@ -95,6 +95,20 @@ export const RAW_STATUS_COLORS: Record<RawStatusKey, MapColorDef> = {
   },
 };
 
+/** Marker fill color for any raw-status or highlight key (map markers + cluster pies). */
+export const MARKER_STATUS_COLORS: Record<
+  RawStatusKey | AttractionHighlightKey,
+  string
+> = {
+  pending: RAW_STATUS_COLORS.pending.hex,
+  rejected: RAW_STATUS_COLORS.rejected.hex,
+  duplicated: RAW_STATUS_COLORS.duplicated.hex,
+  must_see: HIGHLIGHT_COLORS.must_see.hex,
+  recommended: HIGHLIGHT_COLORS.recommended.hex,
+  skip: HIGHLIGHT_COLORS.skip.hex,
+  none: HIGHLIGHT_COLORS.none.hex,
+};
+
 export const HIGHLIGHT_FILTER_PILLS = (
   Object.entries(HIGHLIGHT_COLORS) as [AttractionHighlightKey, MapColorDef][]
 ).map(([key, { label, pill }]) => ({ key, label, color: pill }));

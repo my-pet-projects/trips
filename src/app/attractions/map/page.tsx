@@ -1,6 +1,6 @@
 import { MapPageLayout } from "~/app/_components/map-page-layout";
 import { Navbar } from "~/app/_components/navbar";
-import { BrowseMapView } from "./_components/browse-map-view";
+import { BrowseMap } from "./_components/browse-map";
 
 export const metadata = {
   title: "Attractions Map",
@@ -18,7 +18,7 @@ export default function AttractionsMapPage() {
         />
       }
     >
-      <BrowseMapView />
+      <BrowseMap />
     </MapPageLayout>
   );
 }

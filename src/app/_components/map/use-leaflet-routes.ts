@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 
 import { DEFAULT_BLOCK_COLOR } from "~/lib/map/colors";
 import type { RouteData } from "~/types";
-import { useInjectStyles } from "./useInjectStyles";
+import { useInjectStyles } from "./use-inject-styles";
 
 const ROUTE_STYLES = `
   @keyframes route-pulse {

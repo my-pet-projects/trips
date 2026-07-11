@@ -4,7 +4,7 @@ import { type Metadata } from "next";
 import { MapPageLayout } from "~/app/_components/map-page-layout";
 import { Navbar } from "~/app/_components/navbar";
 import { HydrateClient } from "~/trpc/server";
-import { RawTriageMapView } from "./_components/raw-triage-map-view";
+import { RawTriageMap } from "./_components/raw-triage-map";
 
 export const metadata: Metadata = {
   title: "Raw Attractions",
@@ -33,7 +33,7 @@ export default async function RawAttractionsPage({ searchParams }: PageProps) {
           />
         }
       >
-        <RawTriageMapView countryCode={country} />
+        <RawTriageMap countryCode={country} />
       </MapPageLayout>
     </HydrateClient>
   );

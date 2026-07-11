@@ -1,7 +1,7 @@
 import L from "leaflet";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useInjectStyles } from "./useInjectStyles";
+import { useInjectStyles } from "./use-inject-styles";
 
 const USER_LOCATION_ZOOM = 16;
 

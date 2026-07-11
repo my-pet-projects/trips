@@ -80,3 +80,5 @@ export function useRawTriage(countryCode: string | undefined) {
     promotionMapRef,
   };
 }
+
+export type RawTriage = ReturnType<typeof useRawTriage>;
