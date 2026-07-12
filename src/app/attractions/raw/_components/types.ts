@@ -33,3 +33,10 @@ export type TriageMapQueryInput = {
 };
 
 export { toAttractionHighlightKey as toHighlightIconKey };
+
+/** Normalize a raw attraction's status string to a discrete status key. */
+export function toRawStatusKey(status: string): StatusFilter {
+  if (status === "rejected") return "rejected";
+  if (status === "duplicated") return "duplicated";
+  return "pending";
+}

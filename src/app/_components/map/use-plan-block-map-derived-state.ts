@@ -1,23 +1,21 @@
 import { useMemo } from "react";
 
-import type { AttractionDetail, BasicAttraction } from "~/types";
+import type { AttractionDetail, BasicAttraction, PlanBlock } from "~/types";
 
-import type { AttractionMapStatus } from "./attraction-map-shell";
+import type { AttractionMapStatus } from "./base-attraction-map";
 
 export function usePlanBlockMapDerivedState(
-  allBlocksAttractions: Map<number, BasicAttraction[]>,
+  attractionToBlockMap: Map<number, PlanBlock>,
   selectedBlockAttractions: BasicAttraction[],
   selectedBlockId: number | null,
 ) {
-  const attractionToBlockMap = useMemo(() => {
+  const attractionToBlockId = useMemo(() => {
     const map = new Map<number, number>();
-    allBlocksAttractions.forEach((blockAttractions, blockId) => {
-      blockAttractions.forEach((attraction) => {
-        map.set(attraction.id, blockId);
-      });
+    attractionToBlockMap.forEach((block, attractionId) => {
+      map.set(attractionId, block.id);
     });
     return map;
-  }, [allBlocksAttractions]);
+  }, [attractionToBlockMap]);
 
   const selectedBlockAttractionOrders = useMemo(() => {
     const map = new Map<number, number>();
@@ -30,18 +28,18 @@ export function usePlanBlockMapDerivedState(
   const resolveAttractionStatus = useMemo(
     (): ((attraction: AttractionDetail) => AttractionMapStatus) =>
       (attraction) => {
-        const blockId = attractionToBlockMap.get(attraction.id);
+        const blockId = attractionToBlockId.get(attraction.id);
         return {
           blockId,
           isInAnyBlock: blockId !== undefined,
           isInSelectedBlock: blockId === selectedBlockId,
         };
       },
-    [attractionToBlockMap, selectedBlockId],
+    [attractionToBlockId, selectedBlockId],
   );
 
   return {
-    attractionToBlockMap,
+    attractionToBlockId,
     selectedBlockAttractionOrders,
     resolveAttractionStatus,
   };
