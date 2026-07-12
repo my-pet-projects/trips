@@ -34,7 +34,7 @@ export function useMarkerClusterGroup(
 
     const group = L.markerClusterGroup({
       iconCreateFunction: createTaggedClusterIcon,
-      maxClusterRadius: 60,
+      maxClusterRadius: 40,
       spiderfyOnMaxZoom: true,
       showCoverageOnHover: false,
       zoomToBoundsOnClick: true,
