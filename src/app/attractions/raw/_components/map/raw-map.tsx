@@ -141,9 +141,9 @@ export function RawMap({ countryCode, map }: RawMapProps) {
   // Reveal the selected marker (spiderfy/zoom + pan). Icon highlighting is
   // handled by each layer's `getVisual`.
   useEffect(() => {
-    const map = mapRef.current;
+    const leafletMap = mapRef.current;
     const clusterGroup = clusterRef.current;
-    if (!map || !clusterGroup || !selection) return;
+    if (!leafletMap || !clusterGroup || !selection) return;
 
     let target: L.Marker | undefined;
     if (selection.kind === "raw") {
@@ -160,7 +160,7 @@ export function RawMap({ countryCode, map }: RawMapProps) {
 
     clusterGroup.zoomToShowLayer(target, () => {
       const currentMap = mapRef.current;
-      if (!currentMap || currentMap !== map) return;
+      if (!currentMap || currentMap !== leafletMap) return;
       if (!clusterGroup.hasLayer(target)) return;
       currentMap.panTo(target.getLatLng(), { animate: true, duration: 0.35 });
     });

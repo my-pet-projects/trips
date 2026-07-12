@@ -121,11 +121,19 @@ export default function BaseAttractionMap({
   useEffect(() => {
     if (selectedAttractionDetail) {
       setPanelAttraction(selectedAttractionDetail);
-    } else if (selectedAttractionId) {
-      const fromMap = attractionsMap.get(selectedAttractionId);
-      if (fromMap && "city" in fromMap) {
-        setPanelAttraction(fromMap as AttractionDetail);
-      }
+      return;
+    }
+    if (!selectedAttractionId) return;
+    const fromMap = attractionsMap.get(selectedAttractionId);
+    if (fromMap && "city" in fromMap) {
+      setPanelAttraction(fromMap as AttractionDetail);
+    } else {
+      // A new marker is selected but its detail hasn't loaded yet (browse map
+      // passes summaries without `city`). Drop stale content so the panel never
+      // shows the previously-selected attraction under the new selection.
+      setPanelAttraction((prev) =>
+        prev && prev.id !== selectedAttractionId ? null : prev,
+      );
     }
   }, [selectedAttractionDetail, selectedAttractionId, attractionsMap]);
 

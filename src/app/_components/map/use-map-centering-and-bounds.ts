@@ -75,7 +75,7 @@ export const useMapCenteringAndBounds = ({
     }
 
     const attraction = attractionsMap.get(selectedAttractionId);
-    if (!attraction?.latitude || !attraction?.longitude) return;
+    if (attraction?.latitude == null || attraction?.longitude == null) return;
 
     // Wait until the detail panel reports its height (50% of map).
     if (panelHeight === 0) return;
@@ -109,7 +109,7 @@ export const useMapCenteringAndBounds = ({
 
     const map = mapRef.current;
     const validAttractions = selectedBlockAttractions.filter(
-      (a) => a.latitude && a.longitude,
+      (a) => a.latitude != null && a.longitude != null,
     );
 
     if (validAttractions.length === 0) return;
@@ -157,7 +157,7 @@ export const useMapCenteringAndBounds = ({
       return;
 
     const points = attractions
-      .filter((a) => a.latitude && a.longitude)
+      .filter((a) => a.latitude != null && a.longitude != null)
       .map((a) => [a.latitude!, a.longitude!] as [number, number]);
 
     const fitted = fitMapToPoints(mapRef.current, points, {

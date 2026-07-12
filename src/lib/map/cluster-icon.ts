@@ -17,11 +17,13 @@ export function createTaggedClusterIcon(cluster: L.MarkerCluster): L.DivIcon {
   const tally = new Map<string, ClusterSlice>();
   for (const marker of cluster.getAllChildMarkers()) {
     const tagged = marker as CircleTaggedMarker;
-    if (!tagged._metaTag) continue;
-    const entry = tally.get(tagged._metaTag);
+    // Untagged markers still get a slice (keyed by the default color) so the pie
+    // always accounts for every child and stays in sync with the center count.
+    const key = tagged._metaTag ?? DEFAULT_CIRCLE_COLOR;
+    const entry = tally.get(key);
     if (entry) entry.count++;
     else
-      tally.set(tagged._metaTag, {
+      tally.set(key, {
         color: tagged._metaColor ?? DEFAULT_CIRCLE_COLOR,
         count: 1,
       });

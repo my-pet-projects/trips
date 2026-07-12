@@ -157,6 +157,9 @@ export function useMarkerLayer<T>({
         markersRef.current.delete(id);
         markersRef.current.set(rekeyed.newId, marker);
         bindClick(marker, rekeyed.newId);
+        // Same layer-switch guard as the reattach branch below: detach from the
+        // old layer first so the marker is never live on two layers at once.
+        if (layerChanged) prevLayer?.removeLayer(marker);
         attachMarker(marker, clusterGroup, directMap);
         continue;
       }
