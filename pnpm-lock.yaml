@@ -13,7 +13,7 @@ importers:
         version: 1.6.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@clerk/nextjs':
         specifier: ^7.0.0
-        version: 7.5.15(next@16.2.10(@babel/core@7.29.7)(@playwright/test@1.61.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: 7.5.16(next@16.2.10(@babel/core@7.29.7)(@playwright/test@1.61.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.4.0(react-hook-form@7.81.0(react@19.2.7))
@@ -98,7 +98,7 @@ importers:
     devDependencies:
       '@clerk/testing':
         specifier: ^2.2.2
-        version: 2.2.5(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: 2.2.6(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@eslint/eslintrc':
         specifier: ^3.3.1
         version: 3.3.5
@@ -146,10 +146,10 @@ importers:
         version: 8.5.16
       prettier:
         specifier: ^3.5.3
-        version: 3.9.4
+        version: 3.9.5
       prettier-plugin-tailwindcss:
         specifier: ^0.8.0
-        version: 0.8.0(prettier@3.9.4)
+        version: 0.8.0(prettier@3.9.5)
       tailwindcss:
         specifier: ^4.0.15
         version: 4.3.2
@@ -333,8 +333,8 @@ packages:
     resolution: {integrity: sha512-w4SaKIMuXYJY9bU70ZHxNZtam0GYWlT0IIN7QHsZ1p9LC+v6P/JyHqVK9PNiXjcjVTZymMxkm5d9N6//9MBDzg==}
     engines: {node: '>=20.9.0'}
 
-  '@clerk/nextjs@7.5.15':
-    resolution: {integrity: sha512-CNRdvIZ9YHpDLJVng69Ot9qfxF2ycMml0fr8N1LhPLiTDZ//bkBtnK4/XL6sN/aNTygLeoN5nyFIlWDU+enu6w==}
+  '@clerk/nextjs@7.5.16':
+    resolution: {integrity: sha512-rvIw+xxQxi52qXhRONOKrSbV11mq4pJlJegBdYHG0jQOmR1qke13qBEIPj0H+lNokaOyD1g/flP51wcoQLEoRw==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       next: ^15.2.8 || ^15.3.8 || ^15.4.10 || ^15.5.9 || ^15.6.0-0 || ^16.0.10 || ^16.1.0-0
@@ -360,8 +360,8 @@ packages:
       react-dom:
         optional: true
 
-  '@clerk/testing@2.2.5':
-    resolution: {integrity: sha512-61xa8Wo76IVOQdVbUbAQvUl5IYGj600ayQbEybb28h8aXGH9sNUgXKWqpzjwBP2ndT9whLG9pQD5mAD9ixOktQ==}
+  '@clerk/testing@2.2.6':
+    resolution: {integrity: sha512-ChjFEWCaK1Cgj7W0VNqz+saUwaYPmTDy4CzO9t0yGWRSyPlU3rjgJeyRBdoBVqGUqS7qlJNtGTVL/iLhY49wWg==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       '@playwright/test': ^1
@@ -3572,8 +3572,8 @@ packages:
       prettier-plugin-svelte:
         optional: true
 
-  prettier@3.9.4:
-    resolution: {integrity: sha512-yWG/o/4oJfo036EKAfK6ACAoDOfHeRHx4tuxkfBZiauURiaSmYwlpOr5LQqKtIkRD2z1PLteme2WoxEnj4tHTg==}
+  prettier@3.9.5:
+    resolution: {integrity: sha512-/FVl766LpUfB5vXgCYOYa0MeV/441Ia99AeICQIQFTY/Nw0roZwULcXpku5i1/m5kt/baz+s4Zogspd839HSMg==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -4419,7 +4419,7 @@ snapshots:
       - react
       - react-dom
 
-  '@clerk/nextjs@7.5.15(next@16.2.10(@babel/core@7.29.7)(@playwright/test@1.61.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
+  '@clerk/nextjs@7.5.16(next@16.2.10(@babel/core@7.29.7)(@playwright/test@1.61.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@clerk/backend': 3.11.4(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@clerk/react': 6.12.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -4447,7 +4447,7 @@ snapshots:
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
 
-  '@clerk/testing@2.2.5(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
+  '@clerk/testing@2.2.6(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@clerk/backend': 3.11.4(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@clerk/shared': 4.25.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -7416,11 +7416,11 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier-plugin-tailwindcss@0.8.0(prettier@3.9.4):
+  prettier-plugin-tailwindcss@0.8.0(prettier@3.9.5):
     dependencies:
-      prettier: 3.9.4
+      prettier: 3.9.5
 
-  prettier@3.9.4: {}
+  prettier@3.9.5: {}
 
   pretty-ms@9.3.0:
     dependencies:
