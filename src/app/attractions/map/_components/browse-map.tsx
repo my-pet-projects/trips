@@ -19,11 +19,7 @@ export function BrowseMap() {
     loadErrorMessage,
     retryLoad,
     attractions,
-    counts,
-    showVerifiedOnly,
-    toggleVerifiedOnly,
-    visibleHighlights,
-    toggleHighlight,
+    filters,
     selectedAttractionId,
     selectedAttractionDetail,
     selectAttraction,
@@ -42,14 +38,7 @@ export function BrowseMap() {
         errorMessage={loadErrorMessage}
         onRetry={retryLoad}
       />
-      <BrowseToolbar
-        counts={counts}
-        attractions={attractions}
-        showVerifiedOnly={showVerifiedOnly}
-        toggleVerifiedOnly={toggleVerifiedOnly}
-        visibleHighlights={visibleHighlights}
-        toggleHighlight={toggleHighlight}
-      />
+      <BrowseToolbar filters={filters} />
       <BaseAttractionMap
         attractions={attractions}
         selectedAttractionId={selectedAttractionId}

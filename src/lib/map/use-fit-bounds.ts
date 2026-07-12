@@ -28,6 +28,10 @@ export function fitMapToPoints(
   return true;
 }
 
+/** Sentinel for "never fitted" — distinct from any `triggerKey` value,
+ * including `undefined`, so the first fit always runs. */
+const NEVER_FITTED = Symbol("never-fitted");
+
 export function useFitBounds(
   mapRef: RefObject<L.Map | null>,
   mapReady: boolean,
@@ -35,7 +39,9 @@ export function useFitBounds(
   triggerKey?: string,
   options?: FitBoundsOptions,
 ) {
-  const fittedForRef = useRef<string | undefined>(undefined);
+  const fittedForRef = useRef<string | undefined | typeof NEVER_FITTED>(
+    NEVER_FITTED,
+  );
 
   useEffect(() => {
     const map = mapRef.current;

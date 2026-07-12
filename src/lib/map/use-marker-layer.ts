@@ -144,7 +144,8 @@ export function useMarkerLayer<T>({
     const layer = clusterGroup ?? directMap;
     if (!layer) return;
 
-    const layerChanged = layerRef.current !== layer;
+    const prevLayer = layerRef.current;
+    const layerChanged = prevLayer !== layer;
     layerRef.current = layer;
     dataRef.current = items;
 
@@ -169,7 +170,13 @@ export function useMarkerLayer<T>({
       const existing = markersRef.current.get(id);
       if (existing) {
         bindClick(existing, id);
-        if (layerChanged) attachMarker(existing, clusterGroup, directMap);
+        if (layerChanged) {
+          // Detach from the previous layer before reattaching, so a marker is
+          // never live on two layers at once (avoids duplicates / markercluster
+          // parent-state errors when switching map <-> cluster group).
+          prevLayer?.removeLayer(existing);
+          attachMarker(existing, clusterGroup, directMap);
+        }
         continue;
       }
 

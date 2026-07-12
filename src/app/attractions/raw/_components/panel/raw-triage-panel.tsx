@@ -10,7 +10,7 @@ import {
   TooltipTrigger,
 } from "~/app/_components/ui/tooltip";
 import { cn } from "~/lib/utils";
-import type { RawTriage } from "../hooks/use-raw-triage";
+import type { RawTriagePanelData } from "../hooks/use-raw-triage";
 import { TriageActions } from "./triage-actions";
 
 function sourceLabel(source: string) {
@@ -33,26 +33,16 @@ const linkClass = buttonVariants({
   className: "h-7 gap-1.5 px-2.5 text-xs",
 });
 
-type RawTriagePanelProps = Pick<
-  RawTriage,
-  | "selection"
-  | "isLoading"
-  | "clearSelection"
-  | "isMutating"
-  | "onApprove"
-  | "onReject"
-  | "onDuplicated"
->;
-
-export function RawTriagePanel({
-  selection,
-  isLoading,
-  clearSelection,
-  isMutating,
-  onApprove,
-  onReject,
-  onDuplicated,
-}: RawTriagePanelProps) {
+export function RawTriagePanel({ panel }: { panel: RawTriagePanelData }) {
+  const {
+    selection,
+    isLoading,
+    clearSelection,
+    isMutating,
+    onApprove,
+    onReject,
+    onDuplicated,
+  } = panel;
   if (!selection || isLoading) return null;
 
   const { attraction } = selection;

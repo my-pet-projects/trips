@@ -5,28 +5,20 @@ import { useMemo } from "react";
 import { MapFilterBar } from "~/lib/map/map-filter-bar";
 import { HIGHLIGHT_FILTER_PILLS, STATUS_FILTER_PILLS } from "~/lib/map/colors";
 
-import type { RawTriage } from "../hooks/use-raw-triage";
+import type { RawTriageFilters } from "../hooks/use-raw-triage";
 import { RawCountrySelector } from "../raw-country-selector";
 
-type TriageToolbarProps = { countryCode?: string } & Pick<
-  RawTriage,
-  | "counts"
-  | "highlightCounts"
-  | "visibleStatuses"
-  | "toggleStatus"
-  | "visibleHighlights"
-  | "toggleHighlight"
->;
+type TriageToolbarProps = { countryCode?: string; filters: RawTriageFilters };
 
-export function TriageToolbar({
-  countryCode,
-  counts,
-  highlightCounts,
-  visibleStatuses,
-  toggleStatus,
-  visibleHighlights,
-  toggleHighlight,
-}: TriageToolbarProps) {
+export function TriageToolbar({ countryCode, filters }: TriageToolbarProps) {
+  const {
+    counts,
+    highlightCounts,
+    visibleStatuses,
+    toggleStatus,
+    visibleHighlights,
+    toggleHighlight,
+  } = filters;
 
   const statusPills = STATUS_FILTER_PILLS.map(({ key, label, color }) => ({
     key,

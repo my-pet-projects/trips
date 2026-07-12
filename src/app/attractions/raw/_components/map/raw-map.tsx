@@ -13,35 +13,24 @@ import { useMapClickDeselect } from "~/lib/map/use-map-click-deselect";
 import { useMarkerClusterGroup } from "~/lib/map/use-marker-cluster-group";
 import { useMarkerLayer } from "~/lib/map/use-marker-layer";
 
-import type { RawTriage } from "../hooks/use-raw-triage";
+import type { RawMapData } from "../hooks/use-raw-triage";
 import type { ExistingMapAttraction, RawMapAttraction } from "../types";
 import { toHighlightIconKey, toRawStatusKey } from "../types";
 
-export type RawMapProps = { countryCode?: string } & Pick<
-  RawTriage,
-  | "allPoints"
-  | "clearSelection"
-  | "rawAttractions"
-  | "existing"
-  | "selection"
-  | "selectRaw"
-  | "selectExisting"
-  | "resolveExistingId"
-  | "promotionMapRef"
->;
+export type RawMapProps = { countryCode?: string; map: RawMapData };
 
-export function RawMap({
-  countryCode,
-  allPoints,
-  clearSelection,
-  rawAttractions,
-  existing,
-  selection,
-  selectRaw,
-  selectExisting,
-  resolveExistingId,
-  promotionMapRef,
-}: RawMapProps) {
+export function RawMap({ countryCode, map }: RawMapProps) {
+  const {
+    allPoints,
+    clearSelection,
+    rawAttractions,
+    existing,
+    selection,
+    selectRaw,
+    selectExisting,
+    resolveExistingId,
+    promotionMapRef,
+  } = map;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { mapRef, mapReady } = useLeafletMap(containerRef, [], {
     center: [20, 0],
@@ -50,15 +39,15 @@ export function RawMap({
   });
 
   const existingById = useMemo(() => {
-    const map = new Map<number, ExistingMapAttraction>();
-    for (const a of existing) map.set(a.id, a);
-    return map;
+    const byId = new Map<number, ExistingMapAttraction>();
+    for (const a of existing) byId.set(a.id, a);
+    return byId;
   }, [existing]);
 
   const rawById = useMemo(() => {
-    const map = new Map<number, RawMapAttraction>();
-    for (const r of rawAttractions) map.set(r.id, r);
-    return map;
+    const byId = new Map<number, RawMapAttraction>();
+    for (const r of rawAttractions) byId.set(r.id, r);
+    return byId;
   }, [rawAttractions]);
 
   useFitBounds(mapRef, mapReady, allPoints, countryCode);

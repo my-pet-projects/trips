@@ -55,30 +55,42 @@ export function useRawTriage(countryCode: string | undefined) {
   });
 
   return {
-    rawAttractions: queries.rawAttractions,
-    existing: queries.existing,
     isLoading: queries.isLoading,
     isLoadError: queries.isLoadError,
     loadErrorMessage: queries.loadErrorMessage,
     retryLoad: queries.retryLoad,
-    visibleStatuses,
-    toggleStatus,
-    counts: queries.counts,
-    visibleHighlights,
-    toggleHighlight,
-    highlightCounts: queries.highlightCounts,
-    allPoints: queries.allPoints,
-    isMutating: mutations.isMutating,
-    selection: selectionState.selection,
-    selectRaw: selectionState.selectRaw,
-    selectExisting: selectionState.selectExisting,
-    clearSelection: selectionState.clearSelection,
-    onApprove: mutations.onApprove,
-    onReject: mutations.onReject,
-    onDuplicated: mutations.onDuplicated,
-    resolveExistingId,
-    promotionMapRef,
+    filters: {
+      counts: queries.counts,
+      highlightCounts: queries.highlightCounts,
+      visibleStatuses,
+      toggleStatus,
+      visibleHighlights,
+      toggleHighlight,
+    },
+    panel: {
+      selection: selectionState.selection,
+      isLoading: queries.isLoading,
+      clearSelection: selectionState.clearSelection,
+      isMutating: mutations.isMutating,
+      onApprove: mutations.onApprove,
+      onReject: mutations.onReject,
+      onDuplicated: mutations.onDuplicated,
+    },
+    map: {
+      allPoints: queries.allPoints,
+      rawAttractions: queries.rawAttractions,
+      existing: queries.existing,
+      selection: selectionState.selection,
+      selectRaw: selectionState.selectRaw,
+      selectExisting: selectionState.selectExisting,
+      clearSelection: selectionState.clearSelection,
+      resolveExistingId,
+      promotionMapRef,
+    },
   };
 }
 
-export type RawTriage = ReturnType<typeof useRawTriage>;
+type RawTriage = ReturnType<typeof useRawTriage>;
+export type RawTriageFilters = RawTriage["filters"];
+export type RawTriagePanelData = RawTriage["panel"];
+export type RawMapData = RawTriage["map"];

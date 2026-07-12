@@ -30,38 +30,11 @@ export function RawTriageMap({ countryCode }: { countryCode?: string }) {
         )}
       </MapStatusOverlays>
 
-      <TriageToolbar
-        countryCode={countryCode}
-        counts={triage.counts}
-        highlightCounts={triage.highlightCounts}
-        visibleStatuses={triage.visibleStatuses}
-        toggleStatus={triage.toggleStatus}
-        visibleHighlights={triage.visibleHighlights}
-        toggleHighlight={triage.toggleHighlight}
-      />
+      <TriageToolbar countryCode={countryCode} filters={triage.filters} />
 
-      <RawTriagePanel
-        selection={triage.selection}
-        isLoading={triage.isLoading}
-        clearSelection={triage.clearSelection}
-        isMutating={triage.isMutating}
-        onApprove={triage.onApprove}
-        onReject={triage.onReject}
-        onDuplicated={triage.onDuplicated}
-      />
+      <RawTriagePanel panel={triage.panel} />
 
-      <RawMap
-        countryCode={countryCode}
-        allPoints={triage.allPoints}
-        clearSelection={triage.clearSelection}
-        rawAttractions={triage.rawAttractions}
-        existing={triage.existing}
-        selection={triage.selection}
-        selectRaw={triage.selectRaw}
-        selectExisting={triage.selectExisting}
-        resolveExistingId={triage.resolveExistingId}
-        promotionMapRef={triage.promotionMapRef}
-      />
+      <RawMap countryCode={countryCode} map={triage.map} />
     </div>
   );
 }

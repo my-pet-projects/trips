@@ -7,26 +7,17 @@ import {
   type AttractionHighlightKey,
 } from "~/lib/map/colors";
 
-import type { BrowseMapState } from "../hooks/use-browse-map";
+import type { BrowseFilters } from "../hooks/use-browse-map";
 
-type BrowseToolbarProps = Pick<
-  BrowseMapState,
-  | "counts"
-  | "attractions"
-  | "showVerifiedOnly"
-  | "toggleVerifiedOnly"
-  | "visibleHighlights"
-  | "toggleHighlight"
->;
-
-export function BrowseToolbar({
-  counts,
-  attractions,
-  showVerifiedOnly,
-  toggleVerifiedOnly,
-  visibleHighlights,
-  toggleHighlight,
-}: BrowseToolbarProps) {
+export function BrowseToolbar({ filters }: { filters: BrowseFilters }) {
+  const {
+    counts,
+    shownCount,
+    showVerifiedOnly,
+    toggleVerifiedOnly,
+    visibleHighlights,
+    toggleHighlight,
+  } = filters;
 
   const highlightPills = HIGHLIGHT_FILTER_PILLS.map(({ key, label, color }) => ({
     key,
@@ -44,7 +35,7 @@ export function BrowseToolbar({
     <MapFilterBar
       desktopSummary={
         <span className="whitespace-nowrap text-xs font-medium text-gray-500">
-          {attractions.length.toLocaleString()} shown · {counts.total.toLocaleString()} total
+          {shownCount.toLocaleString()} shown · {counts.total.toLocaleString()} total
         </span>
       }
       groups={[
@@ -66,7 +57,7 @@ export function BrowseToolbar({
         <div className="flex justify-center">
           <div className="rounded-xl border border-gray-200 bg-white/95 px-3 py-1.5 shadow-md backdrop-blur-sm">
             <span className="text-xs font-medium text-gray-500">
-              {attractions.length.toLocaleString()} shown
+              {shownCount.toLocaleString()} shown
             </span>
           </div>
         </div>
