@@ -164,7 +164,10 @@ export function useMarkerLayer<T>({
         continue;
       }
 
-      if (clusterGroup) clusterGroup.removeLayer(marker);
+      // On a layer switch the marker still lives on the previous layer, so
+      // detach it there — otherwise it lingers as a ghost on the old layer.
+      if (layerChanged) prevLayer?.removeLayer(marker);
+      else if (clusterGroup) clusterGroup.removeLayer(marker);
       else marker.remove();
       markersRef.current.delete(id);
     }
