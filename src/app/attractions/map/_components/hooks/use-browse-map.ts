@@ -10,6 +10,21 @@ import {
 import { useSetToggleFilter } from "~/lib/map/use-set-toggle-filter";
 import { api } from "~/trpc/react";
 
+export type BrowseCounts = Record<AttractionHighlightKey, number> & {
+  total: number;
+  verified: number;
+};
+
+/** Filter state + counts consumed by the browse toolbar. */
+export type BrowseFilters = {
+  counts: BrowseCounts;
+  shownCount: number;
+  showVerifiedOnly: boolean;
+  toggleVerifiedOnly: () => void;
+  visibleHighlights: Set<AttractionHighlightKey>;
+  toggleHighlight: (key: AttractionHighlightKey) => void;
+};
+
 export function useBrowseMap() {
   const [selectedAttractionId, setSelectedAttractionId] = useState<number | null>(null);
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
@@ -66,7 +81,7 @@ export function useBrowseMap() {
     },
   });
 
-  const counts = useMemo(() => {
+  const counts: BrowseCounts = useMemo(() => {
     const list = allAttractions ?? [];
     const result = {
       total: list.length,
@@ -149,17 +164,32 @@ export function useBrowseMap() {
     return error.message || "Failed to load attractions";
   }, [error]);
 
+  const filters = useMemo<BrowseFilters>(
+    () => ({
+      counts,
+      shownCount: attractions.length,
+      showVerifiedOnly,
+      toggleVerifiedOnly,
+      visibleHighlights,
+      toggleHighlight,
+    }),
+    [
+      counts,
+      attractions.length,
+      showVerifiedOnly,
+      toggleVerifiedOnly,
+      visibleHighlights,
+      toggleHighlight,
+    ],
+  );
+
   return {
     isLoading,
     isError,
     loadErrorMessage,
     retryLoad,
     attractions,
-    counts,
-    showVerifiedOnly,
-    toggleVerifiedOnly,
-    visibleHighlights,
-    toggleHighlight,
+    filters,
     selectedAttractionId,
     selectedAttractionDetail,
     selectAttraction,

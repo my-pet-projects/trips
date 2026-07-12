@@ -28,7 +28,7 @@ export function ItineraryViewer({
     number | null
   >(null);
 
-  const { allBlocksAttractions, blockColors } = usePlanBlockMaps(planBlocks);
+  const { blockColors, attractionToBlockMap } = usePlanBlockMaps(planBlocks);
 
   const selectedBlock = useMemo(
     () => planBlocks.find((b) => b.id === selectedBlockId),
@@ -142,7 +142,7 @@ export function ItineraryViewer({
             selectedBlockAttractions={selectedBlock?.attractions ?? []}
             selectedBlockId={selectedBlockId}
             selectedAttractionId={selectedAttractionId}
-            allBlocksAttractions={allBlocksAttractions}
+            attractionToBlockMap={attractionToBlockMap}
             blockColors={blockColors}
             hoveredAttractionId={null}
             planBlocks={planBlocks}
