@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 
 import { DEFAULT_BLOCK_COLOR } from "~/lib/map/colors";
 import type { RouteData } from "~/types";
-import { useInjectStyles } from "./useInjectStyles";
+import { useInjectStyles } from "./use-inject-styles";
 
 const ROUTE_STYLES = `
   @keyframes route-pulse {
@@ -52,7 +52,6 @@ export const useLeafletRoutes = (
 
     const map = mapRef.current;
 
-    // Remove all existing polylines
     blockPolylinesRef.current.forEach(({ main, legs }) => {
       main.remove();
       legs.forEach(({ polyline }) => polyline.remove());
@@ -139,7 +138,6 @@ export const useLeafletRoutes = (
     blockPolylinesRef.current.forEach(({ main, legs }, dayId) => {
       const isSelectedBlock = dayId === selectedBlockId;
 
-      // Main polyline opacity
       let weight = isSelectedBlock ? 4 : 3;
       let opacity = isSelectedBlock ? 0.8 : 0.5;
       if (isSelectedBlock && hasActiveLeg) {
@@ -148,7 +146,6 @@ export const useLeafletRoutes = (
       }
       main.setStyle({ opacity, weight });
 
-      // Leg polylines
       legs.forEach(({ polyline, fromAttractionId, toAttractionId }) => {
         const isLegSelected =
           selectedAttractionId === fromAttractionId ||

@@ -96,10 +96,6 @@ function buildDivIcon(icon: CircleMarkerIconResult): L.DivIcon {
   });
 }
 
-export function applyCircleMarkerIcon(marker: L.Marker, icon: CircleMarkerIconResult) {
-  marker.setIcon(buildDivIcon(icon));
-}
-
 export function circleMarkerDivIcon(options: CircleMarkerIconOptions): L.DivIcon {
   return buildDivIcon(createCircleMarkerIcon(options));
 }

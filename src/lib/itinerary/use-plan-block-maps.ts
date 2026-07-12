@@ -1,15 +1,9 @@
 import { useMemo } from "react";
 
 import { getPlanBlockColor } from "~/lib/map/colors";
-import type { BasicAttraction, PlanBlock } from "~/types";
+import type { PlanBlock } from "~/types";
 
 export function usePlanBlockMaps(planBlocks: PlanBlock[]) {
-  const allBlocksAttractions = useMemo(() => {
-    const map = new Map<number, BasicAttraction[]>();
-    planBlocks.forEach((block) => map.set(block.id, block.attractions));
-    return map;
-  }, [planBlocks]);
-
   const blockColors = useMemo(() => {
     const map = new Map<number, string>();
     planBlocks.forEach((block, index) =>
@@ -26,5 +20,5 @@ export function usePlanBlockMaps(planBlocks: PlanBlock[]) {
     return map;
   }, [planBlocks]);
 
-  return { allBlocksAttractions, blockColors, attractionToBlockMap };
+  return { blockColors, attractionToBlockMap };
 }

@@ -5,47 +5,7 @@ import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import { useLayoutEffect, useRef, useState, type RefObject } from "react";
 
-export type MarkerClusterGroupOptions = {
-  iconCreateFunction: (cluster: L.MarkerCluster) => L.DivIcon;
-  maxClusterRadius?: number;
-  chunkedLoading?: boolean;
-  spiderfyOnMaxZoom?: boolean;
-  showCoverageOnHover?: boolean;
-  zoomToBoundsOnClick?: boolean;
-  disableClusteringAtZoom?: number;
-  animate?: boolean;
-  onClusterClick?: () => void;
-};
-
-function createClusterGroup(
-  map: L.Map,
-  optionsRef: RefObject<MarkerClusterGroupOptions>,
-) {
-  const options = optionsRef.current;
-  const group = L.markerClusterGroup({
-    iconCreateFunction: options.iconCreateFunction,
-    maxClusterRadius: options.maxClusterRadius ?? 60,
-    chunkedLoading: options.chunkedLoading ?? false,
-    spiderfyOnMaxZoom: options.spiderfyOnMaxZoom ?? true,
-    showCoverageOnHover: options.showCoverageOnHover ?? false,
-    zoomToBoundsOnClick: options.zoomToBoundsOnClick ?? true,
-    disableClusteringAtZoom: options.disableClusteringAtZoom,
-    animate: options.animate ?? true,
-  });
-
-  const handleClusterClick = () => optionsRef.current.onClusterClick?.();
-  group.on("clusterclick", handleClusterClick);
-
-  map.addLayer(group);
-
-  return {
-    group,
-    cleanup: () => {
-      group.off("clusterclick", handleClusterClick);
-      map.removeLayer(group);
-    },
-  };
-}
+import { createTaggedClusterIcon } from "./cluster-icon";
 
 export type MarkerClusterGroupHandle = {
   clusterRef: RefObject<L.MarkerClusterGroup | null>;
@@ -55,14 +15,14 @@ export type MarkerClusterGroupHandle = {
 /** Cluster group bound to an imperative map ref (waits until mapReady). */
 export function useMarkerClusterGroup(
   mapRef: RefObject<L.Map | null>,
-  options: MarkerClusterGroupOptions,
   enabled: boolean,
   mapReady: boolean,
+  onClusterClick?: () => void,
 ): MarkerClusterGroupHandle {
   const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
   const [clusterGen, setClusterGen] = useState(0);
-  const optionsRef = useRef(options);
-  optionsRef.current = options;
+  const onClusterClickRef = useRef(onClusterClick);
+  onClusterClickRef.current = onClusterClick;
 
   useLayoutEffect(() => {
     const map = mapRef.current;
@@ -72,12 +32,23 @@ export function useMarkerClusterGroup(
       return;
     }
 
-    const { group, cleanup } = createClusterGroup(map, optionsRef);
+    const group = L.markerClusterGroup({
+      iconCreateFunction: createTaggedClusterIcon,
+      maxClusterRadius: 40,
+      spiderfyOnMaxZoom: true,
+      showCoverageOnHover: false,
+      zoomToBoundsOnClick: true,
+    });
+    const handleClusterClick = () => onClusterClickRef.current?.();
+    group.on("clusterclick", handleClusterClick);
+    map.addLayer(group);
+
     clusterRef.current = group;
     setClusterGen((g) => g + 1);
 
     return () => {
-      cleanup();
+      group.off("clusterclick", handleClusterClick);
+      map.removeLayer(group);
       clusterRef.current = null;
       setClusterGen((g) => g + 1);
     };

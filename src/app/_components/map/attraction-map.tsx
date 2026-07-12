@@ -1,10 +1,9 @@
 "use client";
 
-import L, { divIcon } from "leaflet";
+import L from "leaflet";
 import "~/lib/map/leaflet-styles";
 import { AlertCircle, BuildingIcon } from "lucide-react";
-import React, { useEffect, useRef } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
+import { useEffect, useRef } from "react";
 
 import {
   Alert,
@@ -14,8 +13,14 @@ import {
 import { Spinner } from "~/app/_components/ui/spinner";
 import { api } from "~/trpc/react";
 import { normalizePoiName, type NearbyPoi } from "~/lib/geo/nearby-pois";
+import {
+  createAttractionIcon,
+  createDivIcon,
+} from "~/lib/map/marker-icons/attraction";
 import { bindMarkerTooltip } from "~/lib/map/marker-tooltip";
 import type { City } from "~/types";
+
+import { useLeafletMap } from "./use-leaflet-map";
 
 interface AttractionMapProps {
   latitude: number;
@@ -33,75 +38,14 @@ const DEFAULT_ZOOM = 13;
 const COORDINATE_THRESHOLD = 0.001;
 const SEARCH_RADIUS_DEGREES = 0.3;
 
-const createDivIcon = (IconComponent: React.ElementType, color: string, size: number) => {
-  const iconHtml = renderToStaticMarkup(
-    <IconComponent
-      size={size}
-      style={{
-        display: "block",
-        color: color,
-      }}
-    />,
-  );
-
-  return divIcon({
-    html: iconHtml,
-    className: "custom-div-icon",
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size],
-    popupAnchor: [0, -size],
-  });
-};
-
-function createAttractionIcon({ color = "#ff4d4f", size = 40, pulse = true }) {
-  const s = Math.max(16, Math.min(128, size));
-  const outer = Math.round(s * 1.4);
-  const halfOuter = outer / 2;
-  const outerThird = outer / 3;
-  const pinOffset = (outer - s) / 2;
-  const anchorY = outer * 0.9;
-
-  const svg = `
-<svg xmlns='http://www.w3.org/2000/svg' width='${outer}' height='${outer}' viewBox='0 0 ${outer} ${outer}'>
-<style>
-.pulse { 
-  transform-origin: ${halfOuter}px ${halfOuter}px; 
-  animation: pulse 1.8s infinite ease-out; 
-}
-@keyframes pulse { 
-  0% { opacity: .6; transform: scale(0.9); } 
-  60% { opacity: .14; transform: scale(1.5); } 
-  100% { opacity: 0; transform: scale(1.8); } 
-}
-.pin { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25)); }
-</style>
-
-${pulse ? `<circle class='pulse' cx='${halfOuter}' cy='${halfOuter}' r='${outerThird}' fill='${color}' />` : ""}
-
-<g class='pin' transform='translate(${pinOffset}, ${pinOffset})'>
-  <svg x='0' y='0' width='${s}' height='${s}' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'>
-    <path d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z' fill='${color}' />
-    <circle cx='12' cy='9' r='3.2' fill='white' fill-opacity='0.96' />
-    <circle cx='12' cy='9' r='1.2' fill='${color}' />
-  </svg>
-</g>
-</svg>
-`;
-
-  return L.divIcon({
-    className: "leaflet-attraction-icon",
-    html: svg,
-    iconSize: [outer, outer],
-    iconAnchor: [halfOuter, anchorY],
-    popupAnchor: [0, -anchorY],
-    tooltipAnchor: [0, -anchorY],
-  });
-}
-
 const CURRENT_CITY_MARKER_ICON = createDivIcon(BuildingIcon, "blue", 32);
 const NEAREST_CITY_MARKER_ICON = createDivIcon(BuildingIcon, "green", 32);
 const ATTRACTION_MARKER_ICON = createAttractionIcon({});
-const POI_MARKER_ICON = createAttractionIcon({ color: "#6366f1", size: 28, pulse: false });
+const POI_MARKER_ICON = createAttractionIcon({
+  color: "#6366f1",
+  size: 28,
+  pulse: false,
+});
 const POI_SELECTED_MARKER_ICON = createAttractionIcon({
   color: "#f97316",
   size: 28,
@@ -135,7 +79,6 @@ export function AttractionMap({
   className,
 }: AttractionMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<L.Map | null>(null);
   const attractionMarkerRef = useRef<L.Marker | null>(null);
   const cityMarkersRef = useRef<L.Marker[]>([]);
   const poiMarkersRef = useRef<L.Marker[]>([]);
@@ -145,6 +88,12 @@ export function AttractionMap({
   const initialCoordsRef = useRef({ lat: latitude, lng: longitude });
   onCoordinatesChangeRef.current = onCoordinatesChange;
   onPoiSelectRef.current = onPoiSelect;
+
+  const { mapRef, mapReady } = useLeafletMap(containerRef, [], {
+    center: [initialCoordsRef.current.lat, initialCoordsRef.current.lng],
+    zoom: DEFAULT_ZOOM,
+    attributionControl: false,
+  });
 
   const {
     data: nearbyCities,
@@ -171,22 +120,13 @@ export function AttractionMap({
   ).filter((city) => city.id !== currentCity?.id);
 
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return;
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
 
-    const map = L.map(containerRef.current, {
-      center: [initialCoordsRef.current.lat, initialCoordsRef.current.lng],
-      zoom: DEFAULT_ZOOM,
-      scrollWheelZoom: true,
-      attributionControl: false,
-    });
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-    }).addTo(map);
-
-    map.on("click", (e) => {
+    const handleClick = (e: L.LeafletMouseEvent) => {
       onCoordinatesChangeRef.current(e.latlng.lat, e.latlng.lng);
-    });
+    };
+    map.on("click", handleClick);
 
     const marker = L.marker(
       [initialCoordsRef.current.lat, initialCoordsRef.current.lng],
@@ -201,15 +141,14 @@ export function AttractionMap({
       onCoordinatesChangeRef.current(latLng.lat, latLng.lng);
     });
 
-    mapRef.current = map;
     attractionMarkerRef.current = marker;
 
     return () => {
-      map.remove();
-      mapRef.current = null;
+      map.off("click", handleClick);
+      marker.remove();
       attractionMarkerRef.current = null;
     };
-  }, []);
+  }, [mapRef, mapReady]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -221,14 +160,17 @@ export function AttractionMap({
     const latDiff = Math.abs(latitude - prevCoordsRef.current.lat);
     const lngDiff = Math.abs(longitude - prevCoordsRef.current.lng);
     if (latDiff > COORDINATE_THRESHOLD || lngDiff > COORDINATE_THRESHOLD) {
-      map.setView([latitude, longitude], map.getZoom(), { animate: true, duration: 0.5 });
+      map.setView([latitude, longitude], map.getZoom(), {
+        animate: true,
+        duration: 0.5,
+      });
       prevCoordsRef.current = { lat: latitude, lng: longitude };
     }
-  }, [latitude, longitude]);
+  }, [latitude, longitude, mapReady, mapRef]);
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !mapReady) return;
 
     for (const marker of cityMarkersRef.current) {
       marker.remove();
@@ -251,11 +193,11 @@ export function AttractionMap({
       marker.bindPopup(city.name);
       cityMarkersRef.current.push(marker);
     }
-  }, [currentCity, cities]);
+  }, [currentCity, cities, mapReady, mapRef]);
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !mapReady) return;
 
     for (const marker of poiMarkersRef.current) {
       marker.remove();
@@ -292,7 +234,7 @@ export function AttractionMap({
 
       poiMarkersRef.current.push(marker);
     }
-  }, [nearbyPois, selectedPoiName, highlightedPoi]);
+  }, [nearbyPois, selectedPoiName, highlightedPoi, mapReady, mapRef]);
 
   return (
     <div className={className}>
@@ -312,7 +254,9 @@ export function AttractionMap({
       {(isLoading || loadingExtended) && (
         <Alert className="mb-2 border-blue-200 bg-blue-50 [&>svg]:text-blue-600">
           <Spinner className="size-4 text-blue-600" />
-          <AlertTitle className="text-blue-900">Loading nearby cities</AlertTitle>
+          <AlertTitle className="text-blue-900">
+            Loading nearby cities
+          </AlertTitle>
           <AlertDescription className="text-blue-800">
             Fetching map data…
           </AlertDescription>
