@@ -4,7 +4,6 @@ export type MapColorDef = {
   hex: string;
   pill: string;
   label: string;
-  /** Filled action button classes matching this marker color */
   button: string;
 };
 

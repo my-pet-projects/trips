@@ -27,16 +27,13 @@ function syncTooltip(marker: L.Marker, label: string) {
   bindMarkerTooltip(marker, label);
 }
 
-/** How a single marker should look right now. Returned by `getVisual`. */
 export type MarkerVisual = {
   icon: L.DivIcon;
   zIndexOffset?: number;
-  /** Cluster-pie tag; `null`/omitted excludes the marker from pies. */
   tag?: { key: string; color: string } | null;
 };
 
 export type MarkerLayerOptions<T> = {
-  /** Render into a cluster group, or set `mapRef` for un-clustered markers. */
   clusterRef?: RefObject<L.MarkerClusterGroup | null>;
   clusterGen?: number;
   mapRef?: RefObject<L.Map | null>;
@@ -44,15 +41,10 @@ export type MarkerLayerOptions<T> = {
   items: Map<number, T>;
   getLatLng: (item: T) => [number, number];
   getLabel?: (item: T) => string;
-  /**
-   * Full visual description for an item (icon, z-index, cluster tag). Memoize
-   * this with `useCallback` — every marker is restyled whenever its identity
-   * changes, so its dependency list is what drives interaction restyles
-   * (selection, hover, block colors, …).
-   */
+  // Memoize with `useCallback`: its identity is what drives interaction
+  // restyles (selection, hover, block colors, …).
   getVisual: (item: T) => MarkerVisual;
   onSelect: (item: T) => void;
-  /** Stop the marker click from reaching the map (e.g. to avoid deselect). */
   stopClickPropagation?: boolean;
   tryRekey?: (
     id: number,
@@ -65,9 +57,7 @@ export type MarkerLayerOptions<T> = {
  * The single data-driven Leaflet marker layer. Diffs a `Map<id, item>` against
  * the live markers (create / remove / re-key), attaches them to a cluster group
  * or the map directly, binds a selection click, and (re)applies the caller's
- * `getVisual` on create and whenever `restyleDeps` change. Callers decide how a
- * marker looks — a plain colored circle or a rich descriptor circle — while all
- * the plumbing stays here.
+ * `getVisual` on create and whenever it changes.
  */
 export function useMarkerLayer<T>({
   clusterRef,

@@ -12,7 +12,6 @@ type MapStatusOverlaysProps = {
   errorMessage?: string | null;
   onRetry: () => void;
   loadingLabel?: string;
-  /** Extra overlay content (e.g. an empty-state prompt) rendered above the rest. */
   children?: ReactNode;
 };
 

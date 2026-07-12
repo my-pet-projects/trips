@@ -52,7 +52,6 @@ const createCurrentLocationMarkerIcon = (size: number) => {
 };
 
 const GEOLOCATION_MARKER_STYLES = `
-  /* Keyframes for the pulsing ring animation */
   @keyframes pulse-location-ring {
     0% {
       transform: scale(0.6);
@@ -64,7 +63,6 @@ const GEOLOCATION_MARKER_STYLES = `
     }
   }
 
-  /* Style for the pulsating outer ring element */
   .current-location-pulse-ring {
     animation: pulse-location-ring 2s ease-out infinite;
   }
