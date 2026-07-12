@@ -164,20 +164,32 @@ export function useBrowseMap() {
     return error.message || "Failed to load attractions";
   }, [error]);
 
-  return {
-    isLoading,
-    isError,
-    loadErrorMessage,
-    retryLoad,
-    attractions,
-    filters: {
+  const filters = useMemo<BrowseFilters>(
+    () => ({
       counts,
       shownCount: attractions.length,
       showVerifiedOnly,
       toggleVerifiedOnly,
       visibleHighlights,
       toggleHighlight,
-    },
+    }),
+    [
+      counts,
+      attractions.length,
+      showVerifiedOnly,
+      toggleVerifiedOnly,
+      visibleHighlights,
+      toggleHighlight,
+    ],
+  );
+
+  return {
+    isLoading,
+    isError,
+    loadErrorMessage,
+    retryLoad,
+    attractions,
+    filters,
     selectedAttractionId,
     selectedAttractionDetail,
     selectAttraction,
