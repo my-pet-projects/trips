@@ -3,7 +3,12 @@ import { toast } from "sonner";
 
 import { getTrpcErrorMessage } from "~/lib/trpc-error-message";
 import { api } from "~/trpc/react";
-import type { AttractionDetail, PlanBlock, PlanBlockFieldPatch, Trip } from "~/types";
+import type {
+  AttractionDetail,
+  PlanBlock,
+  PlanBlockFieldPatch,
+  Trip,
+} from "~/types";
 
 const AUTO_SAVE_DELAY_MS = 500;
 
@@ -115,34 +120,35 @@ export function usePlanBlockEditor(trip: Trip) {
   const cancelledTempIds = useRef(new Set<number>());
   const silentDeleteIds = useRef(new Set<number>());
   const planBlocksRef = useRef(planBlocks);
+  const saveErrorRef = useRef<string | null>(null);
   planBlocksRef.current = planBlocks;
 
   const { mutate: savePlanBlocks, isPending: isSavingBlocks } =
     api.itinerary.updatePlanBlocks.useMutation({
-    onSuccess: (_, variables) => {
-      lastSavedSnapshot.current = serializeSavedBlocks(
-        variables.blocks as Array<{
-          id: number;
-          name: string;
-          blockNumber: number;
-          pinnedStartDate: Date | null;
-          pinnedEndDate: Date | null;
-          attractions: Array<{ attractionId: number }>;
-        }>,
-      );
-      setSaveError(null);
-      void utils.trip.invalidate();
-    },
-    onError: (err) => {
-      const message = getTrpcErrorMessage(err);
-      setSaveError((prev) => {
-        if (!prev) {
+      onSuccess: (_, variables) => {
+        lastSavedSnapshot.current = serializeSavedBlocks(
+          variables.blocks as Array<{
+            id: number;
+            name: string;
+            blockNumber: number;
+            pinnedStartDate: Date | null;
+            pinnedEndDate: Date | null;
+            attractions: Array<{ attractionId: number }>;
+          }>,
+        );
+        saveErrorRef.current = null;
+        setSaveError(null);
+        void utils.trip.invalidate();
+      },
+      onError: (err) => {
+        const message = getTrpcErrorMessage(err);
+        if (!saveErrorRef.current) {
           toast.error("Could not save changes", { description: message });
         }
-        return message;
-      });
-    },
-  });
+        saveErrorRef.current = message;
+        setSaveError(message);
+      },
+    });
 
   const deleteBlock = api.itinerary.deletePlanBlock.useMutation({
     onSuccess: (_, variables) => {
@@ -353,30 +359,43 @@ export function usePlanBlockEditor(trip: Trip) {
       const index = newBlocks.findIndex((b) => b.id === blockId);
       if (index === -1) return prevBlocks;
 
-      const targetIndex = direction === "up" ? index - 1 : index + 1;
-      if (targetIndex < 0 || targetIndex >= newBlocks.length) return prevBlocks;
+      const undatedIndices = newBlocks
+        .map((block, blockIndex) => (block.pinnedStartDate ? -1 : blockIndex))
+        .filter((blockIndex) => blockIndex >= 0);
+      const undatedPosition = undatedIndices.indexOf(index);
+      const targetPosition =
+        direction === "up" ? undatedPosition - 1 : undatedPosition + 1;
+      const targetIndex = undatedIndices[targetPosition];
+      if (undatedPosition === -1 || targetIndex === undefined) {
+        return prevBlocks;
+      }
 
-      const [movedBlock] = newBlocks.splice(index, 1);
-      newBlocks.splice(targetIndex, 0, movedBlock!);
+      [newBlocks[index], newBlocks[targetIndex]] = [
+        newBlocks[targetIndex]!,
+        newBlocks[index]!,
+      ];
 
       return newBlocks.map((b, i) => ({ ...b, blockNumber: i + 1 }));
     });
   }, []);
 
-  const updateBlock = useCallback((blockId: number, patch: PlanBlockFieldPatch) => {
-    setPlanBlocks((prev) =>
-      prev.map((block) => {
-        if (block.id !== blockId) return block;
-        return {
-          ...block,
-          ...patch,
-          ...(patch.name !== undefined
-            ? { name: patch.name.slice(0, 100) }
-            : {}),
-        };
-      }),
-    );
-  }, []);
+  const updateBlock = useCallback(
+    (blockId: number, patch: PlanBlockFieldPatch) => {
+      setPlanBlocks((prev) =>
+        prev.map((block) => {
+          if (block.id !== blockId) return block;
+          return {
+            ...block,
+            ...patch,
+            ...(patch.name !== undefined
+              ? { name: patch.name.slice(0, 100) }
+              : {}),
+          };
+        }),
+      );
+    },
+    [],
+  );
 
   return {
     planBlocks,
