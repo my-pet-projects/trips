@@ -16,6 +16,7 @@ import type { PlanBlock, PlanBlockFieldPatch, Trip } from "~/types";
 import { PlanDateRange } from "./plan-date-range";
 import { Badge } from "~/app/_components/ui/badge";
 import { Button } from "~/app/_components/ui/button";
+import { Card } from "~/app/_components/ui/card";
 import { Input } from "~/app/_components/ui/input";
 import { Separator } from "~/app/_components/ui/separator";
 import { Spinner } from "~/app/_components/ui/spinner";
@@ -31,6 +32,8 @@ export type PlanBlockCardState = {
   isSelected: boolean;
   isRemoving: boolean;
   selectedAttractionId: number | null;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
 };
 
 export type PlanBlockCardActions = {
@@ -59,7 +62,13 @@ export function PlanBlockCard({
   state,
   actions,
 }: PlanBlockCardProps) {
-  const { isSelected, isRemoving, selectedAttractionId } = state;
+  const {
+    isSelected,
+    isRemoving,
+    selectedAttractionId,
+    canMoveUp,
+    canMoveDown,
+  } = state;
   const {
     select,
     update,
@@ -81,9 +90,9 @@ export function PlanBlockCard({
   const attractionCount = block.attractions.length;
 
   return (
-    <div
+    <Card
       onClick={select}
-      className={`group/card w-full cursor-pointer rounded-xl border-2 bg-white p-4 transition-all duration-300 ${
+      className={`w-full cursor-pointer gap-0 border-2 bg-white p-4 py-4 transition-all duration-300 ${
         isSelected
           ? "ring-opacity-20 shadow-lg ring-2"
           : "border-gray-200 shadow-sm hover:border-gray-300 hover:shadow-md"
@@ -112,7 +121,7 @@ export function PlanBlockCard({
               value={block.name}
               maxLength={100}
               aria-label="Plan name"
-              className="h-8 border-transparent bg-transparent px-1 font-semibold shadow-none hover:border-gray-200 focus-visible:border-input"
+              className="focus-visible:border-input h-8 border-transparent bg-transparent px-1 font-semibold shadow-none hover:border-gray-200"
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
@@ -130,53 +139,58 @@ export function PlanBlockCard({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <div className="flex overflow-hidden rounded-lg border border-gray-300 bg-linear-to-b from-white to-gray-50 shadow-sm">
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    className="px-2 py-1.5 text-gray-600 hover:bg-blue-50 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      move("up");
-                    }}
-                    disabled={block.blockNumber === 1 || isRemoving}
-                    aria-label="Move plan up"
-                  />
-                }
-              >
-                <ChevronUp className="h-4 w-4 transition-transform" />
-              </TooltipTrigger>
-              <TooltipContent>Move plan up</TooltipContent>
-            </Tooltip>
-            <Separator orientation="vertical" className="h-auto" />
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    className="px-2 py-1.5 text-gray-600 hover:bg-blue-50 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      move("down");
-                    }}
-                    disabled={isRemoving}
-                    aria-label="Move plan down"
-                  />
-                }
-              >
-                <ChevronDown className="h-4 w-4 transition-transform" />
-              </TooltipTrigger>
-              <TooltipContent>Move plan down</TooltipContent>
-            </Tooltip>
-          </div>
+          {!block.pinnedStartDate && (
+            <div className="flex overflow-hidden rounded-lg border border-gray-300 bg-linear-to-b from-white to-gray-50 shadow-sm">
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="px-2 py-1.5 text-gray-600 hover:bg-blue-50 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        move("up");
+                      }}
+                      disabled={!canMoveUp || isRemoving}
+                      aria-label="Move plan up"
+                    />
+                  }
+                >
+                  <ChevronUp className="h-4 w-4 transition-transform" />
+                </TooltipTrigger>
+                <TooltipContent>Move plan up</TooltipContent>
+              </Tooltip>
+              <Separator orientation="vertical" className="h-auto" />
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="px-2 py-1.5 text-gray-600 hover:bg-blue-50 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        move("down");
+                      }}
+                      disabled={!canMoveDown || isRemoving}
+                      aria-label="Move plan down"
+                    />
+                  }
+                >
+                  <ChevronDown className="h-4 w-4 transition-transform" />
+                </TooltipTrigger>
+                <TooltipContent>Move plan down</TooltipContent>
+              </Tooltip>
+            </div>
+          )}
           {attractionCount > 0 && (
-            <Badge variant="muted" className="gap-1 px-2.5 py-1 font-semibold shadow-sm ring-1 ring-gray-300/50">
+            <Badge
+              variant="muted"
+              className="gap-1 px-2.5 py-1 font-semibold shadow-sm ring-1 ring-gray-300/50"
+            >
               <MapPin className="h-3 w-3" />
               {attractionCount}
             </Badge>
@@ -269,6 +283,6 @@ export function PlanBlockCard({
           onReorder={reorderAttractions}
         />
       )}
-    </div>
+    </Card>
   );
 }

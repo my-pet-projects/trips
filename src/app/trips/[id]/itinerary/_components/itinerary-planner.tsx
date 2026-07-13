@@ -22,7 +22,7 @@ import { usePlanBlockEditor } from "~/lib/itinerary/use-plan-block-editor";
 import { usePlanBlockMaps } from "~/lib/itinerary/use-plan-block-maps";
 import type { AttractionDetail, Trip } from "~/types";
 import { PlanBlocksPdfButton } from "./plan-block-pdf-export-button";
-import { OvernightStopsPanel } from "./overnight-stops-panel";
+import { ItineraryTimeline } from "./itinerary-timeline";
 import { PlanBlockCard } from "./plan-block";
 
 type ItineraryPlannerProps = {
@@ -72,9 +72,12 @@ export function ItineraryPlanner({
   );
 
   const selectedBlockAttractions = useMemo(
-    () =>
-      planBlocks.find((b) => b.id === selectedBlockId)?.attractions ?? [],
+    () => planBlocks.find((b) => b.id === selectedBlockId)?.attractions ?? [],
     [planBlocks, selectedBlockId],
+  );
+  const undatedPlanBlocks = useMemo(
+    () => planBlocks.filter((block) => !block.pinnedStartDate),
+    [planBlocks],
   );
 
   const handleAddAttractionToBlock = (attraction: AttractionDetail) => {
@@ -88,7 +91,9 @@ export function ItineraryPlanner({
       <div className="min-h-0 space-y-4 overflow-y-auto px-4 py-4 lg:border-r lg:border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-gray-900">Itinerary</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Plans &amp; overnight stays
+            </h2>
             {isSaving && (
               <span className="inline-flex items-center gap-1.5 text-sm text-gray-500">
                 <Spinner className="h-3.5 w-3.5" />
@@ -106,7 +111,7 @@ export function ItineraryPlanner({
             <Button
               type="button"
               variant="outline"
-              onClick={addBlock}
+              onClick={() => addBlock()}
               disabled={isAddingBlock}
             >
               <Plus className="h-4 w-4" />
@@ -123,8 +128,12 @@ export function ItineraryPlanner({
             <div className="flex min-w-0 items-start gap-2">
               <AlertCircle />
               <div>
-                <AlertTitle className="text-red-900">Could not save changes</AlertTitle>
-                <AlertDescription className="text-red-800">{saveError}</AlertDescription>
+                <AlertTitle className="text-red-900">
+                  Could not save changes
+                </AlertTitle>
+                <AlertDescription className="text-red-800">
+                  {saveError}
+                </AlertDescription>
               </div>
             </div>
             <Button
@@ -140,9 +149,48 @@ export function ItineraryPlanner({
           </Alert>
         )}
 
-        <OvernightStopsPanel overnightStops={trip.overnightStops} />
+        {(planBlocks.length > 0 || trip.overnightStops.length > 0) && (
+          <ItineraryTimeline
+            planBlocks={planBlocks}
+            overnightStops={trip.overnightStops}
+            renderBlock={(block) => {
+              const undatedIndex = undatedPlanBlocks.findIndex(
+                (item) => item.id === block.id,
+              );
+              return (
+                <PlanBlockCard
+                  key={block.id}
+                  block={block}
+                  index={planBlocks.findIndex((item) => item.id === block.id)}
+                  trip={trip}
+                  state={{
+                    isSelected: selectedBlockId === block.id,
+                    isRemoving: blockBeingRemoved === block.id,
+                    selectedAttractionId,
+                    canMoveUp: undatedIndex > 0,
+                    canMoveDown:
+                      undatedIndex >= 0 &&
+                      undatedIndex < undatedPlanBlocks.length - 1,
+                  }}
+                  actions={{
+                    select: () => setSelectedBlockId(block.id),
+                    update: (patch) => updateBlock(block.id, patch),
+                    remove: () => removeBlock(block.id),
+                    move: (direction) => moveBlock(block.id, direction),
+                    selectAttraction: handleSelectAttraction,
+                    hoverAttraction: setHoveredAttraction,
+                    removeAttraction: (attractionId) =>
+                      removeAttraction(block.id, attractionId),
+                    reorderAttractions: (attractions) =>
+                      reorderAttractions(block.id, attractions),
+                  }}
+                />
+              );
+            }}
+          />
+        )}
 
-        {planBlocks.length === 0 ? (
+        {planBlocks.length === 0 && (
           <Empty className="border-gray-200 bg-gray-50">
             <EmptyHeader>
               <EmptyTitle>No plans in your itinerary yet</EmptyTitle>
@@ -151,40 +199,12 @@ export function ItineraryPlanner({
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
-              <Button type="button" onClick={addBlock}>
+              <Button type="button" onClick={() => addBlock()}>
                 <Plus className="h-4 w-4" />
                 Add first plan
               </Button>
             </EmptyContent>
           </Empty>
-        ) : (
-          <div className="space-y-3">
-            {planBlocks.map((block, index) => (
-              <PlanBlockCard
-                key={block.id}
-                block={block}
-                index={index}
-                trip={trip}
-                state={{
-                  isSelected: selectedBlockId === block.id,
-                  isRemoving: blockBeingRemoved === block.id,
-                  selectedAttractionId,
-                }}
-                actions={{
-                  select: () => setSelectedBlockId(block.id),
-                  update: (patch) => updateBlock(block.id, patch),
-                  remove: () => removeBlock(block.id),
-                  move: (direction) => moveBlock(block.id, direction),
-                  selectAttraction: handleSelectAttraction,
-                  hoverAttraction: setHoveredAttraction,
-                  removeAttraction: (attractionId) =>
-                    removeAttraction(block.id, attractionId),
-                  reorderAttractions: (attractions) =>
-                    reorderAttractions(block.id, attractions),
-                }}
-              />
-            ))}
-          </div>
         )}
       </div>
 
