@@ -16,12 +16,16 @@ test.use({ storageState: clerkAuthFile });
 test.describe("Raw triage map", () => {
   test.setTimeout(120000);
 
-  test("loads map for a country and opens triage panel on marker click", async ({ page }) => {
+  test("loads map for a country and opens triage panel on marker click", async ({
+    page,
+  }) => {
     await page.goto("/attractions/raw?country=FR");
     await page.waitForLoadState("domcontentloaded");
 
     await expect(page.getByTestId("raw-map-view")).toBeVisible();
-    await expect(page.getByText("Not authenticated")).not.toBeVisible({ timeout: 15000 });
+    await expect(page.getByText("Not authenticated")).not.toBeVisible({
+      timeout: 15000,
+    });
     await waitForLeafletMap(page);
 
     if (!(await hasMapTargets(page))) {
@@ -31,14 +35,19 @@ test.describe("Raw triage map", () => {
 
     await clickFirstMapTarget(page);
 
-    await expect(page.getByTestId("raw-triage-panel")).toBeVisible({ timeout: 20000 });
+    await expect(page.getByTestId("raw-triage-panel")).toBeVisible({
+      timeout: 20000,
+    });
   });
 
-  test("status filter pills toggle without breaking the map", async ({ page }) => {
+  test("status filter pills toggle without breaking the map", async ({
+    page,
+  }) => {
     await page.goto("/attractions/raw?country=FR");
     await waitForLeafletMap(page);
 
-    const pendingPill = desktopFilterBar(page).getByTestId("map-filter-pending");
+    const pendingPill =
+      desktopFilterBar(page).getByTestId("map-filter-pending");
     await expect(pendingPill).toBeVisible();
     await pendingPill.click();
 
@@ -50,12 +59,16 @@ test.describe("Raw triage map", () => {
 test.describe("Itinerary viewer map", () => {
   test.setTimeout(120000);
 
-  test("loads map from trip view with geo tracking and day navigation", async ({ page }) => {
+  test("loads map from trip view with geo tracking and plan navigation", async ({
+    page,
+  }) => {
     await page.goto("/trips");
     await page.waitForLoadState("domcontentloaded");
 
     const viewLink = page.locator('a[href*="/view"]').first();
-    const hasTrips = await viewLink.isVisible({ timeout: 15000 }).catch(() => false);
+    const hasTrips = await viewLink
+      .isVisible({ timeout: 15000 })
+      .catch(() => false);
     if (!hasTrips) {
       test.skip(true, "No trips available in the database");
       return;
@@ -74,12 +87,50 @@ test.describe("Itinerary viewer map", () => {
     }
   });
 
-  test("marker click opens detail panel on itinerary viewer", async ({ page }) => {
+  test("planner presents date ranges as flexible windows", async ({ page }) => {
     await page.goto("/trips");
     await page.waitForLoadState("domcontentloaded");
 
     const viewLink = page.locator('a[href*="/view"]').first();
-    const hasTrips = await viewLink.isVisible({ timeout: 15000 }).catch(() => false);
+    const hasTrips = await viewLink
+      .isVisible({ timeout: 15000 })
+      .catch(() => false);
+    if (!hasTrips) {
+      test.skip(true, "No trips available in the database");
+      return;
+    }
+
+    const href = await viewLink.getAttribute("href");
+    if (!href) {
+      test.skip(true, "No trips available in the database");
+      return;
+    }
+
+    await page.goto(href.replace(/\/view$/, "/itinerary"));
+    await waitForLeafletMap(page);
+
+    const timeline = page.getByTestId("itinerary-flexible-timeline");
+    const hasPlans = await timeline
+      .isVisible({ timeout: 15000 })
+      .catch(() => false);
+    if (!hasPlans) {
+      test.skip(true, "Trip has no itinerary plans");
+      return;
+    }
+
+    await expect(timeline.getByText("Date range").first()).toBeVisible();
+  });
+
+  test("marker click opens detail panel on itinerary viewer", async ({
+    page,
+  }) => {
+    await page.goto("/trips");
+    await page.waitForLoadState("domcontentloaded");
+
+    const viewLink = page.locator('a[href*="/view"]').first();
+    const hasTrips = await viewLink
+      .isVisible({ timeout: 15000 })
+      .catch(() => false);
     if (!hasTrips) {
       test.skip(true, "No trips available in the database");
       return;
@@ -95,6 +146,8 @@ test.describe("Itinerary viewer map", () => {
 
     await clickFirstMapTarget(page);
 
-    await expect(page.getByTestId("map-detail-panel")).toBeVisible({ timeout: 20000 });
+    await expect(page.getByTestId("map-detail-panel")).toBeVisible({
+      timeout: 20000,
+    });
   });
 });
