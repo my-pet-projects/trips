@@ -120,6 +120,7 @@ export function usePlanBlockEditor(trip: Trip) {
   const cancelledTempIds = useRef(new Set<number>());
   const silentDeleteIds = useRef(new Set<number>());
   const planBlocksRef = useRef(planBlocks);
+  const saveErrorRef = useRef<string | null>(null);
   planBlocksRef.current = planBlocks;
 
   const { mutate: savePlanBlocks, isPending: isSavingBlocks } =
@@ -135,17 +136,17 @@ export function usePlanBlockEditor(trip: Trip) {
             attractions: Array<{ attractionId: number }>;
           }>,
         );
+        saveErrorRef.current = null;
         setSaveError(null);
         void utils.trip.invalidate();
       },
       onError: (err) => {
         const message = getTrpcErrorMessage(err);
-        setSaveError((prev) => {
-          if (!prev) {
-            toast.error("Could not save changes", { description: message });
-          }
-          return message;
-        });
+        if (!saveErrorRef.current) {
+          toast.error("Could not save changes", { description: message });
+        }
+        saveErrorRef.current = message;
+        setSaveError(message);
       },
     });
 

@@ -72,6 +72,8 @@ export function buildFlexibleItineraryTimeline<
   const entries = [...datedBlocks, ...stayEntries].sort((a, b) => {
     const startDifference = a.startDate.getTime() - b.startDate.getTime();
     if (startDifference !== 0) return startDifference;
+    // On a check-in date, single-day plans come before the stay while
+    // multi-day plans come after it.
     if (a.type !== b.type) {
       const planEntry = a.type === "plan" ? a : b;
       const planComesFirst =

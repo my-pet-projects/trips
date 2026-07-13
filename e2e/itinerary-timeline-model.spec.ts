@@ -96,4 +96,19 @@ test.describe("flexible itinerary timeline model", () => {
     ).toEqual([2, 1]);
     expect(timeline.undatedBlocks.map((item) => item.id)).toEqual([4, 3]);
   });
+
+  test("treats a null end date as a single-day plan", () => {
+    const timeline = buildFlexibleItineraryTimeline(
+      [block(1, 10, null)],
+      [stays[0]!],
+    );
+
+    expect(
+      timeline.entries.map((entry) =>
+        entry.type === "plan"
+          ? `plan-${entry.block.id}`
+          : `stay-${entry.stop.id}`,
+      ),
+    ).toEqual(["plan-1", "stay-1"]);
+  });
 });

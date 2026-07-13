@@ -92,6 +92,14 @@ test.describe("Itinerary viewer map", () => {
     await page.waitForLoadState("domcontentloaded");
 
     const viewLink = page.locator('a[href*="/view"]').first();
+    const hasTrips = await viewLink
+      .isVisible({ timeout: 15000 })
+      .catch(() => false);
+    if (!hasTrips) {
+      test.skip(true, "No trips available in the database");
+      return;
+    }
+
     const href = await viewLink.getAttribute("href");
     if (!href) {
       test.skip(true, "No trips available in the database");
