@@ -71,11 +71,9 @@ export function useAttractionMapFilters<T extends AttractionWithHighlight>({
   );
 
   const filteredAttractions = useMemo(() => {
-    if (showVerifiedOnly) {
-      return attractions.filter(isAttractionVerified);
-    }
     return attractions.filter((attraction) => {
       if (alwaysVisibleIds?.has(attraction.id)) return true;
+      if (showVerifiedOnly) return isAttractionVerified(attraction);
       return visibleHighlights.has(toAttractionHighlightKey(attraction.highlight));
     });
   }, [attractions, alwaysVisibleIds, showVerifiedOnly, visibleHighlights]);
@@ -94,6 +92,8 @@ export function useAttractionMapFilters<T extends AttractionWithHighlight>({
       return;
     }
 
+    if (alwaysVisibleIds?.has(selected.id)) return;
+
     if (showVerifiedOnly && !isAttractionVerified(selected)) {
       onSelectionClear();
       return;
@@ -101,7 +101,6 @@ export function useAttractionMapFilters<T extends AttractionWithHighlight>({
 
     if (
       !showVerifiedOnly &&
-      !alwaysVisibleIds?.has(selected.id) &&
       !visibleHighlights.has(toAttractionHighlightKey(selected.highlight))
     ) {
       onSelectionClear();
