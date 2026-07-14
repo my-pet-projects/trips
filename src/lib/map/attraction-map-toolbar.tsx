@@ -7,9 +7,17 @@ import {
   type AttractionHighlightKey,
 } from "~/lib/map/colors";
 
-import type { BrowseFilters } from "../hooks/use-browse-map";
+import type { AttractionMapFilters } from "./use-attraction-map-filters";
 
-export function BrowseToolbar({ filters }: { filters: BrowseFilters }) {
+type AttractionMapToolbarProps = {
+  filters: AttractionMapFilters;
+  showVerifiedFilter?: boolean;
+};
+
+export function AttractionMapToolbar({
+  filters,
+  showVerifiedFilter = false,
+}: AttractionMapToolbarProps) {
   const {
     counts,
     shownCount,
@@ -26,10 +34,30 @@ export function BrowseToolbar({ filters }: { filters: BrowseFilters }) {
     count: counts[key] ?? 0,
   }));
 
-  const verifiedPill = {
-    ...VERIFIED_FILTER_PILL,
-    count: counts.verified,
-  };
+  const groups = showVerifiedFilter
+    ? [
+        {
+          id: "verified",
+          filters: [{ ...VERIFIED_FILTER_PILL, count: counts.verified }],
+          visible: showVerifiedOnly ? new Set(["verified"]) : new Set<string>(),
+          onToggle: () => toggleVerifiedOnly(),
+        },
+        {
+          id: "highlight",
+          filters: highlightPills,
+          visible: visibleHighlights,
+          onToggle: (key: string) => toggleHighlight(key as AttractionHighlightKey),
+          disabled: showVerifiedOnly,
+        },
+      ]
+    : [
+        {
+          id: "highlight",
+          filters: highlightPills,
+          visible: visibleHighlights,
+          onToggle: (key: string) => toggleHighlight(key as AttractionHighlightKey),
+        },
+      ];
 
   return (
     <MapFilterBar
@@ -38,21 +66,7 @@ export function BrowseToolbar({ filters }: { filters: BrowseFilters }) {
           {shownCount.toLocaleString()} shown · {counts.total.toLocaleString()} total
         </span>
       }
-      groups={[
-        {
-          id: "verified",
-          filters: [verifiedPill],
-          visible: showVerifiedOnly ? new Set(["verified"]) : new Set(),
-          onToggle: () => toggleVerifiedOnly(),
-        },
-        {
-          id: "highlight",
-          filters: highlightPills,
-          visible: visibleHighlights,
-          onToggle: (key) => toggleHighlight(key as AttractionHighlightKey),
-          disabled: showVerifiedOnly,
-        },
-      ]}
+      groups={groups}
       mobileTop={
         <div className="flex justify-center">
           <div className="rounded-xl border border-gray-200 bg-white/95 px-3 py-1.5 shadow-md backdrop-blur-sm">
