@@ -19,6 +19,8 @@ import {
 } from "~/app/_components/ui/empty";
 import { Spinner } from "~/app/_components/ui/spinner";
 import { usePlanBlockEditor } from "~/lib/itinerary/use-plan-block-editor";
+import { useAttractionMapFilters } from "~/lib/map/use-attraction-map-filters";
+import { AttractionMapToolbar } from "~/lib/map/attraction-map-toolbar";
 import { usePlanBlockMaps } from "~/lib/itinerary/use-plan-block-maps";
 import type { AttractionDetail, Trip } from "~/types";
 import { PlanBlocksPdfButton } from "./plan-block-pdf-export-button";
@@ -79,6 +81,29 @@ export function ItineraryPlanner({
     () => planBlocks.filter((block) => !block.pinnedStartDate),
     [planBlocks],
   );
+
+  const plannedAttractionIds = useMemo(() => {
+    const ids = new Set<number>();
+    for (const block of planBlocks) {
+      for (const attraction of block.attractions) {
+        ids.add(attraction.id);
+      }
+    }
+    return ids;
+  }, [planBlocks]);
+
+  const handleDeselectAttraction = useCallback(() => {
+    setSelectedAttractionId(null);
+  }, []);
+
+  const { attractions: mapAttractions, markerMeta, filters } =
+    useAttractionMapFilters({
+      attractions,
+      defaultHighlights: ["must_see", "recommended", "none"],
+      alwaysVisibleIds: plannedAttractionIds,
+      selectedAttractionId,
+      onSelectionClear: handleDeselectAttraction,
+    });
 
   const handleAddAttractionToBlock = (attraction: AttractionDetail) => {
     if (addAttractionToBlock(selectedBlockId, attraction)) {
@@ -209,9 +234,10 @@ export function ItineraryPlanner({
       </div>
 
       <div className="relative min-h-[45vh] overflow-hidden border-t border-gray-200 lg:min-h-0 lg:border-t-0">
+        <AttractionMapToolbar filters={filters} />
         <ItineraryMap
           className="h-full rounded-none border-0 shadow-none lg:rounded-none lg:border-0 lg:shadow-none"
-          attractions={attractions}
+          attractions={mapAttractions}
           selectedBlockAttractions={selectedBlockAttractions}
           selectedBlockId={selectedBlockId}
           selectedAttractionId={selectedAttractionId}
@@ -219,6 +245,7 @@ export function ItineraryPlanner({
           blockColors={blockColors}
           hoveredAttractionId={hoveredAttraction}
           planBlocks={planBlocks}
+          markerMeta={markerMeta}
           onAttractionSelect={handleSelectAttraction}
           onAddAttractionToBlock={handleAddAttractionToBlock}
           tripsImageSource="map-itinerary"
