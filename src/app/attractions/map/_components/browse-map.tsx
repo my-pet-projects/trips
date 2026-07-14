@@ -3,10 +3,10 @@
 import type { BaseAttractionMapProps } from "~/app/_components/map/base-attraction-map";
 import { MapStatusOverlays } from "~/app/_components/map/map-status-overlays";
 import { useMarkerSelect } from "~/app/_components/map/use-marker-select";
+import { AttractionMapToolbar } from "~/lib/map/attraction-map-toolbar";
 import { dynamicMap } from "~/lib/map/dynamic-map";
 
 import { useBrowseMap } from "./hooks/use-browse-map";
-import { BrowseToolbar } from "./toolbar/browse-toolbar";
 
 const BaseAttractionMap = dynamicMap<BaseAttractionMapProps>(
   () => import("~/app/_components/map/base-attraction-map"),
@@ -38,7 +38,7 @@ export function BrowseMap() {
         errorMessage={loadErrorMessage}
         onRetry={retryLoad}
       />
-      <BrowseToolbar filters={filters} />
+      <AttractionMapToolbar filters={filters} showVerifiedFilter />
       <BaseAttractionMap
         attractions={attractions}
         selectedAttractionId={selectedAttractionId}
