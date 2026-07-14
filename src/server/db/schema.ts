@@ -245,6 +245,9 @@ export const routes = sqliteTable(
     geoJson: text("geo_json").notNull(),
     distanceMeters: real("distance_m").notNull(),
     durationSeconds: real("duration_s").notNull(),
+    travelMode: text("travel_mode", { enum: ["walking", "driving"] })
+      .default("walking")
+      .notNull(),
     createdAt: integer("created_at", { mode: "timestamp" })
       .default(sql`(unixepoch())`)
       .notNull(),
@@ -253,6 +256,7 @@ export const routes = sqliteTable(
     uniqueIndex("routes_unique_idx").on(
       table.fromAttractionId,
       table.toAttractionId,
+      table.travelMode,
     ),
     index("routes_from_attraction_idx").on(table.fromAttractionId),
     index("routes_to_attraction_idx").on(table.toAttractionId),

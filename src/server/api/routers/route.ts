@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { env } from "~/env";
+import { haversineDistance } from "~/lib/geo";
 import { createLogger, errMsg } from "~/lib/logger";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import * as schema from "~/server/db/schema";
@@ -21,11 +22,11 @@ interface OrsResponse {
 
 type OrsDirectionsErrorBody = {
   error?:
-  | string
-  | {
-    code: number;
-    message: string;
-  };
+    | string
+    | {
+        code: number;
+        message: string;
+      };
   info?: {
     engine?: { version?: string; build_date?: string };
     timestamp?: number;
@@ -74,13 +75,29 @@ type GeoJSON = {
   coordinates: [number, number][];
 };
 
-const ORS_API_URL =
-  "https://api.openrouteservice.org/v2/directions/foot-walking";
+type TravelMode = typeof schema.routes.$inferSelect.travelMode;
+
+const ORS_API_BASE_URL = "https://api.openrouteservice.org/v2/directions";
+const ORS_PROFILES = {
+  walking: "foot-walking",
+  driving: "driving-car",
+} satisfies Record<TravelMode, string>;
+const DRIVING_DISTANCE_THRESHOLD_KM = 3;
 /** @see https://openrouteservice.org/restrictions/ — Directions: Route waypoints max 50 */
 const MAX_ROUTE_WAYPOINTS = 50;
 const ORS_TIMEOUT_MS = 10000;
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1000;
+
+function getTravelMode(
+  fromLat: number,
+  fromLng: number,
+  toLat: number,
+  toLng: number,
+): TravelMode {
+  const distanceKm = haversineDistance(fromLat, fromLng, toLat, toLng);
+  return distanceKm > DRIVING_DISTANCE_THRESHOLD_KM ? "driving" : "walking";
+}
 
 /**
  * Decode Google Polyline encoded string to coordinates
@@ -124,19 +141,21 @@ async function fetchRouteFromORS(
   fromLat: number,
   toLng: number,
   toLat: number,
+  travelMode: TravelMode,
   retryCount = 0,
 ): Promise<OrsResponse> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), ORS_TIMEOUT_MS);
   const startTime = Date.now();
+  const profile = ORS_PROFILES[travelMode];
 
   log.debug(
-    { fromLng, fromLat, toLng, toLat, retryCount },
+    { fromLng, fromLat, toLng, toLat, travelMode, profile, retryCount },
     "Fetching route from OpenRouteService",
   );
 
   try {
-    const response = await fetch(ORS_API_URL, {
+    const response = await fetch(`${ORS_API_BASE_URL}/${profile}`, {
       method: "POST",
       headers: {
         Authorization: env.OPENROUTE_API_KEY,
@@ -183,6 +202,7 @@ async function fetchRouteFromORS(
           fromLat,
           toLng,
           toLat,
+          travelMode,
           retryCount + 1,
         );
       }
@@ -211,6 +231,7 @@ async function fetchRouteFromORS(
         durationMs,
         distance: data.routes[0]?.segments[0]?.distance,
         routeDuration: data.routes[0]?.segments[0]?.duration,
+        travelMode,
       },
       "Route fetched successfully",
     );
@@ -233,6 +254,7 @@ async function fetchRouteFromORS(
           fromLat,
           toLng,
           toLat,
+          travelMode,
           retryCount + 1,
         );
       }
@@ -284,6 +306,12 @@ export const routeRouter = createTRPCRouter({
         .slice(0, -1)
         .map(async (fromPoint, i) => {
           const toPoint = input.points[i + 1]!;
+          const travelMode = getTravelMode(
+            fromPoint.lat,
+            fromPoint.lng,
+            toPoint.lat,
+            toPoint.lng,
+          );
 
           // Check cache
           let leg = await ctx.db
@@ -293,6 +321,7 @@ export const routeRouter = createTRPCRouter({
               and(
                 eq(schema.routes.fromAttractionId, fromPoint.id),
                 eq(schema.routes.toAttractionId, toPoint.id),
+                eq(schema.routes.travelMode, travelMode),
               ),
             )
             .limit(1)
@@ -307,6 +336,7 @@ export const routeRouter = createTRPCRouter({
               fromPoint.lat,
               toPoint.lng,
               toPoint.lat,
+              travelMode,
             );
 
             const route = data.routes[0]!;
@@ -324,6 +354,7 @@ export const routeRouter = createTRPCRouter({
               geoJson: JSON.stringify(geometry),
               distanceMeters: segment.distance,
               durationSeconds: segment.duration,
+              travelMode,
             } satisfies typeof schema.routes.$inferInsert;
 
             // Insert and return
@@ -344,6 +375,7 @@ export const routeRouter = createTRPCRouter({
                   and(
                     eq(schema.routes.fromAttractionId, fromPoint.id),
                     eq(schema.routes.toAttractionId, toPoint.id),
+                    eq(schema.routes.travelMode, travelMode),
                   ),
                 )
                 .limit(1)
@@ -351,7 +383,7 @@ export const routeRouter = createTRPCRouter({
 
             if (!leg) {
               log.error(
-                { fromId: fromPoint.id, toId: toPoint.id },
+                { fromId: fromPoint.id, toId: toPoint.id, travelMode },
                 "Failed to retrieve route leg",
               );
               throw new TRPCError({
@@ -365,7 +397,12 @@ export const routeRouter = createTRPCRouter({
             if (error instanceof TRPCError) throw error;
 
             log.error(
-              { fromId: fromPoint.id, toId: toPoint.id, error: errMsg(error) },
+              {
+                fromId: fromPoint.id,
+                toId: toPoint.id,
+                travelMode,
+                error: errMsg(error),
+              },
               "Failed to compute route",
             );
             throw new TRPCError({
