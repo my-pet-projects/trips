@@ -29,7 +29,7 @@ type LegPolyline = {
 };
 
 type DayPolylines = {
-  main: L.Polyline;
+  main: L.Polyline[];
   legs: LegPolyline[];
 };
 
@@ -53,7 +53,7 @@ export const useLeafletRoutes = (
     const map = mapRef.current;
 
     blockPolylinesRef.current.forEach(({ main, legs }) => {
-      main.remove();
+      main.forEach((polyline) => polyline.remove());
       legs.forEach(({ polyline }) => polyline.remove());
     });
     blockPolylinesRef.current.clear();
@@ -62,23 +62,33 @@ export const useLeafletRoutes = (
       const color = blockColors.get(dayId) ?? DEFAULT_BLOCK_COLOR;
       const isSelectedBlock = dayId === selectedBlockId;
 
-      const latLngs = route.geojson.geometry.coordinates.map(
-        ([lng, lat]) => [lat, lng] as [number, number],
-      );
+      const main = route.legs.map((leg) => {
+        const latLngs = leg.geometryGeojsonParsed.coordinates.map(
+          ([lng, lat]) => [lat, lng] as [number, number],
+        );
+        const isDriving = leg.travelMode === "driving";
+        const polyline = L.polyline(latLngs, {
+          color,
+          weight: isSelectedBlock ? 4 : 3,
+          opacity: isSelectedBlock ? 0.8 : 0.5,
+          dashArray: isDriving ? "10 8" : undefined,
+          lineJoin: "round",
+          lineCap: isDriving ? "butt" : "round",
+        }).addTo(map);
 
-      const main = L.polyline(latLngs, {
-        color,
-        weight: isSelectedBlock ? 4 : 3,
-        opacity: isSelectedBlock ? 0.8 : 0.5,
-        lineJoin: "round",
-        lineCap: "round",
-      }).addTo(map);
+        polyline.bindTooltip(
+          `${isDriving ? "Driving" : "Walking"} · ${(leg.distanceMeters / 1000).toFixed(1)} km · ${Math.round(leg.durationSeconds / 60)} min`,
+          { sticky: true },
+        );
 
-      const mainPath = main.getElement();
-      if (mainPath instanceof SVGPathElement) {
-        mainPath.classList.remove("route-pulse-animation");
-        mainPath.style.animation = "none";
-      }
+        const path = polyline.getElement();
+        if (path instanceof SVGPathElement) {
+          path.classList.remove("route-pulse-animation");
+          path.style.animation = "none";
+        }
+
+        return polyline;
+      });
 
       const legs: LegPolyline[] = [];
 
@@ -92,8 +102,9 @@ export const useLeafletRoutes = (
             color,
             weight: 5,
             opacity: 0,
+            dashArray: leg.travelMode === "driving" ? "10 8" : undefined,
             lineJoin: "round",
-            lineCap: "round",
+            lineCap: leg.travelMode === "driving" ? "butt" : "round",
           }).addTo(map);
 
           legs.push({
@@ -109,7 +120,7 @@ export const useLeafletRoutes = (
 
     return () => {
       blockPolylinesRef.current.forEach(({ main, legs }) => {
-        main.remove();
+        main.forEach((polyline) => polyline.remove());
         legs.forEach(({ polyline }) => polyline.remove());
       });
       blockPolylinesRef.current.clear();
@@ -126,13 +137,15 @@ export const useLeafletRoutes = (
       (selectedAttractionId !== null || hoveredAttractionId !== null) &&
       (() => {
         const dp = blockPolylinesRef.current.get(selectedBlockId);
-        return dp?.legs.some(
-          (l) =>
-            l.fromAttractionId === selectedAttractionId ||
-            l.toAttractionId === selectedAttractionId ||
-            l.fromAttractionId === hoveredAttractionId ||
-            l.toAttractionId === hoveredAttractionId,
-        ) ?? false;
+        return (
+          dp?.legs.some(
+            (l) =>
+              l.fromAttractionId === selectedAttractionId ||
+              l.toAttractionId === selectedAttractionId ||
+              l.fromAttractionId === hoveredAttractionId ||
+              l.toAttractionId === hoveredAttractionId,
+          ) ?? false
+        );
       })();
 
     blockPolylinesRef.current.forEach(({ main, legs }, dayId) => {
@@ -144,7 +157,7 @@ export const useLeafletRoutes = (
         opacity = 0.3;
         weight = 2;
       }
-      main.setStyle({ opacity, weight });
+      main.forEach((polyline) => polyline.setStyle({ opacity, weight }));
 
       legs.forEach(({ polyline, fromAttractionId, toAttractionId }) => {
         const isLegSelected =
@@ -163,7 +176,7 @@ export const useLeafletRoutes = (
         const path = polyline.getElement();
         if (path instanceof SVGPathElement) {
           if (isLegSelected) {
-            path.style.animation = "";  // clear inline override before adding class
+            path.style.animation = ""; // clear inline override before adding class
             path.classList.add("route-pulse-animation");
           } else {
             path.classList.remove("route-pulse-animation");
@@ -172,5 +185,12 @@ export const useLeafletRoutes = (
         }
       });
     });
-  }, [mapRef, hoveredAttractionId, selectedAttractionId, selectedBlockId, blockRoutes, isLoadingRoutes]);
+  }, [
+    mapRef,
+    hoveredAttractionId,
+    selectedAttractionId,
+    selectedBlockId,
+    blockRoutes,
+    isLoadingRoutes,
+  ]);
 };

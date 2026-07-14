@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, GripVertical, Route, Trash2 } from "lucide-react";
+import { Car, Clock, Footprints, GripVertical, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
@@ -130,6 +130,8 @@ export function PlanBlockAttractionList({
         const isDragOver = dragOverIndex === index;
         const isRemoving = removingAttractionId === attraction.id;
         const legToNext = routeLegs?.[index];
+        const TravelModeIcon =
+          legToNext?.travelMode === "driving" ? Car : Footprints;
 
         return (
           <div key={attraction.id}>
@@ -151,7 +153,9 @@ export function PlanBlockAttractionList({
               } ${isDragOver ? "scale-[1.02] border-blue-400 bg-blue-100 shadow-md" : ""} ${
                 isRemoving ? "scale-90 opacity-0 blur-sm" : ""
               }`}
-              onMouseEnter={() => !isDragging && onHoverAttraction(attraction.id)}
+              onMouseEnter={() =>
+                !isDragging && onHoverAttraction(attraction.id)
+              }
               onMouseLeave={() => onHoverAttraction(null)}
               onClick={(e) => handleClick(e, attraction.id)}
             >
@@ -201,7 +205,10 @@ export function PlanBlockAttractionList({
               <div className="ml-4 flex items-center gap-2 py-1.5 pl-3 text-xs text-gray-500">
                 <div className="flex h-6 w-0.5 bg-linear-to-b from-gray-300 to-transparent" />
                 <div className="flex items-center gap-2 rounded-md bg-gray-100 px-2 py-1">
-                  <Route className="h-3 w-3" />
+                  <TravelModeIcon className="h-3 w-3" />
+                  <span>
+                    {legToNext.travelMode === "driving" ? "Driving" : "Walking"}
+                  </span>
                   <span>{(legToNext.distanceMeters / 1000).toFixed(1)} km</span>
                   <span className="text-gray-400">•</span>
                   <Clock className="h-3 w-3" />

@@ -36,6 +36,13 @@
       "when": 1783523600000,
       "tag": "0004_rename_plan_block_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1784029183532,
+      "tag": "0005_sour_fat_cobra",
+      "breakpoints": true
     }
   ]
 }
