@@ -4,6 +4,7 @@ import "~/lib/map/leaflet-styles";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { circleMarkerVisual } from "~/lib/map/circle-marker-descriptor";
+import { overnightStopDivIcon } from "~/lib/map/marker-icons/overnight-stop";
 import type { MarkerMeta } from "~/lib/map/marker-meta";
 import { useMarkerClusterGroup } from "~/lib/map/use-marker-cluster-group";
 import { useMarkerLayer } from "~/lib/map/use-marker-layer";
@@ -11,6 +12,7 @@ import type {
   AttractionDetail,
   AttractionSummary,
   BasicAttraction,
+  OvernightStop,
   RouteData,
 } from "~/types";
 
@@ -22,6 +24,7 @@ import {
   EMPTY_BLOCK_COLORS,
   EMPTY_BLOCK_ORDERS,
   EMPTY_BLOCK_ROUTES,
+  EMPTY_OVERNIGHT_STOPS,
 } from "./map-constants";
 import { useGeolocationTracking } from "./use-geolocation-tracking";
 import { useLeafletMap } from "./use-leaflet-map";
@@ -42,6 +45,7 @@ export type AttractionMapStatus = {
 export type ItineraryMapFeatures = {
   selectedBlockAttractions?: BasicAttraction[];
   selectedBlockId?: number | null;
+  overnightStops?: OvernightStop[];
   attractionToBlockMap?: Map<number, number>;
   blockColors?: Map<number, string>;
   hoveredAttractionId?: number | null;
@@ -49,7 +53,9 @@ export type ItineraryMapFeatures = {
   selectedBlockAttractionOrders?: Map<number, number>;
   isLoadingRoutes?: boolean;
   enableLocationTracking?: boolean;
-  resolveAttractionStatus?: (attraction: AttractionDetail) => AttractionMapStatus;
+  resolveAttractionStatus?: (
+    attraction: AttractionDetail,
+  ) => AttractionMapStatus;
   onAddToPlan?: (attraction: AttractionDetail) => void;
 };
 
@@ -98,6 +104,7 @@ export default function BaseAttractionMap({
   const {
     selectedBlockAttractions = EMPTY_BASIC_ATTRACTIONS,
     selectedBlockId = null,
+    overnightStops = EMPTY_OVERNIGHT_STOPS,
     attractionToBlockMap = EMPTY_ATTRACTION_TO_BLOCK,
     blockColors = EMPTY_BLOCK_COLORS,
     hoveredAttractionId = null,
@@ -212,6 +219,49 @@ export default function BaseAttractionMap({
     stopClickPropagation: true,
   });
 
+  const validOvernightStops = useMemo(
+    () =>
+      overnightStops.filter(
+        (stop) =>
+          stop.latitude != null &&
+          Number.isFinite(stop.latitude) &&
+          stop.latitude >= -90 &&
+          stop.latitude <= 90 &&
+          stop.longitude != null &&
+          Number.isFinite(stop.longitude) &&
+          stop.longitude >= -180 &&
+          stop.longitude <= 180,
+      ),
+    [overnightStops],
+  );
+  const overnightStopItems = useMemo(
+    () => new Map(validOvernightStops.map((stop) => [stop.id, stop])),
+    [validOvernightStops],
+  );
+  const overnightStopPoints = useMemo(
+    () =>
+      validOvernightStops.map(
+        (stop) => [stop.latitude, stop.longitude] as [number, number],
+      ),
+    [validOvernightStops],
+  );
+  const getOvernightStopVisual = useCallback(
+    () => ({ icon: overnightStopDivIcon(), zIndexOffset: 250 }),
+    [],
+  );
+  const ignoreOvernightStopSelection = useCallback(() => undefined, []);
+
+  useMarkerLayer<OvernightStop>({
+    mapRef,
+    mapReady,
+    items: overnightStopItems,
+    getLatLng: (stop) => [stop.latitude, stop.longitude],
+    getLabel: (stop) => stop.name,
+    getVisual: getOvernightStopVisual,
+    onSelect: ignoreOvernightStopSelection,
+    stopClickPropagation: true,
+  });
+
   useLeafletRoutes(
     mapRef,
     blockRoutes,
@@ -239,6 +289,7 @@ export default function BaseAttractionMap({
     selectedAttractionId,
     panelHeight,
     userLocation,
+    additionalPoints: overnightStopPoints,
   });
 
   const showLoadingRoutesMessage =

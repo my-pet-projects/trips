@@ -231,7 +231,7 @@ export function PlanBlockCard({
       />
 
       {attractionCount >= 2 && (
-        <div className="mb-3 flex items-center gap-3 rounded-lg bg-linear-to-r from-blue-50 to-sky-50 px-3 py-2 text-xs">
+        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-lg bg-linear-to-r from-blue-50 to-sky-50 px-3 py-2 text-xs">
           {isLoadingRoute ? (
             <>
               <Spinner className="h-4 w-4 text-sky-600" />
@@ -239,19 +239,33 @@ export function PlanBlockCard({
             </>
           ) : routeData ? (
             <>
-              <div className="flex items-center gap-1.5 text-gray-700">
-                <Route className="h-3.5 w-3.5 text-sky-600" />
-                <span className="font-semibold">
-                  {routeData.totalKm.toFixed(1)} km
-                </span>
-              </div>
-              <div className="h-3 w-px bg-sky-200" />
-              <div className="flex items-center gap-1.5 text-gray-700">
-                <Clock className="h-3.5 w-3.5 text-sky-600" />
-                <span className="font-semibold">
-                  {Math.round(routeData.totalDurationMinutes)} min
-                </span>
-              </div>
+              {routeData.legs.length > 0 && (
+                <>
+                  <div className="flex items-center gap-1.5 text-gray-700">
+                    <Route className="h-3.5 w-3.5 text-sky-600" />
+                    <span className="font-semibold">
+                      {routeData.totalKm.toFixed(1)} km
+                    </span>
+                  </div>
+                  <div className="h-3 w-px bg-sky-200" />
+                  <div className="flex items-center gap-1.5 text-gray-700">
+                    <Clock className="h-3.5 w-3.5 text-sky-600" />
+                    <span className="font-semibold">
+                      {Math.round(routeData.totalDurationMinutes)} min
+                    </span>
+                  </div>
+                </>
+              )}
+              {routeData.unroutableLegs.length > 0 && (
+                <div className="flex items-start gap-2 text-amber-700">
+                  <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  <span className="font-medium">
+                    {routeData.legs.length > 0
+                      ? `${routeData.unroutableLegs.length} route ${routeData.unroutableLegs.length === 1 ? "leg is" : "legs are"} unavailable; available totals are shown.`
+                      : "No road or walking route was found for these stops."}
+                  </span>
+                </div>
+              )}
             </>
           ) : routeError ? (
             <div className="flex flex-col gap-0.5 text-amber-600">

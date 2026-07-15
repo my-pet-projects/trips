@@ -159,6 +159,7 @@ export function ItineraryViewer({
           blockColors={blockColors}
           hoveredAttractionId={null}
           planBlocks={planBlocks}
+          overnightStops={trip.overnightStops}
           onAttractionSelect={setSelectedAttractionId}
           enableLocationTracking
           tripsImageSource="map-view"

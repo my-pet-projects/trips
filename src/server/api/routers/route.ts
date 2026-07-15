@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { env } from "~/env";
 import { haversineDistance } from "~/lib/geo";
+import { isUnroutableRouteMessage } from "~/lib/itinerary/route-errors";
 import { createLogger, errMsg } from "~/lib/logger";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import * as schema from "~/server/db/schema";
@@ -327,7 +328,14 @@ export const routeRouter = createTRPCRouter({
             .limit(1)
             .then((rows) => rows[0]);
 
-          if (leg) return leg;
+          if (leg) {
+            return {
+              kind: "routed" as const,
+              leg,
+              fromAttractionId: fromPoint.id,
+              toAttractionId: toPoint.id,
+            };
+          }
 
           // Fetch from ORS
           try {
@@ -392,8 +400,32 @@ export const routeRouter = createTRPCRouter({
               });
             }
 
-            return leg;
+            return {
+              kind: "routed" as const,
+              leg,
+              fromAttractionId: fromPoint.id,
+              toAttractionId: toPoint.id,
+            };
           } catch (error) {
+            if (
+              error instanceof TRPCError &&
+              isUnroutableRouteMessage(error.message)
+            ) {
+              log.warn(
+                {
+                  fromId: fromPoint.id,
+                  toId: toPoint.id,
+                  travelMode,
+                },
+                "Skipping unroutable itinerary leg",
+              );
+              return {
+                kind: "unroutable" as const,
+                fromAttractionId: fromPoint.id,
+                toAttractionId: toPoint.id,
+              };
+            }
+
             if (error instanceof TRPCError) throw error;
 
             log.error(
@@ -413,31 +445,48 @@ export const routeRouter = createTRPCRouter({
           }
         });
 
-      const legs = await Promise.all(legPromises);
+      const legResults = await Promise.all(legPromises);
+      const routedLegs = legResults.filter(
+        (result) => result.kind === "routed",
+      );
+      const unroutableLegs = legResults
+        .filter((result) => result.kind === "unroutable")
+        .map(({ fromAttractionId, toAttractionId }) => ({
+          fromAttractionId,
+          toAttractionId,
+        }));
 
       const allCoordinates: [number, number][] = [];
       let totalDistanceMeters = 0;
       let totalDurationSeconds = 0;
 
-      const parsedGeometries = legs.map(
-        (leg) => JSON.parse(leg.geoJson) as GeoJSON,
+      const parsedGeometries = routedLegs.map(
+        ({ leg }) => JSON.parse(leg.geoJson) as GeoJSON,
       );
 
       parsedGeometries.forEach((geometry, i) => {
-        const coords =
-          i === 0 ? geometry.coordinates : geometry.coordinates.slice(1);
+        const currentLeg = routedLegs[i]!;
+        const previousLeg = routedLegs[i - 1];
+        const isContiguous =
+          previousLeg?.toAttractionId === currentLeg.fromAttractionId;
+        const coords = isContiguous
+          ? geometry.coordinates.slice(1)
+          : geometry.coordinates;
         allCoordinates.push(...coords);
-        totalDistanceMeters += legs[i]!.distanceMeters;
-        totalDurationSeconds += legs[i]!.durationSeconds;
+        totalDistanceMeters += currentLeg.leg.distanceMeters;
+        totalDurationSeconds += currentLeg.leg.durationSeconds;
       });
 
       return {
-        legs: legs.map((leg, i) => ({
-          ...leg,
-          geometryGeojsonParsed: parsedGeometries[i]!,
-          fromAttractionId: input.points[i]!.id,
-          toAttractionId: input.points[i + 1]!.id,
-        })),
+        legs: routedLegs.map(
+          ({ leg, fromAttractionId, toAttractionId }, i) => ({
+            ...leg,
+            geometryGeojsonParsed: parsedGeometries[i]!,
+            fromAttractionId,
+            toAttractionId,
+          }),
+        ),
+        unroutableLegs,
         geojson: {
           type: "Feature",
           geometry: {
@@ -447,7 +496,7 @@ export const routeRouter = createTRPCRouter({
           properties: {
             totalDistanceMeters,
             totalDurationSeconds,
-            legCount: legs.length,
+            legCount: routedLegs.length,
           },
         },
         totalKm: totalDistanceMeters / 1000,
