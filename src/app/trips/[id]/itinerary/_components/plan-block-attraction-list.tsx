@@ -129,7 +129,14 @@ export function PlanBlockAttractionList({
         const isDragging = draggedIndex === index;
         const isDragOver = dragOverIndex === index;
         const isRemoving = removingAttractionId === attraction.id;
-        const legToNext = routeLegs?.[index];
+        const nextAttraction = attractions[index + 1];
+        const legToNext = nextAttraction
+          ? routeLegs?.find(
+              (leg) =>
+                leg.fromAttractionId === attraction.id &&
+                leg.toAttractionId === nextAttraction.id,
+            )
+          : undefined;
         const TravelModeIcon =
           legToNext?.travelMode === "driving" ? Car : Footprints;
 

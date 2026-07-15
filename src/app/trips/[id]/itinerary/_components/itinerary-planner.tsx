@@ -96,14 +96,17 @@ export function ItineraryPlanner({
     setSelectedAttractionId(null);
   }, []);
 
-  const { attractions: mapAttractions, markerMeta, filters } =
-    useAttractionMapFilters({
-      attractions,
-      defaultHighlights: ["must_see", "recommended", "none"],
-      alwaysVisibleIds: plannedAttractionIds,
-      selectedAttractionId,
-      onSelectionClear: handleDeselectAttraction,
-    });
+  const {
+    attractions: mapAttractions,
+    markerMeta,
+    filters,
+  } = useAttractionMapFilters({
+    attractions,
+    defaultHighlights: ["must_see", "recommended", "none"],
+    alwaysVisibleIds: plannedAttractionIds,
+    selectedAttractionId,
+    onSelectionClear: handleDeselectAttraction,
+  });
 
   const handleAddAttractionToBlock = (attraction: AttractionDetail) => {
     if (addAttractionToBlock(selectedBlockId, attraction)) {
@@ -245,6 +248,7 @@ export function ItineraryPlanner({
           blockColors={blockColors}
           hoveredAttractionId={hoveredAttraction}
           planBlocks={planBlocks}
+          overnightStops={trip.overnightStops}
           markerMeta={markerMeta}
           onAttractionSelect={handleSelectAttraction}
           onAddAttractionToBlock={handleAddAttractionToBlock}

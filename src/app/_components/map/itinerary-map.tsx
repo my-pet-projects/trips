@@ -7,6 +7,7 @@ import type { TripsImageSource } from "~/lib/trips-image-extension";
 import type {
   AttractionDetail,
   BasicAttraction,
+  OvernightStop,
   PlanBlock,
 } from "~/types";
 
@@ -31,6 +32,7 @@ type ItineraryMapProps = Pick<
   | "className"
 > & {
   planBlocks: PlanBlock[];
+  overnightStops: OvernightStop[];
   selectedBlockAttractions: BasicAttraction[];
   selectedBlockId: number | null;
   attractionToBlockMap: Map<number, PlanBlock>;
@@ -45,6 +47,7 @@ type ItineraryMapProps = Pick<
 
 export function ItineraryMap({
   planBlocks,
+  overnightStops,
   selectedBlockAttractions,
   selectedBlockId,
   attractionToBlockMap,
@@ -77,10 +80,15 @@ export function ItineraryMap({
   return (
     <BaseAttractionMap
       {...base}
-      markers={{ onClick: handleMarkerClick, enableClustering, meta: markerMeta }}
+      markers={{
+        onClick: handleMarkerClick,
+        enableClustering,
+        meta: markerMeta,
+      }}
       itinerary={{
         selectedBlockAttractions,
         selectedBlockId,
+        overnightStops,
         selectedBlockAttractionOrders,
         attractionToBlockMap: attractionToBlockId,
         blockColors,

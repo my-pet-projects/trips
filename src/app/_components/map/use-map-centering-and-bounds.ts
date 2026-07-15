@@ -14,6 +14,7 @@ export type MapCenteringAndBoundsOptions = {
   selectedAttractionId?: number | null;
   panelHeight?: number;
   userLocation?: [number, number] | null;
+  additionalPoints?: [number, number][];
 };
 
 /** Delay before recentring on a selection, so the detail panel can settle. */
@@ -61,6 +62,7 @@ export const useMapCenteringAndBounds = ({
   selectedAttractionId = null,
   panelHeight = 0,
   userLocation = null,
+  additionalPoints = [],
 }: MapCenteringAndBoundsOptions) => {
   const lastCenteredRef = useRef<{
     id: number;
@@ -156,9 +158,12 @@ export const useMapCenteringAndBounds = ({
     )
       return;
 
-    const points = attractions
-      .filter((a) => a.latitude != null && a.longitude != null)
-      .map((a) => [a.latitude!, a.longitude!] as [number, number]);
+    const points = [
+      ...attractions
+        .filter((a) => a.latitude != null && a.longitude != null)
+        .map((a) => [a.latitude!, a.longitude!] as [number, number]),
+      ...additionalPoints,
+    ];
 
     const fitted = fitMapToPoints(mapRef.current, points, {
       padding: INITIAL_FIT_PADDING,
@@ -170,6 +175,7 @@ export const useMapCenteringAndBounds = ({
   }, [
     mapRef,
     attractions,
+    additionalPoints,
     selectedBlockId,
     selectedAttractionId,
     hasInitializedBounds,
