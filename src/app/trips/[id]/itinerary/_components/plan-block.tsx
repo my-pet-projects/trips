@@ -10,9 +10,20 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { usePlanBlockRoute } from "~/lib/itinerary/use-plan-block-route-map";
+import {
+  formatRouteDuration,
+  formatRouteKm,
+  formatRouteLegStats,
+} from "~/lib/itinerary/format-route-stats";
 import { getPlanBlockColor } from "~/lib/map/colors";
-import type { PlanBlock, PlanBlockFieldPatch, Trip } from "~/types";
+import { OVERNIGHT_STOP_COLOR } from "~/lib/map/marker-icons/overnight-stop";
+import type {
+  OvernightLegResult,
+  PlanBlock,
+  PlanBlockFieldPatch,
+  RouteData,
+  Trip,
+} from "~/types";
 import { PlanDateRange } from "./plan-date-range";
 import { Badge } from "~/app/_components/ui/badge";
 import { Button } from "~/app/_components/ui/button";
@@ -51,6 +62,10 @@ export type PlanBlockCardProps = {
   block: PlanBlock;
   index: number;
   trip: Pick<Trip, "startDate" | "endDate">;
+  overnightLegs?: OvernightLegResult;
+  routeData?: RouteData | null;
+  isLoadingRoute?: boolean;
+  routeError?: string;
   state: PlanBlockCardState;
   actions: PlanBlockCardActions;
 };
@@ -59,6 +74,10 @@ export function PlanBlockCard({
   block,
   index,
   trip,
+  overnightLegs,
+  routeData = null,
+  isLoadingRoute = false,
+  routeError,
   state,
   actions,
 }: PlanBlockCardProps) {
@@ -82,12 +101,11 @@ export function PlanBlockCard({
 
   const color = getPlanBlockColor(index);
 
-  const { routeData, isLoadingRoute, routeError } = usePlanBlockRoute(
-    block.id,
-    block.attractions,
-  );
-
   const attractionCount = block.attractions.length;
+  const arrivalLeg = overnightLegs?.arrival?.data;
+  const departureLeg = overnightLegs?.departure?.data;
+  const showRouteStats =
+    attractionCount >= 2 || arrivalLeg != null || departureLeg != null;
 
   return (
     <Card
@@ -230,7 +248,7 @@ export function PlanBlockCard({
         onChange={update}
       />
 
-      {attractionCount >= 2 && (
+      {showRouteStats && (
         <div className="mb-3 flex flex-wrap items-center gap-3 rounded-lg bg-linear-to-r from-blue-50 to-sky-50 px-3 py-2 text-xs">
           {isLoadingRoute ? (
             <>
@@ -244,24 +262,24 @@ export function PlanBlockCard({
                   <div className="flex items-center gap-1.5 text-gray-700">
                     <Route className="h-3.5 w-3.5 text-sky-600" />
                     <span className="font-semibold">
-                      {routeData.totalKm.toFixed(1)} km
+                      {formatRouteKm(routeData.totalDistanceMeters)}
                     </span>
                   </div>
                   <div className="h-3 w-px bg-sky-200" />
                   <div className="flex items-center gap-1.5 text-gray-700">
                     <Clock className="h-3.5 w-3.5 text-sky-600" />
                     <span className="font-semibold">
-                      {Math.round(routeData.totalDurationMinutes)} min
+                      {formatRouteDuration(routeData.totalDurationSeconds)}
                     </span>
                   </div>
                 </>
               )}
-              {routeData.unroutableLegs.length > 0 && (
+              {routeData.unroutableLegCount > 0 && (
                 <div className="flex items-start gap-2 text-amber-700">
                   <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   <span className="font-medium">
                     {routeData.legs.length > 0
-                      ? `${routeData.unroutableLegs.length} route ${routeData.unroutableLegs.length === 1 ? "leg is" : "legs are"} unavailable; available totals are shown.`
+                      ? `${routeData.unroutableLegCount} route ${routeData.unroutableLegCount === 1 ? "leg is" : "legs are"} unavailable; available totals are shown.`
                       : "No road or walking route was found for these stops."}
                   </span>
                 </div>
@@ -276,6 +294,46 @@ export function PlanBlockCard({
               <p className="ml-5 text-xs text-amber-700">{routeError}</p>
             </div>
           ) : null}
+          {departureLeg && (
+            <>
+              {(routeData?.legs.length ?? 0) > 0 && (
+                <div className="h-3 w-px bg-sky-200" />
+              )}
+              <div
+                className="flex items-center gap-1.5 text-gray-700"
+                style={{ color: OVERNIGHT_STOP_COLOR }}
+              >
+                <Route className="h-3.5 w-3.5" />
+                <span className="font-semibold">
+                  From hotel ·{" "}
+                  {formatRouteLegStats(
+                    departureLeg.distanceMeters,
+                    departureLeg.durationSeconds,
+                  )}
+                </span>
+              </div>
+            </>
+          )}
+          {arrivalLeg && (
+            <>
+              {((routeData?.legs.length ?? 0) > 0 || departureLeg) && (
+                <div className="h-3 w-px bg-sky-200" />
+              )}
+              <div
+                className="flex items-center gap-1.5 text-gray-700"
+                style={{ color: OVERNIGHT_STOP_COLOR }}
+              >
+                <Route className="h-3.5 w-3.5" />
+                <span className="font-semibold">
+                  To hotel ·{" "}
+                  {formatRouteLegStats(
+                    arrivalLeg.distanceMeters,
+                    arrivalLeg.durationSeconds,
+                  )}
+                </span>
+              </div>
+            </>
+          )}
         </div>
       )}
 

@@ -68,6 +68,12 @@ export const useMapCenteringAndBounds = ({
     id: number;
     panelHeight: number;
   } | null>(null);
+  const prevSelectedBlockIdRef = useRef<number | null>(null);
+  const selectedBlockAttractionsRef = useRef(selectedBlockAttractions);
+
+  useEffect(() => {
+    selectedBlockAttractionsRef.current = selectedBlockAttractions;
+  }, [selectedBlockAttractions]);
 
   // Center map on selected attraction, offset for the detail panel.
   useEffect(() => {
@@ -105,12 +111,20 @@ export const useMapCenteringAndBounds = ({
     return () => clearTimeout(timeoutId);
   }, [selectedAttractionId, attractionsMap, mapRef, panelHeight]);
 
-  // Center map on the selected block's attractions.
+  // Center map on the selected block's attractions (only when the block changes).
   useEffect(() => {
-    if (!mapRef.current || !selectedBlockId || selectedAttractionId) return;
+    if (selectedBlockId == null) {
+      prevSelectedBlockIdRef.current = null;
+      return;
+    }
+    if (!mapRef.current || selectedAttractionId) return;
+
+    const blockChanged = prevSelectedBlockIdRef.current !== selectedBlockId;
+    prevSelectedBlockIdRef.current = selectedBlockId;
+    if (!blockChanged) return;
 
     const map = mapRef.current;
-    const validAttractions = selectedBlockAttractions.filter(
+    const validAttractions = selectedBlockAttractionsRef.current.filter(
       (a) => a.latitude != null && a.longitude != null,
     );
 
@@ -140,13 +154,7 @@ export const useMapCenteringAndBounds = ({
     }, MARKER_RENDER_DELAY_MS);
 
     return () => clearTimeout(timeoutId);
-  }, [
-    selectedBlockId,
-    selectedBlockAttractions,
-    selectedAttractionId,
-    userLocation,
-    mapRef,
-  ]);
+  }, [selectedBlockId, selectedAttractionId, userLocation, mapRef]);
 
   // Initial fit bounds for all attractions (if no block/attraction selected).
   useEffect(() => {

@@ -1,8 +1,10 @@
 import L from "leaflet";
 import { useEffect, useRef } from "react";
 
+import { formatRouteLegStats } from "~/lib/itinerary/format-route-stats";
 import { DEFAULT_BLOCK_COLOR } from "~/lib/map/colors";
-import type { RouteData } from "~/types";
+import { OVERNIGHT_STOP_COLOR } from "~/lib/map/marker-icons/overnight-stop";
+import type { OvernightLegResult, RouteData } from "~/types";
 import { useInjectStyles } from "./use-inject-styles";
 
 const ROUTE_STYLES = `
@@ -24,8 +26,8 @@ const ROUTE_STYLES = `
 
 type LegPolyline = {
   polyline: L.Polyline;
-  fromAttractionId: number;
-  toAttractionId: number;
+  fromAttractionId: number | null;
+  toAttractionId: number | null;
 };
 
 type DayPolylines = {
@@ -33,9 +35,16 @@ type DayPolylines = {
   legs: LegPolyline[];
 };
 
+/** Legs touching a bare coordinate have no attraction id, so null never matches. */
+const matchesAttraction = (
+  legAttractionId: number | null,
+  attractionId: number | null,
+) => legAttractionId !== null && legAttractionId === attractionId;
+
 export const useLeafletRoutes = (
   mapRef: React.RefObject<L.Map | null>,
   blockRoutes: Map<number, RouteData>,
+  overnightLegs: Map<number, OvernightLegResult>,
   blockColors: Map<number, string>,
   selectedBlockId: number | null,
   hoveredAttractionId: number | null,
@@ -43,10 +52,12 @@ export const useLeafletRoutes = (
   isLoadingRoutes: boolean,
 ) => {
   const blockPolylinesRef = useRef<Map<number, DayPolylines>>(new Map());
+  // Separate ref so the overnight effect can clean up its own polylines
+  // without racing against the main block-routes rebuild.
+  const overnightPolylinesRef = useRef<Map<number, L.Polyline[]>>(new Map());
 
   useInjectStyles("leaflet-route-styles", ROUTE_STYLES);
 
-  // Rebuild polylines when routes/colors/selected-day change (not on hover/select)
   useEffect(() => {
     if (!mapRef.current || isLoadingRoutes) return;
 
@@ -77,7 +88,7 @@ export const useLeafletRoutes = (
         }).addTo(map);
 
         polyline.bindTooltip(
-          `${isDriving ? "Driving" : "Walking"} · ${(leg.distanceMeters / 1000).toFixed(1)} km · ${Math.round(leg.durationSeconds / 60)} min`,
+          `${isDriving ? "Driving" : "Walking"} · ${formatRouteLegStats(leg.distanceMeters, leg.durationSeconds)}`,
           { sticky: true },
         );
 
@@ -87,18 +98,14 @@ export const useLeafletRoutes = (
           path.style.animation = "none";
         }
 
-        return polyline;
+        return { polyline, latLngs };
       });
 
       const legs: LegPolyline[] = [];
 
-      if (isSelectedBlock && route.legs) {
-        route.legs.forEach((leg) => {
-          const legLatLngs = leg.geometryGeojsonParsed.coordinates.map(
-            ([lng, lat]) => [lat, lng] as [number, number],
-          );
-
-          const legPolyline = L.polyline(legLatLngs, {
+      if (isSelectedBlock) {
+        route.legs.forEach((leg, i) => {
+          const legPolyline = L.polyline(main[i]!.latLngs, {
             color,
             weight: 5,
             opacity: 0,
@@ -115,7 +122,10 @@ export const useLeafletRoutes = (
         });
       }
 
-      blockPolylinesRef.current.set(dayId, { main, legs });
+      blockPolylinesRef.current.set(dayId, {
+        main: main.map((m) => m.polyline),
+        legs,
+      });
     });
 
     return () => {
@@ -127,8 +137,75 @@ export const useLeafletRoutes = (
     };
   }, [mapRef, blockRoutes, blockColors, selectedBlockId, isLoadingRoutes]);
 
-  // Update opacity/animation on existing polylines when hover/select changes.
-  // Also depends on blockRoutes/isLoadingRoutes so styling is re-applied after rebuild.
+  // Render overnight legs independently — not gated on isLoadingRoutes so they
+  // appear even before or after the main block-route queries settle.
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const map = mapRef.current;
+
+    overnightPolylinesRef.current.forEach((polylines) =>
+      polylines.forEach((p) => p.remove()),
+    );
+    overnightPolylinesRef.current.clear();
+
+    const renderOvernightPolyline = (
+      data: OvernightLegResult["departure"] | OvernightLegResult["arrival"],
+      label: string,
+      isSelectedBlock: boolean,
+    ) => {
+      if (!data?.data) return null;
+      const latLngs = data.data.geometry.coordinates.map(
+        ([lng, lat]) => [lat, lng] as [number, number],
+      );
+      const stats = formatRouteLegStats(
+        data.data.distanceMeters,
+        data.data.durationSeconds,
+      );
+      const mode = data.data.travelMode === "driving" ? "Driving" : "Walking";
+      const pl = L.polyline(latLngs, {
+        color: OVERNIGHT_STOP_COLOR,
+        weight: isSelectedBlock ? 5 : 4,
+        opacity: isSelectedBlock ? 0.9 : 0.6,
+        dashArray: "8 10",
+        lineJoin: "round",
+        lineCap: "round",
+      }).addTo(map);
+      pl.bindTooltip(`${label} · ${stats} (${mode})`, { sticky: true });
+      return pl;
+    };
+
+    overnightLegs.forEach((overnightLeg, dayId) => {
+      const isSelectedBlock = dayId === selectedBlockId;
+      const polylines: L.Polyline[] = [];
+
+      const dep = renderOvernightPolyline(
+        overnightLeg.departure,
+        "From hotel",
+        isSelectedBlock,
+      );
+      const arr = renderOvernightPolyline(
+        overnightLeg.arrival,
+        "To hotel",
+        isSelectedBlock,
+      );
+      if (dep) polylines.push(dep);
+      if (arr) polylines.push(arr);
+
+      if (polylines.length > 0) {
+        overnightPolylinesRef.current.set(dayId, polylines);
+      }
+    });
+
+    return () => {
+      overnightPolylinesRef.current.forEach((polylines) =>
+        polylines.forEach((p) => p.remove()),
+      );
+      overnightPolylinesRef.current.clear();
+    };
+  }, [mapRef, overnightLegs, selectedBlockId]);
+
+  // Depends on blockRoutes/isLoadingRoutes so styling is re-applied after a rebuild.
   useEffect(() => {
     if (!mapRef.current) return;
 
@@ -140,10 +217,10 @@ export const useLeafletRoutes = (
         return (
           dp?.legs.some(
             (l) =>
-              l.fromAttractionId === selectedAttractionId ||
-              l.toAttractionId === selectedAttractionId ||
-              l.fromAttractionId === hoveredAttractionId ||
-              l.toAttractionId === hoveredAttractionId,
+              matchesAttraction(l.fromAttractionId, selectedAttractionId) ||
+              matchesAttraction(l.toAttractionId, selectedAttractionId) ||
+              matchesAttraction(l.fromAttractionId, hoveredAttractionId) ||
+              matchesAttraction(l.toAttractionId, hoveredAttractionId),
           ) ?? false
         );
       })();
@@ -159,13 +236,17 @@ export const useLeafletRoutes = (
       }
       main.forEach((polyline) => polyline.setStyle({ opacity, weight }));
 
+      overnightPolylinesRef.current
+        .get(dayId)
+        ?.forEach((p) => p.setStyle({ opacity, weight }));
+
       legs.forEach(({ polyline, fromAttractionId, toAttractionId }) => {
         const isLegSelected =
-          selectedAttractionId === fromAttractionId ||
-          selectedAttractionId === toAttractionId;
+          matchesAttraction(fromAttractionId, selectedAttractionId) ||
+          matchesAttraction(toAttractionId, selectedAttractionId);
         const isLegHovered =
-          hoveredAttractionId === fromAttractionId ||
-          hoveredAttractionId === toAttractionId;
+          matchesAttraction(fromAttractionId, hoveredAttractionId) ||
+          matchesAttraction(toAttractionId, hoveredAttractionId);
 
         const active = isLegSelected || isLegHovered;
         polyline.setStyle({
@@ -191,6 +272,7 @@ export const useLeafletRoutes = (
     selectedAttractionId,
     selectedBlockId,
     blockRoutes,
+    overnightLegs,
     isLoadingRoutes,
   ]);
 };

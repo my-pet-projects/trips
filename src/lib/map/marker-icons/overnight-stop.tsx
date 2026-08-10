@@ -4,7 +4,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 const MARKER_SIZE = 34;
 const ICON_SIZE = 18;
-const MARKER_COLOR = "#7c3aed";
+export const OVERNIGHT_STOP_COLOR = "#7c3aed";
+const MARKER_COLOR = OVERNIGHT_STOP_COLOR;
 
 export function overnightStopDivIcon(): L.DivIcon {
   const icon = renderToStaticMarkup(

@@ -8,6 +8,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/app/_components/ui/tooltip";
+import {
+  formatRouteDuration,
+  formatRouteKm,
+} from "~/lib/itinerary/format-route-stats";
 import type { PlanBlock, RouteData } from "~/types";
 
 type PlanBlockAttractionListProps = {
@@ -216,10 +220,10 @@ export function PlanBlockAttractionList({
                   <span>
                     {legToNext.travelMode === "driving" ? "Driving" : "Walking"}
                   </span>
-                  <span>{(legToNext.distanceMeters / 1000).toFixed(1)} km</span>
+                  <span>{formatRouteKm(legToNext.distanceMeters)}</span>
                   <span className="text-gray-400">•</span>
                   <Clock className="h-3 w-3" />
-                  <span>{Math.round(legToNext.durationSeconds / 60)} min</span>
+                  <span>{formatRouteDuration(legToNext.durationSeconds)}</span>
                 </div>
               </div>
             )}
