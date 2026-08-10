@@ -19,6 +19,10 @@ import {
 } from "~/app/_components/ui/empty";
 import { Spinner } from "~/app/_components/ui/spinner";
 import { usePlanBlockEditor } from "~/lib/itinerary/use-plan-block-editor";
+import {
+  useItineraryRoutes,
+  shouldFetchBlockRoute,
+} from "~/lib/itinerary/use-itinerary-routes";
 import { useAttractionMapFilters } from "~/lib/map/use-attraction-map-filters";
 import { AttractionMapToolbar } from "~/lib/map/attraction-map-toolbar";
 import { usePlanBlockMaps } from "~/lib/itinerary/use-plan-block-maps";
@@ -62,6 +66,13 @@ export function ItineraryPlanner({
   } = usePlanBlockEditor(trip);
 
   const { blockColors, attractionToBlockMap } = usePlanBlockMaps(planBlocks);
+  const {
+    blockRoutes,
+    blockRouteErrors,
+    overnightLegs,
+    isLoadingRoutes,
+    routeError,
+  } = useItineraryRoutes(trip.id);
 
   const handleSelectAttraction = useCallback(
     (attractionId: number | null) => {
@@ -191,6 +202,14 @@ export function ItineraryPlanner({
                   block={block}
                   index={planBlocks.findIndex((item) => item.id === block.id)}
                   trip={trip}
+                  overnightLegs={overnightLegs.get(block.id)}
+                  routeData={blockRoutes.get(block.id) ?? null}
+                  routeError={blockRouteErrors.get(block.id) ?? routeError}
+                  isLoadingRoute={
+                    shouldFetchBlockRoute(block.id, block.attractions) &&
+                    isLoadingRoutes &&
+                    !blockRoutes.has(block.id)
+                  }
                   state={{
                     isSelected: selectedBlockId === block.id,
                     isRemoving: blockBeingRemoved === block.id,
@@ -247,7 +266,9 @@ export function ItineraryPlanner({
           attractionToBlockMap={attractionToBlockMap}
           blockColors={blockColors}
           hoveredAttractionId={hoveredAttraction}
-          planBlocks={planBlocks}
+          blockRoutes={blockRoutes}
+          overnightLegs={overnightLegs}
+          isLoadingRoutes={isLoadingRoutes}
           overnightStops={trip.overnightStops}
           markerMeta={markerMeta}
           onAttractionSelect={handleSelectAttraction}

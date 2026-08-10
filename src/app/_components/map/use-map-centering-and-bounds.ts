@@ -68,6 +68,9 @@ export const useMapCenteringAndBounds = ({
     id: number;
     panelHeight: number;
   } | null>(null);
+  const prevSelectedBlockIdRef = useRef<number | null>(null);
+  const selectedBlockAttractionsRef = useRef(selectedBlockAttractions);
+  selectedBlockAttractionsRef.current = selectedBlockAttractions;
 
   // Center map on selected attraction, offset for the detail panel.
   useEffect(() => {
@@ -105,12 +108,16 @@ export const useMapCenteringAndBounds = ({
     return () => clearTimeout(timeoutId);
   }, [selectedAttractionId, attractionsMap, mapRef, panelHeight]);
 
-  // Center map on the selected block's attractions.
+  // Center map on the selected block's attractions (only when the block changes).
   useEffect(() => {
     if (!mapRef.current || !selectedBlockId || selectedAttractionId) return;
 
+    const blockChanged = prevSelectedBlockIdRef.current !== selectedBlockId;
+    prevSelectedBlockIdRef.current = selectedBlockId;
+    if (!blockChanged) return;
+
     const map = mapRef.current;
-    const validAttractions = selectedBlockAttractions.filter(
+    const validAttractions = selectedBlockAttractionsRef.current.filter(
       (a) => a.latitude != null && a.longitude != null,
     );
 
@@ -142,7 +149,6 @@ export const useMapCenteringAndBounds = ({
     return () => clearTimeout(timeoutId);
   }, [
     selectedBlockId,
-    selectedBlockAttractions,
     selectedAttractionId,
     userLocation,
     mapRef,

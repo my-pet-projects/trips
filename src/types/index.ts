@@ -30,7 +30,17 @@ export type ExistingAttraction =
   RouterOutputs["rawAttraction"]["getTriageMapData"]["existing"][number];
 
 // Route types
-export type RouteData = RouterOutputs["route"]["buildRoute"];
+export type RouteData = NonNullable<
+  RouterOutputs["route"]["forTrip"]["blocks"][number]["route"]
+>;
+export type OvernightLegData =
+  RouterOutputs["route"]["forTrip"]["overnight"][number]["data"];
+export type OvernightLegResult = {
+  /** Departure leg: overnight stop → first attraction of this block */
+  departure?: { stopId: number; toAttractionId: number; data: OvernightLegData };
+  /** Arrival leg: last attraction of this block → overnight stop */
+  arrival?: { stopId: number; fromAttractionId: number; data: OvernightLegData };
+};
 
 // Plan block types (derived from Trip)
 export type PlanBlock = Trip["planBlocks"][number];

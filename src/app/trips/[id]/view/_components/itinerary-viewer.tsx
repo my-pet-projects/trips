@@ -8,6 +8,7 @@ import { ItineraryMap } from "~/app/_components/map/itinerary-map";
 import { Badge } from "~/app/_components/ui/badge";
 import { Button } from "~/app/_components/ui/button";
 import { buildFlexibleItineraryTimeline } from "~/lib/itinerary/build-flexible-itinerary-timeline";
+import { useItineraryRoutes } from "~/lib/itinerary/use-itinerary-routes";
 import { usePlanBlockMaps } from "~/lib/itinerary/use-plan-block-maps";
 import { DEFAULT_BLOCK_COLOR } from "~/lib/map/colors";
 import type { AttractionDetail, Trip } from "~/types";
@@ -42,6 +43,9 @@ export function ItineraryViewer({
   >(null);
 
   const { blockColors, attractionToBlockMap } = usePlanBlockMaps(planBlocks);
+  const { blockRoutes, overnightLegs, isLoadingRoutes } = useItineraryRoutes(
+    trip.id,
+  );
 
   const selectedBlock = useMemo(
     () => planBlocks.find((b) => b.id === selectedBlockId),
@@ -158,7 +162,9 @@ export function ItineraryViewer({
           attractionToBlockMap={attractionToBlockMap}
           blockColors={blockColors}
           hoveredAttractionId={null}
-          planBlocks={planBlocks}
+          blockRoutes={blockRoutes}
+          overnightLegs={overnightLegs}
+          isLoadingRoutes={isLoadingRoutes}
           overnightStops={trip.overnightStops}
           onAttractionSelect={setSelectedAttractionId}
           enableLocationTracking
