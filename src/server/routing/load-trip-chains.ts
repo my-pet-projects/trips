@@ -9,12 +9,8 @@ import {
   attractionsToRoutePoints,
   type RoutePoint,
 } from "~/lib/itinerary/route-point";
-import { createLogger } from "~/lib/logger";
-import { MAX_CHAIN_POINTS } from "~/server/routing/constants";
 import type { db as tripsDb } from "~/server/db";
 import * as schema from "~/server/db/schema";
-
-const log = createLogger("route:chains");
 
 export type BlockChain = { blockId: number; points: RoutePoint[] };
 
@@ -76,19 +72,9 @@ export async function loadTripChains(
   const blockChains: BlockChain[] = [];
   for (const block of planBlocks) {
     const points = attractionsToRoutePoints(block.attractions);
-    if (points.length < 2) continue;
-
-    if (points.length > MAX_CHAIN_POINTS) {
-      log.warn(
-        { blockId: block.id, pointCount: points.length, MAX_CHAIN_POINTS },
-        "Plan block exceeds the routable point limit; routing a prefix only",
-      );
+    if (points.length >= 2) {
+      blockChains.push({ blockId: block.id, points });
     }
-
-    blockChains.push({
-      blockId: block.id,
-      points: points.slice(0, MAX_CHAIN_POINTS),
-    });
   }
 
   return {

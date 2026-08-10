@@ -1,3 +1,4 @@
+import type { TravelMode } from "~/server/routing/constants";
 import type { GeoJSONLineString } from "~/server/routing/ors-client";
 import type { ResolvedLeg } from "~/server/routing/resolve-leg";
 
@@ -5,7 +6,7 @@ export type RouteChainLeg = {
   geometryGeojsonParsed: GeoJSONLineString;
   distanceMeters: number;
   durationSeconds: number;
-  travelMode: "walking" | "driving";
+  travelMode: TravelMode;
   fromAttractionId: number | null;
   toAttractionId: number | null;
 };

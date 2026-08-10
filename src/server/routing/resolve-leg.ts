@@ -1,4 +1,4 @@
-import { inArray } from "drizzle-orm";
+import { and, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 import { haversineDistance } from "~/lib/geo";
@@ -6,9 +6,9 @@ import { isUnroutableRouteMessage } from "~/lib/itinerary/route-errors";
 import type { RoutePoint } from "~/lib/itinerary/route-point";
 import { createLogger, errMsg } from "~/lib/logger";
 import {
-  CACHE_LOOKUP_CHUNK_SIZE,
   DIRECT_LEG_CACHE_MAX,
   DRIVING_DISTANCE_THRESHOLD_KM,
+  MAX_QUERY_PARAMETERS,
   type TravelMode,
 } from "~/server/routing/constants";
 import {
@@ -45,7 +45,7 @@ export type ResolvedChain = {
 
 type LegPair = { from: RoutePoint; to: RoutePoint; travelMode: TravelMode };
 
-const directLegCache = new Map<string, RouteLegData>();
+const directLegCache = new Map<string, Promise<RouteLegData | null>>();
 
 function getTravelMode(from: RoutePoint, to: RoutePoint): TravelMode {
   const distanceKm = haversineDistance(from.lat, from.lng, to.lat, to.lng);
@@ -88,29 +88,42 @@ function rowToLegData(row: typeof schema.routes.$inferSelect): RouteLegData {
   };
 }
 
-/** Filters on origin only, then narrows to the wanted pairs in memory, to keep this to one query. */
 async function loadCachedAttractionLegs(
   db: RouteDb,
   pairs: LegPair[],
 ): Promise<Map<string, RouteLegData>> {
   const wanted = new Set<string>();
   const fromIds = new Set<number>();
+  const toIds = new Set<number>();
 
   for (const { from, to, travelMode } of pairs) {
     if (from.kind !== "attraction" || to.kind !== "attraction") continue;
     wanted.add(attractionPairKey(from.id, to.id, travelMode));
     fromIds.add(from.id);
+    toIds.add(to.id);
   }
 
   const cached = new Map<string, RouteLegData>();
   if (wanted.size === 0) return cached;
 
+  // Both id lists have to share one statement's parameter budget.
+  const destinationIds = [...toIds];
+  const originChunkSize = Math.max(
+    1,
+    MAX_QUERY_PARAMETERS - destinationIds.length,
+  );
+
   const rowGroups = await Promise.all(
-    chunk([...fromIds], CACHE_LOOKUP_CHUNK_SIZE).map((ids) =>
+    chunk([...fromIds], originChunkSize).map((ids) =>
       db
         .select()
         .from(schema.routes)
-        .where(inArray(schema.routes.fromAttractionId, ids)),
+        .where(
+          and(
+            inArray(schema.routes.fromAttractionId, ids),
+            inArray(schema.routes.toAttractionId, destinationIds),
+          ),
+        ),
     ),
   );
 
@@ -128,7 +141,9 @@ async function loadCachedAttractionLegs(
 
 /**
  * Process-local fallback cache. It is the only cache for legs touching a bare
- * coordinate, since the `routes` table can only key on attraction ids.
+ * coordinate, since the `routes` table can only key on attraction ids. Caching the
+ * promise rather than the value lets concurrent callers share one request, and a
+ * cached `null` stops a permanently unroutable pair from being retried forever.
  */
 async function fetchLegViaOrsCached(
   from: RoutePoint,
@@ -144,39 +159,46 @@ async function fetchLegViaOrsCached(
     return cached;
   }
 
-  try {
-    const data = await fetchRouteFromOrs(
-      from.lng,
-      from.lat,
-      to.lng,
-      to.lat,
-      travelMode,
-    );
-    const result = orsResponseToLegData(data, travelMode);
-
-    directLegCache.set(cacheKey, result);
-    if (directLegCache.size > DIRECT_LEG_CACHE_MAX) {
-      const oldest = directLegCache.keys().next().value;
-      if (oldest) directLegCache.delete(oldest);
-    }
-
-    return result;
-  } catch (error) {
-    if (error instanceof TRPCError && isUnroutableRouteMessage(error.message)) {
-      log.warn(
-        {
-          fromLat: from.lat,
-          fromLng: from.lng,
-          toLat: to.lat,
-          toLng: to.lng,
-          travelMode,
-        },
-        "Skipping unroutable leg",
+  const pending = (async () => {
+    try {
+      const data = await fetchRouteFromOrs(
+        from.lng,
+        from.lat,
+        to.lng,
+        to.lat,
+        travelMode,
       );
-      return null;
+      return orsResponseToLegData(data, travelMode);
+    } catch (error) {
+      if (
+        error instanceof TRPCError &&
+        isUnroutableRouteMessage(error.message)
+      ) {
+        log.warn(
+          {
+            fromLat: from.lat,
+            fromLng: from.lng,
+            toLat: to.lat,
+            toLng: to.lng,
+            travelMode,
+          },
+          "Skipping unroutable leg",
+        );
+        return null;
+      }
+      // Transient failures must not be remembered.
+      directLegCache.delete(cacheKey);
+      throw error;
     }
-    throw error;
+  })();
+
+  directLegCache.set(cacheKey, pending);
+  if (directLegCache.size > DIRECT_LEG_CACHE_MAX) {
+    const oldest = directLegCache.keys().next().value;
+    if (oldest !== undefined) directLegCache.delete(oldest);
   }
+
+  return pending;
 }
 
 async function resolveLeg(

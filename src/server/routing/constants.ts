@@ -9,11 +9,11 @@ export const ORS_PROFILES = {
   driving: "driving-car",
 } satisfies Record<TravelMode, string>;
 export const DRIVING_DISTANCE_THRESHOLD_KM = 3;
-/** Upper bound on points per chain, to cap ORS fan-out for very large plan blocks. */
-export const MAX_CHAIN_POINTS = 50;
-/** SQLite caps bound parameters per statement; chunk `IN (...)` lookups below it. */
-export const CACHE_LOOKUP_CHUNK_SIZE = 500;
+/** SQLite caps bound parameters per statement; stay well below it when batching `IN (...)`. */
+export const MAX_QUERY_PARAMETERS = 900;
 export const ORS_TIMEOUT_MS = 10000;
 export const MAX_RETRIES = 2;
 export const RETRY_DELAY_MS = 1000;
 export const DIRECT_LEG_CACHE_MAX = 500;
+/** Caps simultaneous outbound ORS requests so one cold trip cannot burst the quota. */
+export const MAX_ORS_CONCURRENCY = 4;

@@ -207,8 +207,7 @@ export function ItineraryPlanner({
                   routeError={blockRouteErrors.get(block.id) ?? routeError}
                   isLoadingRoute={
                     shouldFetchBlockRoute(block.id, block.attractions) &&
-                    isLoadingRoutes &&
-                    !blockRoutes.has(block.id)
+                    isLoadingRoutes
                   }
                   state={{
                     isSelected: selectedBlockId === block.id,
