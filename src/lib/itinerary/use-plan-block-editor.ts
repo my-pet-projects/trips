@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { useInvalidateItinerary } from "~/lib/itinerary/use-invalidate-itinerary";
 import { getTrpcErrorMessage } from "~/lib/trpc-error-message";
 import { api } from "~/trpc/react";
 import type {
@@ -89,6 +90,7 @@ function serializePlanBlocks(blocks: PlanBlock[]): string {
 export function usePlanBlockEditor(trip: Trip) {
   const tripId = trip.id;
   const utils = api.useUtils();
+  const invalidateItinerary = useInvalidateItinerary();
 
   const [planBlocks, setPlanBlocks] = useState<PlanBlock[]>(
     () => trip.planBlocks,
@@ -138,7 +140,7 @@ export function usePlanBlockEditor(trip: Trip) {
         );
         saveErrorRef.current = null;
         setSaveError(null);
-        void utils.trip.invalidate();
+        invalidateItinerary();
       },
       onError: (err) => {
         const message = getTrpcErrorMessage(err);
@@ -161,7 +163,7 @@ export function usePlanBlockEditor(trip: Trip) {
       if (!isSilent) {
         toast.success("Plan removed");
       }
-      void utils.trip.invalidate();
+      invalidateItinerary();
     },
     onError: (err) => {
       toast.error("Failed to remove plan", {
@@ -212,7 +214,7 @@ export function usePlanBlockEditor(trip: Trip) {
       );
       setSelectedBlockId(newBlock.id);
       toast.success("Plan added");
-      void utils.trip.invalidate();
+      invalidateItinerary();
     },
     onError: (err, _, context) => {
       if (context?.tempId) {

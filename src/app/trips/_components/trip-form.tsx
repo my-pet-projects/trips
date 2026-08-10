@@ -25,6 +25,7 @@ import {
   getTrpcFormErrorDescription,
 } from "~/lib/trpc-error-message";
 import { formatDateForInput } from "~/lib/format-date-for-input";
+import { useInvalidateItinerary } from "~/lib/itinerary/use-invalidate-itinerary";
 import { tripFormSchema, type TripFormData } from "~/server/api/schemas/trip";
 import { api } from "~/trpc/react";
 import type { Country, TripById } from "~/types";
@@ -44,6 +45,7 @@ type TripFormProps =
 export function TripForm({ mode, trip }: TripFormProps) {
   const router = useRouter();
   const utils = api.useUtils();
+  const invalidateItinerary = useInvalidateItinerary();
 
   const { data: countries, isLoading: isLoadingCountries, error: countriesError } =
     api.geo.getCountries.useQuery();
@@ -142,7 +144,7 @@ export function TripForm({ mode, trip }: TripFormProps) {
       toast.success("Trip updated!", {
         description: "Changes have been saved successfully.",
       });
-      void utils.trip.invalidate();
+      invalidateItinerary();
     },
     onError: (err) => {
       handleMutationError("Failed to update trip", err);
