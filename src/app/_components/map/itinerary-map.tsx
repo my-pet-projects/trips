@@ -1,14 +1,15 @@
 "use client";
 
 import { dynamicMap } from "~/lib/map/dynamic-map";
-import { usePlanBlockRouteMap } from "~/lib/itinerary/use-plan-block-route-map";
 import type { MarkerMeta } from "~/lib/map/marker-meta";
 import type { TripsImageSource } from "~/lib/trips-image-extension";
 import type {
   AttractionDetail,
   BasicAttraction,
+  OvernightLegResult,
   OvernightStop,
   PlanBlock,
+  RouteData,
 } from "~/types";
 
 import type { BaseAttractionMapProps } from "./base-attraction-map";
@@ -31,13 +32,15 @@ type ItineraryMapProps = Pick<
   | "onDeleteAttraction"
   | "className"
 > & {
-  planBlocks: PlanBlock[];
-  overnightStops: OvernightStop[];
   selectedBlockAttractions: BasicAttraction[];
   selectedBlockId: number | null;
   attractionToBlockMap: Map<number, PlanBlock>;
   blockColors: Map<number, string>;
   hoveredAttractionId: number | null;
+  blockRoutes: Map<number, RouteData>;
+  overnightLegs: Map<number, OvernightLegResult>;
+  overnightStops: OvernightStop[];
+  isLoadingRoutes: boolean;
   onAddAttractionToBlock?: (attraction: AttractionDetail) => void;
   enableLocationTracking?: boolean;
   enableClustering?: boolean;
@@ -46,13 +49,15 @@ type ItineraryMapProps = Pick<
 };
 
 export function ItineraryMap({
-  planBlocks,
-  overnightStops,
   selectedBlockAttractions,
   selectedBlockId,
   attractionToBlockMap,
   blockColors,
   hoveredAttractionId,
+  blockRoutes,
+  overnightLegs,
+  overnightStops,
+  isLoadingRoutes,
   onAddAttractionToBlock,
   enableLocationTracking = false,
   enableClustering = false,
@@ -60,8 +65,6 @@ export function ItineraryMap({
   tripsImageSource,
   ...base
 }: ItineraryMapProps) {
-  const { blockRoutes, isLoadingRoutes } = usePlanBlockRouteMap(planBlocks);
-
   const {
     attractionToBlockId,
     selectedBlockAttractionOrders,
@@ -95,6 +98,7 @@ export function ItineraryMap({
         hoveredAttractionId,
         blockRoutes,
         isLoadingRoutes,
+        overnightLegs,
         enableLocationTracking,
         resolveAttractionStatus,
         onAddToPlan: onAddAttractionToBlock,
