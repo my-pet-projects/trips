@@ -6,27 +6,27 @@ import {
   ORS_API_BASE_URL,
   ORS_PROFILES,
   ORS_TIMEOUT_MS,
-  MAX_ORS_CONCURRENCY,
   MAX_RETRIES,
+  MAX_RETRY_DELAY_MS,
   RETRY_DELAY_MS,
   type TravelMode,
 } from "~/server/routing/constants";
-import { createSemaphore } from "~/server/routing/semaphore";
 
 const log = createLogger("route:ors");
 
-const acquireOrsSlot = createSemaphore(MAX_ORS_CONCURRENCY);
-
 /**
- * Jitter keeps the concurrent legs of one trip from retrying in lockstep, and
- * `Retry-After` avoids retrying before the upstream quota window reopens.
+ * Jitter keeps the concurrent legs of one trip from retrying in lockstep.
+ * `Retry-After` is honoured but clamped in both directions: ORS can name a whole
+ * quota window, which would otherwise hold the request open for that long.
  */
 function retryDelayMs(retryCount: number, retryAfterHeader?: string | null) {
   const headerSeconds = retryAfterHeader ? Number(retryAfterHeader) : NaN;
-  const base = Number.isFinite(headerSeconds)
-    ? headerSeconds * 1000
-    : RETRY_DELAY_MS * (retryCount + 1);
-  return base + Math.random() * RETRY_DELAY_MS;
+  const backoff = RETRY_DELAY_MS * (retryCount + 1);
+  const base =
+    Number.isFinite(headerSeconds) && headerSeconds > 0
+      ? Math.min(headerSeconds * 1000, MAX_RETRY_DELAY_MS)
+      : backoff;
+  return Math.max(base, backoff) + Math.random() * RETRY_DELAY_MS;
 }
 
 interface OrsResponse {
@@ -113,7 +113,7 @@ function parseOrsErrorMessage(
   return `Routing request failed (HTTP ${httpStatus})`;
 }
 
-async function requestRoute(
+export async function fetchRouteFromOrs(
   fromLng: number,
   fromLat: number,
   toLng: number,
@@ -177,7 +177,7 @@ async function requestRoute(
             retryDelayMs(retryCount, response.headers.get("retry-after")),
           ),
         );
-        return requestRoute(
+        return fetchRouteFromOrs(
           fromLng,
           fromLat,
           toLng,
@@ -229,7 +229,7 @@ async function requestRoute(
         await new Promise((resolve) =>
           setTimeout(resolve, retryDelayMs(retryCount)),
         );
-        return requestRoute(
+        return fetchRouteFromOrs(
           fromLng,
           fromLat,
           toLng,
@@ -253,22 +253,6 @@ async function requestRoute(
       message: "Failed to fetch route from OpenRouteService",
       cause: errMsg(error),
     });
-  }
-}
-
-/** A retrying request holds its slot throughout, so 429s throttle the whole pool. */
-export async function fetchRouteFromOrs(
-  fromLng: number,
-  fromLat: number,
-  toLng: number,
-  toLat: number,
-  travelMode: TravelMode,
-): Promise<OrsResponse> {
-  const release = await acquireOrsSlot();
-  try {
-    return await requestRoute(fromLng, fromLat, toLng, toLat, travelMode);
-  } finally {
-    release();
   }
 }
 

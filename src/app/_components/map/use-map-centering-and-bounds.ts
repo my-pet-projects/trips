@@ -113,7 +113,11 @@ export const useMapCenteringAndBounds = ({
 
   // Center map on the selected block's attractions (only when the block changes).
   useEffect(() => {
-    if (!mapRef.current || !selectedBlockId || selectedAttractionId) return;
+    if (selectedBlockId == null) {
+      prevSelectedBlockIdRef.current = null;
+      return;
+    }
+    if (!mapRef.current || selectedAttractionId) return;
 
     const blockChanged = prevSelectedBlockIdRef.current !== selectedBlockId;
     prevSelectedBlockIdRef.current = selectedBlockId;
