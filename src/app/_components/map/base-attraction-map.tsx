@@ -12,7 +12,7 @@ import type {
   AttractionDetail,
   AttractionSummary,
   BasicAttraction,
-  OvernightLegResult,
+  LabeledConnectorRoute,
   OvernightStop,
   RouteData,
 } from "~/types";
@@ -25,7 +25,7 @@ import {
   EMPTY_BLOCK_COLORS,
   EMPTY_BLOCK_ORDERS,
   EMPTY_BLOCK_ROUTES,
-  EMPTY_OVERNIGHT_LEGS,
+  EMPTY_LABELED_CONNECTOR_ROUTES,
   EMPTY_OVERNIGHT_STOPS,
 } from "./map-constants";
 import { useGeolocationTracking } from "./use-geolocation-tracking";
@@ -52,7 +52,7 @@ export type ItineraryMapFeatures = {
   blockColors?: Map<number, string>;
   hoveredAttractionId?: number | null;
   blockRoutes?: Map<number, RouteData>;
-  overnightLegs?: Map<number, OvernightLegResult>;
+  labeledConnectorRoutes?: LabeledConnectorRoute[];
   selectedBlockAttractionOrders?: Map<number, number>;
   isLoadingRoutes?: boolean;
   enableLocationTracking?: boolean;
@@ -112,7 +112,7 @@ export default function BaseAttractionMap({
     blockColors = EMPTY_BLOCK_COLORS,
     hoveredAttractionId = null,
     blockRoutes = EMPTY_BLOCK_ROUTES,
-    overnightLegs = EMPTY_OVERNIGHT_LEGS,
+    labeledConnectorRoutes = EMPTY_LABELED_CONNECTOR_ROUTES,
     selectedBlockAttractionOrders = EMPTY_BLOCK_ORDERS,
     enableLocationTracking = false,
     isLoadingRoutes = false,
@@ -269,7 +269,7 @@ export default function BaseAttractionMap({
   useLeafletRoutes(
     mapRef,
     blockRoutes,
-    overnightLegs,
+    labeledConnectorRoutes,
     blockColors,
     selectedBlockId,
     hoveredAttractionId,

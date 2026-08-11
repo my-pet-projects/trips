@@ -33,13 +33,16 @@ export type ExistingAttraction =
 export type RouteData = NonNullable<
   RouterOutputs["route"]["forTrip"]["blocks"][number]["route"]
 >;
-export type OvernightLegData =
-  RouterOutputs["route"]["forTrip"]["overnight"][number]["data"];
-export type OvernightLegResult = {
-  /** Departure leg: overnight stop → first attraction of this block */
-  departure?: { stopId: number; toAttractionId: number; data: OvernightLegData };
-  /** Arrival leg: last attraction of this block → overnight stop */
-  arrival?: { stopId: number; fromAttractionId: number; data: OvernightLegData };
+export type ConnectorRouteData = NonNullable<
+  RouterOutputs["route"]["forTrip"]["connectors"][number]["data"]
+>;
+export type PlanConnectorLegs = {
+  toHotel?: ConnectorRouteData;
+  fromHotel?: ConnectorRouteData;
+};
+export type LabeledConnectorRoute = {
+  label: string;
+  data: ConnectorRouteData;
 };
 
 // Plan block types (derived from Trip)

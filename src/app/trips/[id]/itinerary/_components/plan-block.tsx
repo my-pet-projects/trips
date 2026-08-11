@@ -9,7 +9,12 @@ import {
   Route,
   Trash2,
 } from "lucide-react";
+import { useLayoutEffect, useRef } from "react";
 
+import {
+  consumePlanBlockScroll,
+  markPlanBlockForScroll,
+} from "~/lib/itinerary/plan-block-scroll";
 import {
   formatRouteDuration,
   formatRouteKm,
@@ -18,9 +23,9 @@ import {
 import { getPlanBlockColor } from "~/lib/map/colors";
 import { OVERNIGHT_STOP_COLOR } from "~/lib/map/marker-icons/overnight-stop";
 import type {
-  OvernightLegResult,
   PlanBlock,
   PlanBlockFieldPatch,
+  PlanConnectorLegs,
   RouteData,
   Trip,
 } from "~/types";
@@ -62,7 +67,7 @@ export type PlanBlockCardProps = {
   block: PlanBlock;
   index: number;
   trip: Pick<Trip, "startDate" | "endDate">;
-  overnightLegs?: OvernightLegResult;
+  planConnectors?: PlanConnectorLegs;
   routeData?: RouteData | null;
   isLoadingRoute?: boolean;
   routeError?: string;
@@ -74,7 +79,7 @@ export function PlanBlockCard({
   block,
   index,
   trip,
-  overnightLegs,
+  planConnectors,
   routeData = null,
   isLoadingRoute = false,
   routeError,
@@ -100,15 +105,22 @@ export function PlanBlockCard({
   } = actions;
 
   const color = getPlanBlockColor(index);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (!consumePlanBlockScroll(block.id)) return;
+    cardRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [block.id, block.pinnedStartDate, block.pinnedEndDate]);
 
   const attractionCount = block.attractions.length;
-  const arrivalLeg = overnightLegs?.arrival?.data;
-  const departureLeg = overnightLegs?.departure?.data;
+  const toHotelLeg = planConnectors?.toHotel;
+  const fromHotelLeg = planConnectors?.fromHotel;
   const showRouteStats =
-    attractionCount >= 2 || arrivalLeg != null || departureLeg != null;
+    attractionCount >= 2 || toHotelLeg != null || fromHotelLeg != null;
 
   return (
     <Card
+      ref={cardRef}
       onClick={select}
       className={`w-full cursor-pointer gap-0 border-2 bg-white p-4 py-4 transition-all duration-300 ${
         isSelected
@@ -245,7 +257,10 @@ export function PlanBlockCard({
         }}
         tripStartDate={trip.startDate}
         tripEndDate={trip.endDate}
-        onChange={update}
+        onChange={(range) => {
+          markPlanBlockForScroll(block.id);
+          update(range);
+        }}
       />
 
       {showRouteStats && (
@@ -294,7 +309,7 @@ export function PlanBlockCard({
               <p className="ml-5 text-xs text-amber-700">{routeError}</p>
             </div>
           ) : null}
-          {departureLeg && (
+          {fromHotelLeg && (
             <>
               {(routeData?.legs.length ?? 0) > 0 && (
                 <div className="h-3 w-px bg-sky-200" />
@@ -307,16 +322,16 @@ export function PlanBlockCard({
                 <span className="font-semibold">
                   From hotel ·{" "}
                   {formatRouteLegStats(
-                    departureLeg.distanceMeters,
-                    departureLeg.durationSeconds,
+                    fromHotelLeg.distanceMeters,
+                    fromHotelLeg.durationSeconds,
                   )}
                 </span>
               </div>
             </>
           )}
-          {arrivalLeg && (
+          {toHotelLeg && (
             <>
-              {((routeData?.legs.length ?? 0) > 0 || departureLeg) && (
+              {((routeData?.legs.length ?? 0) > 0 || fromHotelLeg) && (
                 <div className="h-3 w-px bg-sky-200" />
               )}
               <div
@@ -327,8 +342,8 @@ export function PlanBlockCard({
                 <span className="font-semibold">
                   To hotel ·{" "}
                   {formatRouteLegStats(
-                    arrivalLeg.distanceMeters,
-                    arrivalLeg.durationSeconds,
+                    toHotelLeg.distanceMeters,
+                    toHotelLeg.durationSeconds,
                   )}
                 </span>
               </div>
