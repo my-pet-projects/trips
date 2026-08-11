@@ -6,7 +6,7 @@ import type { TripsImageSource } from "~/lib/trips-image-extension";
 import type {
   AttractionDetail,
   BasicAttraction,
-  OvernightLegResult,
+  LabeledConnectorRoute,
   OvernightStop,
   PlanBlock,
   RouteData,
@@ -38,7 +38,7 @@ type ItineraryMapProps = Pick<
   blockColors: Map<number, string>;
   hoveredAttractionId: number | null;
   blockRoutes: Map<number, RouteData>;
-  overnightLegs: Map<number, OvernightLegResult>;
+  labeledConnectorRoutes: LabeledConnectorRoute[];
   overnightStops: OvernightStop[];
   isLoadingRoutes: boolean;
   onAddAttractionToBlock?: (attraction: AttractionDetail) => void;
@@ -55,7 +55,7 @@ export function ItineraryMap({
   blockColors,
   hoveredAttractionId,
   blockRoutes,
-  overnightLegs,
+  labeledConnectorRoutes,
   overnightStops,
   isLoadingRoutes,
   onAddAttractionToBlock,
@@ -98,7 +98,7 @@ export function ItineraryMap({
         hoveredAttractionId,
         blockRoutes,
         isLoadingRoutes,
-        overnightLegs,
+        labeledConnectorRoutes,
         enableLocationTracking,
         resolveAttractionStatus,
         onAddToPlan: onAddAttractionToBlock,

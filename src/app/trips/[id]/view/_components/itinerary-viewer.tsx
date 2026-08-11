@@ -43,9 +43,8 @@ export function ItineraryViewer({
   >(null);
 
   const { blockColors, attractionToBlockMap } = usePlanBlockMaps(planBlocks);
-  const { blockRoutes, overnightLegs, isLoadingRoutes } = useItineraryRoutes(
-    trip.id,
-  );
+  const { blockRoutes, labeledRoutes, isLoadingRoutes } =
+    useItineraryRoutes(trip.id);
 
   const selectedBlock = useMemo(
     () => planBlocks.find((b) => b.id === selectedBlockId),
@@ -163,7 +162,7 @@ export function ItineraryViewer({
           blockColors={blockColors}
           hoveredAttractionId={null}
           blockRoutes={blockRoutes}
-          overnightLegs={overnightLegs}
+          labeledConnectorRoutes={labeledRoutes}
           isLoadingRoutes={isLoadingRoutes}
           overnightStops={trip.overnightStops}
           onAttractionSelect={setSelectedAttractionId}

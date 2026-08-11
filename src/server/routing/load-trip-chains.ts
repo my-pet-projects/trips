@@ -2,9 +2,9 @@ import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 
 import {
-  resolveOvernightLegInputs,
-  type OvernightLegInput,
-} from "~/lib/itinerary/resolve-overnight-leg-inputs";
+  resolveTimelineConnectors,
+  type TimelineConnectorInput,
+} from "~/lib/itinerary/resolve-timeline-connectors";
 import {
   attractionsToRoutePoints,
   type RoutePoint,
@@ -16,7 +16,7 @@ export type BlockChain = { blockId: number; points: RoutePoint[] };
 
 export type TripChains = {
   blockChains: BlockChain[];
-  overnightLegs: OvernightLegInput[];
+  connectors: TimelineConnectorInput[];
 };
 
 export async function loadTripChains(
@@ -79,6 +79,6 @@ export async function loadTripChains(
 
   return {
     blockChains,
-    overnightLegs: resolveOvernightLegInputs(planBlocks, trip.overnightStops),
+    connectors: resolveTimelineConnectors(planBlocks, trip.overnightStops),
   };
 }

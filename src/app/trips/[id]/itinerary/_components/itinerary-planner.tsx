@@ -69,7 +69,9 @@ export function ItineraryPlanner({
   const {
     blockRoutes,
     blockRouteErrors,
-    overnightLegs,
+    planConnectors,
+    stayConnectors,
+    labeledRoutes,
     isLoadingRoutes,
     routeError,
   } = useItineraryRoutes(trip.id);
@@ -192,6 +194,7 @@ export function ItineraryPlanner({
           <ItineraryTimeline
             planBlocks={planBlocks}
             overnightStops={trip.overnightStops}
+            stayConnectors={stayConnectors}
             renderBlock={(block) => {
               const undatedIndex = undatedPlanBlocks.findIndex(
                 (item) => item.id === block.id,
@@ -202,7 +205,7 @@ export function ItineraryPlanner({
                   block={block}
                   index={planBlocks.findIndex((item) => item.id === block.id)}
                   trip={trip}
-                  overnightLegs={overnightLegs.get(block.id)}
+                  planConnectors={planConnectors.get(block.id)}
                   routeData={blockRoutes.get(block.id) ?? null}
                   routeError={blockRouteErrors.get(block.id) ?? routeError}
                   isLoadingRoute={
@@ -266,7 +269,7 @@ export function ItineraryPlanner({
           blockColors={blockColors}
           hoveredAttractionId={hoveredAttraction}
           blockRoutes={blockRoutes}
-          overnightLegs={overnightLegs}
+          labeledConnectorRoutes={labeledRoutes}
           isLoadingRoutes={isLoadingRoutes}
           overnightStops={trip.overnightStops}
           markerMeta={markerMeta}
