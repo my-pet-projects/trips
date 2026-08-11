@@ -3,7 +3,7 @@ import type { GeoJSONLineString } from "~/server/routing/ors-client";
 import type { ResolvedLeg } from "~/server/routing/resolve-leg";
 
 export type RouteChainLeg = {
-  geometryGeojsonParsed: GeoJSONLineString;
+  geometry: GeoJSONLineString;
   distanceMeters: number;
   durationSeconds: number;
   travelMode: TravelMode;
@@ -29,7 +29,7 @@ export function buildChainResponse(
     if (!data) continue;
 
     legs.push({
-      geometryGeojsonParsed: data.geometry,
+      geometry: data.geometry,
       distanceMeters: data.distanceMeters,
       durationSeconds: data.durationSeconds,
       travelMode: data.travelMode,

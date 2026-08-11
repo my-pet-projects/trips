@@ -9,19 +9,19 @@ export const routeRouter = createTRPCRouter({
   forTrip: publicProcedure
     .input(z.object({ tripId: z.number().int().positive() }))
     .query(async ({ ctx, input }) => {
-      const { blockChains, overnightLegs } = await loadTripChains(
+      const { blockChains, connectors } = await loadTripChains(
         ctx.db,
         input.tripId,
       );
 
-      const [blockResults, overnightResults] = await Promise.all([
+      const [blockResults, connectorResults] = await Promise.all([
         resolveChains(
           ctx.db,
           blockChains.map((chain) => chain.points),
         ),
         resolveChains(
           ctx.db,
-          overnightLegs.map((leg) => leg.points),
+          connectors.map((connector) => connector.points),
         ),
       ]);
 
@@ -34,13 +34,11 @@ export const routeRouter = createTRPCRouter({
             error,
           };
         }),
-        overnight: overnightLegs.map((leg, i) => {
-          const { legs, error } = overnightResults[i]!;
+        connectors: connectors.map((connector, i) => {
+          const { legs, error } = connectorResults[i]!;
           return {
-            blockId: leg.blockId,
-            kind: leg.kind,
-            stopId: leg.stopId,
-            attractionId: leg.attractionId,
+            label: connector.label,
+            attachTo: connector.attachTo,
             data: legs[0]?.data ?? null,
             error,
           };
