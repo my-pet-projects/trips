@@ -13,7 +13,7 @@ importers:
         version: 1.7.0(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@clerk/nextjs':
         specifier: ^7.0.0
-        version: 7.7.9(next@16.3.1(@babel/core@7.29.7)(@playwright/test@1.62.1)(@types/node@24.13.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 7.8.0(next@16.3.1(@babel/core@7.29.7)(@playwright/test@1.62.1)(@types/node@24.13.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.9.1(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.85.0(react@19.2.8))(zod@4.4.3)
@@ -98,7 +98,7 @@ importers:
     devDependencies:
       '@clerk/testing':
         specifier: ^2.2.2
-        version: 2.2.27(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 2.2.28(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@eslint/eslintrc':
         specifier: ^3.3.1
         version: 3.3.6
@@ -336,8 +336,8 @@ packages:
     resolution: {integrity: sha512-rYGgr3sshL6Jaq5bvw3hGYnvOj31o6Yie/jWYiNUnlET9RFH82GywxWIGv6YVGSdYIFVm6DnaCyKqXc/hff/hA==}
     engines: {node: '>=20.9.0'}
 
-  '@clerk/nextjs@7.7.9':
-    resolution: {integrity: sha512-6niXLthsXYDwmH2pD0qL7Ut499p6/ucect1Ks9WQp+rVC5va+rTYGEy9pkKKWWePnO4oYf7ncmzJmjFYZXM0Hg==}
+  '@clerk/nextjs@7.8.0':
+    resolution: {integrity: sha512-GvIEQEiVSAouUUUqQNjqDvHmr9zDZyGNNjEn19sGtyyxqwsP0g6u2I40rsdrxyHHchaAgxzkefRc1e2OejHwfA==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       next: ^15.2.8 || ^15.3.8 || ^15.4.10 || ^15.5.9 || ^15.6.0-0 || ^16.0.10 || ^16.1.0-0
@@ -363,8 +363,8 @@ packages:
       react-dom:
         optional: true
 
-  '@clerk/testing@2.2.27':
-    resolution: {integrity: sha512-NvLn6ODOgoe5T41S47TLwpG3lpBUg/eAHrljXV8rbhByNamNfE7uEpmzQlYkFEqSj/RPnYX3EMXuoJXlmtqi7w==}
+  '@clerk/testing@2.2.28':
+    resolution: {integrity: sha512-b6JWXtdJzJWHuE3QZrwg7YT56s1v/Gdm5sZmYItH759wltlXrsntDimdGWYg9Kq0vKAEdpO1oaQnah3Y3x7t5w==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       '@playwright/test': ^1
@@ -1591,6 +1591,9 @@ packages:
 
   '@tanstack/query-core@5.101.4':
     resolution: {integrity: sha512-gNwcvOJcRbLWPOLG/2OBm+zM+Yv+MKsXKEOWC57USuZDEsI71hEErQsiEGx5wX9rzWWkfwM0fVSPoiIFSsxfiw==}
+
+  '@tanstack/query-core@5.102.0':
+    resolution: {integrity: sha512-tvBzr11Q7StuMCEsIJdqX8TAWt6WZIzfw/yrSAjObZDerwTTPeCxeLXN2R8ZSn4ZxFpQV819Xn8QmoO+vtnDvw==}
 
   '@tanstack/react-query@5.101.4':
     resolution: {integrity: sha512-yRg2pfOCxIs4ZJW3XYYHU/WgtD04FHSnfHlpRT7h7pR77hwkdRG4wxbKe4aq6P0RvXUTBSQpQeadS1SUYUe+KA==}
@@ -4859,7 +4862,7 @@ snapshots:
       - react
       - react-dom
 
-  '@clerk/nextjs@7.7.9(next@16.3.1(@babel/core@7.29.7)(@playwright/test@1.62.1)(@types/node@24.13.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@clerk/nextjs@7.8.0(next@16.3.1(@babel/core@7.29.7)(@playwright/test@1.62.1)(@types/node@24.13.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@clerk/backend': 3.16.10(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@clerk/react': 6.14.5(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -4879,7 +4882,7 @@ snapshots:
 
   '@clerk/shared@4.29.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
-      '@tanstack/query-core': 5.101.4
+      '@tanstack/query-core': 5.102.0
       dequal: 2.0.3
       glob-to-regexp: 0.4.1
       js-cookie: 3.0.7
@@ -4887,7 +4890,7 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  '@clerk/testing@2.2.27(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@clerk/testing@2.2.28(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@clerk/backend': 3.16.10(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@clerk/shared': 4.29.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -5682,6 +5685,8 @@ snapshots:
       tailwindcss: 4.3.3
 
   '@tanstack/query-core@5.101.4': {}
+
+  '@tanstack/query-core@5.102.0': {}
 
   '@tanstack/react-query@5.101.4(react@19.2.8)':
     dependencies:
